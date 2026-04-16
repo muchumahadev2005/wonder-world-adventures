@@ -43,7 +43,7 @@ const container = {
 
 const item = {
   hidden: { y: 40, opacity: 0, scale: 0.8 },
-  show: { y: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 200 } },
+  show: { y: 0, opacity: 1, scale: 1, transition: { type: 'spring' as const, stiffness: 200 } },
 };
 
 // Tiny sparkle dots
