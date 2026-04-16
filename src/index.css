@@ -1,95 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 210 100% 97%;
+    --foreground: 240 20% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 20% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 240 20% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 260 85% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 340 90% 65%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 45 100% 60%;
+    --accent-foreground: 30 80% 20%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 260 85% 60%;
+    --radius: 1rem;
 
-    --radius: 0.5rem;
+    /* Custom children's palette */
+    --sky: 200 90% 60%;
+    --sky-light: 200 90% 85%;
+    --mint: 160 70% 55%;
+    --mint-light: 160 70% 85%;
+    --coral: 15 90% 65%;
+    --coral-light: 15 90% 85%;
+    --sunshine: 45 100% 60%;
+    --sunshine-light: 45 100% 85%;
+    --lavender: 270 80% 70%;
+    --lavender-light: 270 80% 90%;
+    --bubblegum: 330 85% 65%;
+    --bubblegum-light: 330 85% 90%;
+
+    /* Glossy effects */
+    --glass-bg: 0 0% 100% / 0.6;
+    --glass-border: 0 0% 100% / 0.3;
+    --glass-shadow: 260 85% 60% / 0.15;
+
+    /* Star gold */
+    --star: 45 100% 50%;
+    --star-glow: 45 100% 70%;
+
+    /* Premium */
+    --premium: 45 100% 50%;
+    --premium-glow: 30 100% 55%;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -100,6 +79,108 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
+    font-family: 'Nunito', sans-serif;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Baloo 2', cursive;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-3xl border border-white/30 shadow-xl;
+    background: hsla(var(--glass-bg));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-card-strong {
+    @apply rounded-3xl border border-white/40 shadow-2xl;
+    background: hsla(0 0% 100% / 0.8);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+  }
+
+  .glossy-btn {
+    @apply relative overflow-hidden rounded-2xl font-bold shadow-lg transition-all;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--lavender)));
+  }
+
+  .glossy-btn::before {
+    content: '';
+    @apply absolute inset-0 rounded-2xl;
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%);
+  }
+
+  .star-glow {
+    filter: drop-shadow(0 0 8px hsl(var(--star-glow)));
+  }
+
+  .premium-badge {
+    background: linear-gradient(135deg, hsl(var(--premium)), hsl(var(--premium-glow)));
+    @apply text-white font-bold px-3 py-1 rounded-full text-xs shadow-lg;
+  }
+
+  .bubble-gradient {
+    background: linear-gradient(135deg, hsl(var(--sky-light)), hsl(var(--lavender-light)), hsl(var(--bubblegum-light)));
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--bubblegum)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--sunshine)), hsl(var(--coral)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float 5s ease-in-out infinite;
+  }
+
+  .animate-bounce-soft {
+    animation: bounceSoft 2s ease-in-out infinite;
+  }
+
+  .animate-sparkle {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
 }
