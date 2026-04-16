@@ -1,18 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useChild } from '@/context/ChildContext';
-import NavBar from '@/components/NavBar';
-import FloatingBubbles from '@/components/FloatingBubbles';
-import { MessageCircle, Send, Bot, User } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useChild } from "@/context/ChildContext";
+import NavBar from "@/components/NavBar";
+import FloatingBubbles from "@/components/FloatingBubbles";
+import { MessageCircle, Send, Bot, User } from "lucide-react";
 
 interface Message {
-  role: 'user' | 'bot';
+  role: "user" | "bot";
   text: string;
 }
 
 const botResponses: Record<string, string[]> = {
-  hello: ["Hi there! 😊 I'm Buddy, your learning friend!", "Hey! Ready to learn something cool?", "Hello! How are you today? 🌟"],
-  help: ["I can tell you fun facts, jokes, or help with math! What would you like?", "Sure! Ask me anything - I love helping!"],
+  hello: [
+    "Hi there! 😊 I'm Buddy, your learning friend!",
+    "Hey! Ready to learn something cool?",
+    "Hello! How are you today? 🌟",
+  ],
+  help: [
+    "I can tell you fun facts, jokes, or help with math! What would you like?",
+    "Sure! Ask me anything - I love helping!",
+  ],
   joke: [
     "Why did the math book look sad? Because it had too many problems! 😂",
     "What do you call a sleeping dinosaur? A dino-snore! 🦕😴",
@@ -37,35 +44,50 @@ const botResponses: Record<string, string[]> = {
 const getResponse = (input: string): string => {
   const lower = input.toLowerCase();
   for (const [key, responses] of Object.entries(botResponses)) {
-    if (lower.includes(key)) return responses[Math.floor(Math.random() * responses.length)];
+    if (lower.includes(key))
+      return responses[Math.floor(Math.random() * responses.length)];
   }
-  return botResponses.default[Math.floor(Math.random() * botResponses.default.length)];
+  return botResponses.default[
+    Math.floor(Math.random() * botResponses.default.length)
+  ];
 };
 
 const ChatPage = () => {
   const { profile } = useChild();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'bot', text: `Hi ${profile?.name || 'friend'}! 👋 I'm Buddy! Ask me for jokes, fun facts, or math help!` },
+    {
+      role: "bot",
+      text: `Hi ${profile?.name || "friend"}! 👋 I'm Buddy! Ask me for jokes, fun facts, or math help!`,
+    },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
   const sendMessage = () => {
     if (!input.trim()) return;
-    const userMsg: Message = { role: 'user', text: input.trim() };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
+    const userMsg: Message = { role: "user", text: input.trim() };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'bot', text: getResponse(userMsg.text) }]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 800);
+    setTimeout(
+      () => {
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", text: getResponse(userMsg.text) },
+        ]);
+        setIsTyping(false);
+      },
+      800 + Math.random() * 800,
+    );
   };
 
   return (
@@ -74,44 +96,70 @@ const ChatPage = () => {
       <NavBar />
 
       <div className="page-shell-compact flex-1 flex flex-col w-full">
-        <motion.div className="page-header mb-4" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+        <motion.div
+          className="page-header mb-4"
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+        >
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-gradient-primary flex items-center justify-center gap-2">
-            <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-primary" /> Chat with Buddy
+            <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />{" "}
+            Chat with Buddy
           </h1>
         </motion.div>
 
-        <div ref={scrollRef} className="glass-card-strong flex-1 p-4 overflow-y-auto space-y-3 mb-4 max-h-[60vh]">
+        <div
+          ref={scrollRef}
+          className="glass-card-strong flex-1 p-4 overflow-y-auto space-y-3 mb-4 max-h-[60vh]"
+        >
           {messages.map((msg, i) => (
             <motion.div
               key={i}
-              className={`flex items-start gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+              className={`flex items-start gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                msg.role === 'bot' ? 'bg-gradient-to-br from-primary to-lavender' : 'bg-gradient-to-br from-sky to-mint'
-              }`}>
-                {msg.role === 'bot' ? <Bot className="w-4 h-4 text-primary-foreground" /> : <User className="w-4 h-4 text-primary-foreground" />}
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  msg.role === "bot"
+                    ? "bg-gradient-to-br from-primary to-lavender"
+                    : "bg-gradient-to-br from-sky to-mint"
+                }`}
+              >
+                {msg.role === "bot" ? (
+                  <Bot className="w-4 h-4 text-primary-foreground" />
+                ) : (
+                  <User className="w-4 h-4 text-primary-foreground" />
+                )}
               </div>
-              <div className={`glass-card px-4 py-2 max-w-[85%] sm:max-w-[75%] ${
-                msg.role === 'user' ? 'bg-primary/10' : ''
-              }`}>
+              <div
+                className={`glass-card px-4 py-2 max-w-[85%] sm:max-w-[75%] ${
+                  msg.role === "user" ? "bg-primary/10" : ""
+                }`}
+              >
                 <p className="text-sm font-body">{msg.text}</p>
               </div>
             </motion.div>
           ))}
           {isTyping && (
-            <motion.div className="flex items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div
+              className="flex items-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-lavender flex items-center justify-center">
                 <Bot className="w-4 h-4 text-primary-foreground" />
               </div>
               <div className="glass-card px-4 py-2 flex gap-1">
-                {[0, 1, 2].map(i => (
+                {[0, 1, 2].map((i) => (
                   <motion.span
                     key={i}
                     className="w-2 h-2 bg-muted-foreground rounded-full"
                     animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+                    transition={{
+                      duration: 0.5,
+                      repeat: Infinity,
+                      delay: i * 0.15,
+                    }}
                   />
                 ))}
               </div>
@@ -123,7 +171,7 @@ const ChatPage = () => {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             placeholder="Say something to Buddy..."
             className="flex-1 px-4 py-2 rounded-xl bg-transparent text-foreground focus:outline-none font-body"
           />

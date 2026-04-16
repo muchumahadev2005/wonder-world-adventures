@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -80,11 +80,16 @@
 
   body {
     @apply bg-background text-foreground font-body;
-    font-family: 'Nunito', sans-serif;
+    font-family: "Nunito", sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Baloo 2', cursive;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Baloo 2", cursive;
   }
 }
 
@@ -121,13 +126,21 @@
 
   .glossy-btn {
     @apply relative overflow-hidden rounded-2xl font-bold shadow-lg transition-all;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--lavender)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--lavender))
+    );
   }
 
   .glossy-btn::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 rounded-2xl;
-    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0) 50%
+    );
   }
 
   .star-glow {
@@ -135,23 +148,40 @@
   }
 
   .premium-badge {
-    background: linear-gradient(135deg, hsl(var(--premium)), hsl(var(--premium-glow)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--premium)),
+      hsl(var(--premium-glow))
+    );
     @apply text-white font-bold px-3 py-1 rounded-full text-xs shadow-lg;
   }
 
   .bubble-gradient {
-    background: linear-gradient(135deg, hsl(var(--sky-light)), hsl(var(--lavender-light)), hsl(var(--bubblegum-light)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--sky-light)),
+      hsl(var(--lavender-light)),
+      hsl(var(--bubblegum-light))
+    );
   }
 
   .text-gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--bubblegum)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--bubblegum))
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(var(--sunshine)), hsl(var(--coral)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--sunshine)),
+      hsl(var(--coral))
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -181,22 +211,46 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes bounceSoft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 @keyframes sparkle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
 }
 
 @keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-5deg); }
-  75% { transform: rotate(5deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
 }

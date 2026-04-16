@@ -1,79 +1,81 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useChild } from '@/context/ChildContext';
-import NavBar from '@/components/NavBar';
-import FloatingBubbles from '@/components/FloatingBubbles';
-import PremiumBadge from '@/components/PremiumBadge';
-import StarBurst from '@/components/StarBurst';
-import { BookOpen, Star, Lock, ChevronRight } from 'lucide-react';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useChild } from "@/context/ChildContext";
+import NavBar from "@/components/NavBar";
+import FloatingBubbles from "@/components/FloatingBubbles";
+import PremiumBadge from "@/components/PremiumBadge";
+import StarBurst from "@/components/StarBurst";
+import { BookOpen, Star, Lock, ChevronRight } from "lucide-react";
 
 const stories = [
   {
-    id: 'moon-rabbit',
-    title: 'The Moon Rabbit',
-    cover: '🐰🌙',
-    color: 'from-lavender to-sky',
+    id: "moon-rabbit",
+    title: "The Moon Rabbit",
+    cover: "🐰🌙",
+    color: "from-lavender to-sky",
     premium: false,
     stars: 2,
     pages: [
       'Once upon a time, a little rabbit looked up at the big bright moon. "I want to visit you!" she said.',
       'So she built a rocket from carrots and leaves. "3... 2... 1... Blast off!" she shouted.',
-      'When she landed on the moon, she found it was made of cheese! She nibbled happily.',
+      "When she landed on the moon, she found it was made of cheese! She nibbled happily.",
       'The moon winked at her and said, "Come visit anytime, little friend!" And she did, every night in her dreams.',
     ],
   },
   {
-    id: 'brave-star',
-    title: 'The Brave Little Star',
-    cover: '⭐✨',
-    color: 'from-sunshine to-coral',
+    id: "brave-star",
+    title: "The Brave Little Star",
+    cover: "⭐✨",
+    color: "from-sunshine to-coral",
     premium: false,
     stars: 2,
     pages: [
       'There was a tiny star who was afraid of the dark. "But you ARE the light!" said the moon.',
-      'The little star tried shining as bright as she could. Her glow lit up a whole village below.',
+      "The little star tried shining as bright as she could. Her glow lit up a whole village below.",
       'The children looked up and smiled. "Thank you, little star!" they cheered.',
-      'From that night on, she was never afraid again. She knew her light made the world brighter.',
+      "From that night on, she was never afraid again. She knew her light made the world brighter.",
     ],
   },
   {
-    id: 'dragon-friend',
-    title: 'The Friendly Dragon',
-    cover: '🐉💚',
-    color: 'from-mint to-sky',
+    id: "dragon-friend",
+    title: "The Friendly Dragon",
+    cover: "🐉💚",
+    color: "from-mint to-sky",
     premium: true,
     stars: 3,
     pages: [
-      'Everyone was scared of the green dragon, but he just wanted friends.',
+      "Everyone was scared of the green dragon, but he just wanted friends.",
       'One day, a brave girl named Lily said "Hello!" The dragon was so happy he sneezed... flowers!',
-      'Together they flew over mountains and valleys, sharing stories and snacks.',
-      'The village learned that being different is wonderful, and the dragon became everyone\'s best friend.',
+      "Together they flew over mountains and valleys, sharing stories and snacks.",
+      "The village learned that being different is wonderful, and the dragon became everyone's best friend.",
     ],
   },
   {
-    id: 'rainbow-fish',
-    title: 'Rainbow Fish',
-    cover: '🐠🌈',
-    color: 'from-bubblegum to-lavender',
+    id: "rainbow-fish",
+    title: "Rainbow Fish",
+    cover: "🐠🌈",
+    color: "from-bubblegum to-lavender",
     premium: true,
     stars: 3,
     pages: [
       'A beautiful fish with rainbow scales swam alone. "Why won\'t anyone play with me?"',
       'A wise octopus said, "Share your sparkle!" So the fish gave each friend a shiny scale.',
-      'Soon the whole ocean glittered with shared colors. Every fish was special and unique.',
-      'The rainbow fish smiled. Having friends was better than having all the sparkle to herself.',
+      "Soon the whole ocean glittered with shared colors. Every fish was special and unique.",
+      "The rainbow fish smiled. Having friends was better than having all the sparkle to herself.",
     ],
   },
 ];
 
 const StoriesPage = () => {
   const { profile, addStars, completeStory } = useChild();
-  const [activeStory, setActiveStory] = useState<typeof stories[0] | null>(null);
+  const [activeStory, setActiveStory] = useState<(typeof stories)[0] | null>(
+    null,
+  );
   const [page, setPage] = useState(0);
   const [showStarBurst, setShowStarBurst] = useState(false);
   const [earnedStars, setEarnedStars] = useState(0);
 
-  const finishStory = (story: typeof stories[0]) => {
+  const finishStory = (story: (typeof stories)[0]) => {
     if (!profile?.completedStories.includes(story.id)) {
       addStars(story.stars);
       completeStory(story.id);
@@ -97,11 +99,18 @@ const StoriesPage = () => {
       <StarBurst show={showStarBurst} count={earnedStars} />
 
       <div className="page-shell max-w-5xl">
-        <motion.div className="page-header" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+        <motion.div
+          className="page-header"
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+        >
           <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
-            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Story Time
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Story
+            Time
           </h1>
-          <p className="text-muted-foreground mt-1">Read stories and earn stars! 📚</p>
+          <p className="text-muted-foreground mt-1">
+            Read stories and earn stars! 📚
+          </p>
         </motion.div>
 
         {activeStory ? (
@@ -110,15 +119,26 @@ const StoriesPage = () => {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
           >
-            <button onClick={() => { setActiveStory(null); setPage(0); }}
-              className="text-primary font-bold text-sm hover:underline mb-4 block">← Back</button>
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">{activeStory.title}</h2>
+            <button
+              onClick={() => {
+                setActiveStory(null);
+                setPage(0);
+              }}
+              className="text-primary font-bold text-sm hover:underline mb-4 block"
+            >
+              ← Back
+            </button>
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
+              {activeStory.title}
+            </h2>
             <div className="text-center text-4xl mb-4">{activeStory.cover}</div>
 
             <div className="w-full h-1.5 bg-muted rounded-full mb-6 overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-primary to-lavender rounded-full"
-                animate={{ width: `${((page + 1) / activeStory.pages.length) * 100}%` }}
+                animate={{
+                  width: `${((page + 1) / activeStory.pages.length) * 100}%`,
+                }}
               />
             </div>
 
@@ -136,7 +156,7 @@ const StoriesPage = () => {
 
             <div className="flex items-center justify-between gap-3 mt-6">
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
                 className="glossy-btn px-4 sm:px-6 py-2 text-primary-foreground font-bold disabled:opacity-30"
               >
@@ -144,7 +164,7 @@ const StoriesPage = () => {
               </button>
               {page < activeStory.pages.length - 1 ? (
                 <motion.button
-                  onClick={() => setPage(p => p + 1)}
+                  onClick={() => setPage((p) => p + 1)}
                   className="glossy-btn px-4 sm:px-6 py-2 text-primary-foreground font-bold flex items-center gap-1"
                   whileHover={{ scale: 1.05 }}
                 >
@@ -176,25 +196,43 @@ const StoriesPage = () => {
               return (
                 <motion.button
                   key={story.id}
-                  variants={{ hidden: { y: 30, opacity: 0 }, show: { y: 0, opacity: 1 } }}
+                  variants={{
+                    hidden: { y: 30, opacity: 0 },
+                    show: { y: 0, opacity: 1 },
+                  }}
                   onClick={() => !locked && setActiveStory(story)}
-                  className={`glass-card-strong p-5 sm:p-6 text-center relative ${locked ? 'opacity-70' : ''}`}
+                  className={`glass-card-strong p-5 sm:p-6 text-center relative ${locked ? "opacity-70" : ""}`}
                   whileHover={locked ? {} : { scale: 1.05, y: -5 }}
                   whileTap={locked ? {} : { scale: 0.95 }}
                 >
-                  {story.premium && <div className="absolute top-3 right-3"><PremiumBadge /></div>}
+                  {story.premium && (
+                    <div className="absolute top-3 right-3">
+                      <PremiumBadge />
+                    </div>
+                  )}
                   {locked && (
                     <div className="absolute inset-0 rounded-3xl bg-card/50 backdrop-blur-sm flex items-center justify-center z-10">
                       <Lock className="w-8 h-8 text-muted-foreground" />
                     </div>
                   )}
-                  {completed && <div className="absolute top-3 left-3"><span className="text-sm">✅</span></div>}
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${story.color} flex items-center justify-center mx-auto mb-3 shadow-lg text-2xl`}>
+                  {completed && (
+                    <div className="absolute top-3 left-3">
+                      <span className="text-sm">✅</span>
+                    </div>
+                  )}
+                  <div
+                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${story.color} flex items-center justify-center mx-auto mb-3 shadow-lg text-2xl`}
+                  >
                     {story.cover}
                   </div>
-                  <h3 className="font-display text-base sm:text-sm font-bold text-foreground">{story.title}</h3>
+                  <h3 className="font-display text-base sm:text-sm font-bold text-foreground">
+                    {story.title}
+                  </h3>
                   <div className="flex items-center justify-center gap-1 mt-1">
-                    <Star className="w-3 h-3 text-star fill-star" /><span className="text-xs text-muted-foreground font-bold">{story.stars}</span>
+                    <Star className="w-3 h-3 text-star fill-star" />
+                    <span className="text-xs text-muted-foreground font-bold">
+                      {story.stars}
+                    </span>
                   </div>
                 </motion.button>
               );

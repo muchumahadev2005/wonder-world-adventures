@@ -1,54 +1,113 @@
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useChild } from '@/context/ChildContext';
-import NavBar from '@/components/NavBar';
-import FloatingBubbles from '@/components/FloatingBubbles';
-import PremiumBadge from '@/components/PremiumBadge';
-import StarBurst from '@/components/StarBurst';
-import { Gamepad2, Star, Lock, Calculator, Shapes, Puzzle, Brain, Zap } from 'lucide-react';
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useChild } from "@/context/ChildContext";
+import NavBar from "@/components/NavBar";
+import FloatingBubbles from "@/components/FloatingBubbles";
+import PremiumBadge from "@/components/PremiumBadge";
+import StarBurst from "@/components/StarBurst";
+import {
+  Gamepad2,
+  Star,
+  Lock,
+  Calculator,
+  Shapes,
+  Puzzle,
+  Brain,
+  Zap,
+} from "lucide-react";
 
 const games = [
-  { id: 'math-add', title: 'Addition Fun', icon: Calculator, color: 'from-sky to-lavender', stars: 3, premium: false },
-  { id: 'math-sub', title: 'Subtraction', icon: Calculator, color: 'from-mint to-sky', stars: 3, premium: false },
-  { id: 'shapes', title: 'Shape Match', icon: Shapes, color: 'from-coral to-sunshine', stars: 5, premium: false },
-  { id: 'patterns', title: 'Patterns', icon: Puzzle, color: 'from-bubblegum to-lavender', stars: 5, premium: true },
-  { id: 'memory', title: 'Memory Game', icon: Brain, color: 'from-sunshine to-coral', stars: 4, premium: false },
-  { id: 'speed-math', title: 'Speed Math', icon: Zap, color: 'from-lavender to-bubblegum', stars: 8, premium: true },
+  {
+    id: "math-add",
+    title: "Addition Fun",
+    icon: Calculator,
+    color: "from-sky to-lavender",
+    stars: 3,
+    premium: false,
+  },
+  {
+    id: "math-sub",
+    title: "Subtraction",
+    icon: Calculator,
+    color: "from-mint to-sky",
+    stars: 3,
+    premium: false,
+  },
+  {
+    id: "shapes",
+    title: "Shape Match",
+    icon: Shapes,
+    color: "from-coral to-sunshine",
+    stars: 5,
+    premium: false,
+  },
+  {
+    id: "patterns",
+    title: "Patterns",
+    icon: Puzzle,
+    color: "from-bubblegum to-lavender",
+    stars: 5,
+    premium: true,
+  },
+  {
+    id: "memory",
+    title: "Memory Game",
+    icon: Brain,
+    color: "from-sunshine to-coral",
+    stars: 4,
+    premium: false,
+  },
+  {
+    id: "speed-math",
+    title: "Speed Math",
+    icon: Zap,
+    color: "from-lavender to-bubblegum",
+    stars: 8,
+    premium: true,
+  },
 ];
 
-const MathGame = ({ onComplete, type }: { onComplete: (stars: number) => void; type: 'add' | 'sub' }) => {
+const MathGame = ({
+  onComplete,
+  type,
+}: {
+  onComplete: (stars: number) => void;
+  type: "add" | "sub";
+}) => {
   const [score, setScore] = useState(0);
   const [question, setQuestion] = useState(0);
   const [a, setA] = useState(() => Math.floor(Math.random() * 10) + 1);
-  const [b, setB] = useState(() => Math.floor(Math.random() * (type === 'sub' ? 5 : 10)) + 1);
-  const [answer, setAnswer] = useState('');
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [b, setB] = useState(
+    () => Math.floor(Math.random() * (type === "sub" ? 5 : 10)) + 1,
+  );
+  const [answer, setAnswer] = useState("");
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const totalQuestions = 5;
 
-  const correct = type === 'add' ? a + b : a + b; // ensure a+b for sub means (a+b) - b = a
-  const displayA = type === 'sub' ? a + b : a;
-  const displayOp = type === 'sub' ? '−' : '+';
+  const correct = type === "add" ? a + b : a + b; // ensure a+b for sub means (a+b) - b = a
+  const displayA = type === "sub" ? a + b : a;
+  const displayOp = type === "sub" ? "−" : "+";
   const displayB = b;
-  const correctAnswer = type === 'sub' ? a : a + b;
+  const correctAnswer = type === "sub" ? a : a + b;
 
   const nextQuestion = useCallback(() => {
     if (question + 1 >= totalQuestions) {
-      onComplete(score + (feedback === 'correct' ? 1 : 0));
+      onComplete(score + (feedback === "correct" ? 1 : 0));
       return;
     }
-    setQuestion(q => q + 1);
+    setQuestion((q) => q + 1);
     setA(Math.floor(Math.random() * 10) + 1);
-    setB(Math.floor(Math.random() * (type === 'sub' ? 5 : 10)) + 1);
-    setAnswer('');
+    setB(Math.floor(Math.random() * (type === "sub" ? 5 : 10)) + 1);
+    setAnswer("");
     setFeedback(null);
   }, [question, score, feedback, onComplete, type]);
 
   const checkAnswer = () => {
     if (parseInt(answer) === correctAnswer) {
-      setFeedback('correct');
-      setScore(s => s + 1);
+      setFeedback("correct");
+      setScore((s) => s + 1);
     } else {
-      setFeedback('wrong');
+      setFeedback("wrong");
     }
     setTimeout(nextQuestion, 1000);
   };
@@ -85,17 +144,25 @@ const MathGame = ({ onComplete, type }: { onComplete: (stars: number) => void; t
           exit={{ x: -30, opacity: 0 }}
         >
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6">
-            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">{displayA}</span>
-            <span className="text-2xl sm:text-3xl font-bold text-primary">{displayOp}</span>
-            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">{displayB}</span>
-            <span className="text-2xl sm:text-3xl font-bold text-primary">=</span>
+            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">
+              {displayA}
+            </span>
+            <span className="text-2xl sm:text-3xl font-bold text-primary">
+              {displayOp}
+            </span>
+            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">
+              {displayB}
+            </span>
+            <span className="text-2xl sm:text-3xl font-bold text-primary">
+              =
+            </span>
           </div>
 
           <input
             type="number"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && answer && checkAnswer()}
+            onKeyDown={(e) => e.key === "Enter" && answer && checkAnswer()}
             placeholder="?"
             className="w-20 sm:w-24 px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-xl sm:text-2xl font-bold focus:outline-none focus:border-primary transition-colors mx-auto block"
             autoFocus
@@ -103,11 +170,13 @@ const MathGame = ({ onComplete, type }: { onComplete: (stars: number) => void; t
 
           {feedback && (
             <motion.p
-              className={`mt-3 font-bold text-lg ${feedback === 'correct' ? 'text-mint' : 'text-destructive'}`}
+              className={`mt-3 font-bold text-lg ${feedback === "correct" ? "text-mint" : "text-destructive"}`}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
             >
-              {feedback === 'correct' ? '✅ Correct!' : `❌ It was ${correctAnswer}`}
+              {feedback === "correct"
+                ? "✅ Correct!"
+                : `❌ It was ${correctAnswer}`}
             </motion.p>
           )}
 
@@ -134,7 +203,7 @@ const GamesPage = () => {
   const [earnedStars, setEarnedStars] = useState(0);
 
   const handleGameComplete = (gameId: string, score: number) => {
-    const game = games.find(g => g.id === gameId);
+    const game = games.find((g) => g.id === gameId);
     if (!game) return;
     const stars = Math.ceil((score / 5) * game.stars);
     setEarnedStars(stars);
@@ -160,9 +229,12 @@ const GamesPage = () => {
           animate={{ y: 0, opacity: 1 }}
         >
           <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
-            <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Games Zone
+            <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Games
+            Zone
           </h1>
-          <p className="text-muted-foreground mt-1">Play games and earn stars! ⭐</p>
+          <p className="text-muted-foreground mt-1">
+            Play games and earn stars! ⭐
+          </p>
         </motion.div>
 
         {activeGame ? (
@@ -174,16 +246,20 @@ const GamesPage = () => {
             >
               ← Back to Games
             </motion.button>
-            {(activeGame === 'math-add' || activeGame === 'math-sub') && (
+            {(activeGame === "math-add" || activeGame === "math-sub") && (
               <MathGame
-                type={activeGame === 'math-add' ? 'add' : 'sub'}
+                type={activeGame === "math-add" ? "add" : "sub"}
                 onComplete={(score) => handleGameComplete(activeGame, score)}
               />
             )}
-            {!['math-add', 'math-sub'].includes(activeGame) && (
+            {!["math-add", "math-sub"].includes(activeGame) && (
               <div className="glass-card-strong p-8 sm:p-12 text-center max-w-sm mx-auto">
-                <p className="font-display text-xl font-bold text-muted-foreground">🚧 Coming Soon!</p>
-                <p className="text-muted-foreground text-sm mt-2">This game is being built!</p>
+                <p className="font-display text-xl font-bold text-muted-foreground">
+                  🚧 Coming Soon!
+                </p>
+                <p className="text-muted-foreground text-sm mt-2">
+                  This game is being built!
+                </p>
               </div>
             )}
           </div>
@@ -205,7 +281,7 @@ const GamesPage = () => {
                     show: { y: 0, opacity: 1 },
                   }}
                   onClick={() => !locked && setActiveGame(game.id)}
-                  className={`glass-card-strong p-5 sm:p-6 text-center relative group ${locked ? 'opacity-70' : ''}`}
+                  className={`glass-card-strong p-5 sm:p-6 text-center relative group ${locked ? "opacity-70" : ""}`}
                   whileHover={locked ? {} : { scale: 1.05, y: -5 }}
                   whileTap={locked ? {} : { scale: 0.95 }}
                 >
@@ -224,13 +300,19 @@ const GamesPage = () => {
                       <span className="text-sm">✅</span>
                     </div>
                   )}
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mx-auto mb-3 shadow-lg`}>
+                  <div
+                    className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mx-auto mb-3 shadow-lg`}
+                  >
                     <game.icon className="w-7 h-7 text-primary-foreground" />
                   </div>
-                  <h3 className="font-display text-base font-bold text-foreground">{game.title}</h3>
+                  <h3 className="font-display text-base font-bold text-foreground">
+                    {game.title}
+                  </h3>
                   <div className="flex items-center justify-center gap-1 mt-1">
                     <Star className="w-3 h-3 text-star fill-star" />
-                    <span className="text-xs text-muted-foreground font-bold">{game.stars} stars</span>
+                    <span className="text-xs text-muted-foreground font-bold">
+                      {game.stars} stars
+                    </span>
                   </div>
                 </motion.button>
               );
