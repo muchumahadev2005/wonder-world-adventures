@@ -65,7 +65,7 @@ const LoginPage = () => {
       </div>
 
       <motion.div
-        className="glass-card-strong p-8 w-full max-w-md relative z-10"
+        className="glass-card-strong p-5 sm:p-8 w-full max-w-md relative z-10"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200 }}
@@ -90,7 +90,7 @@ const LoginPage = () => {
             transition={{ duration: 0.3 }}
           >
             <div className="text-center mb-6">
-              <h1 className="font-display text-2xl font-bold text-foreground">{steps[step].title}</h1>
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground">{steps[step].title}</h1>
               <p className="text-muted-foreground mt-1">{steps[step].subtitle}</p>
             </div>
 
@@ -122,19 +122,19 @@ const LoginPage = () => {
 
             {step === 2 && (
               <div className="text-center">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <span className="glass-card px-4 py-2 text-2xl font-display font-bold">{mathA}</span>
-                  <span className="text-2xl font-bold text-primary">+</span>
-                  <span className="glass-card px-4 py-2 text-2xl font-display font-bold">{mathB}</span>
-                  <span className="text-2xl font-bold text-primary">=</span>
-                  <span className="text-2xl font-bold text-primary">?</span>
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+                  <span className="glass-card px-3 sm:px-4 py-2 text-xl sm:text-2xl font-display font-bold">{mathA}</span>
+                  <span className="text-xl sm:text-2xl font-bold text-primary">+</span>
+                  <span className="glass-card px-3 sm:px-4 py-2 text-xl sm:text-2xl font-display font-bold">{mathB}</span>
+                  <span className="text-xl sm:text-2xl font-bold text-primary">=</span>
+                  <span className="text-xl sm:text-2xl font-bold text-primary">?</span>
                 </div>
                 <input
                   type="number"
                   value={mathAnswer}
                   onChange={(e) => setMathAnswer(e.target.value)}
                   placeholder="?"
-                  className="w-24 px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-2xl font-bold focus:outline-none focus:border-primary transition-colors mx-auto"
+                  className="w-20 sm:w-24 px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-xl sm:text-2xl font-bold focus:outline-none focus:border-primary transition-colors mx-auto"
                   onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                   autoFocus
                 />
@@ -147,7 +147,7 @@ const LoginPage = () => {
                   <motion.button
                     key={c.name}
                     onClick={() => setColor(c.name)}
-                    className={`w-14 h-14 rounded-2xl ${c.bg} border-4 transition-all ${
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${c.bg} border-4 transition-all ${
                       color === c.name ? 'border-foreground scale-110 shadow-lg' : 'border-transparent'
                     }`}
                     whileHover={{ scale: 1.15 }}
@@ -171,7 +171,7 @@ const LoginPage = () => {
 
         <motion.button
           onClick={handleNext}
-          className="glossy-btn w-full mt-6 px-6 py-3 text-primary-foreground font-display text-lg flex items-center justify-center gap-2"
+          className="glossy-btn w-full mt-6 px-6 py-3 text-primary-foreground font-display text-base sm:text-lg flex items-center justify-center gap-2"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >

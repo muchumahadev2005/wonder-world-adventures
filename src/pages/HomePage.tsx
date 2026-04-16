@@ -134,12 +134,12 @@ const HomePage = () => {
 
       <NavBar />
 
-      <div className="pt-28 pb-16 px-6 max-w-6xl mx-auto relative z-10">
+      <div className="page-shell md:pt-28 sm:pb-16">
         {/* Hero Section – 2 columns */}
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-4 mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-6 mb-16">
           {/* Left Side – 45% */}
           <motion.div
-            className="w-full lg:w-[45%] text-center lg:text-left relative"
+            className="w-full max-w-xl mx-auto lg:mx-0 text-center lg:text-left relative"
             initial={{ x: -60, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
@@ -156,27 +156,24 @@ const HomePage = () => {
                 👋
               </motion.span>
             </h1>
-            <p className="text-muted-foreground text-lg lg:text-xl mt-3 font-body max-w-md">
+            <p className="text-muted-foreground text-base sm:text-lg lg:text-xl mt-3 font-body max-w-md mx-auto lg:mx-0">
               Ready for some fun learning today?
             </p>
 
             {/* Progress Card */}
             <motion.div
-              className="mt-8 inline-flex items-center gap-0 rounded-[30px] overflow-hidden"
+              className="mt-8 mx-auto lg:mx-0 flex w-full max-w-[560px] flex-col items-stretch gap-0 overflow-hidden rounded-[30px] sm:inline-flex sm:flex-row"
               style={{
                 background: 'rgba(255,255,255,0.85)',
                 backdropFilter: 'blur(20px)',
                 boxShadow: '0 8px 30px rgba(124,58,237,0.08), 0 2px 8px rgba(0,0,0,0.03)',
                 border: '1px solid rgba(255,255,255,0.6)',
-                height: 88,
-                maxWidth: 560,
-                width: '100%',
               }}
               whileHover={{ y: -3, boxShadow: '0 12px 40px rgba(124,58,237,0.12), 0 4px 12px rgba(0,0,0,0.05)' }}
               transition={{ duration: 0.2 }}
             >
               {/* Stars */}
-              <motion.div className="flex-1 flex items-center justify-center gap-2 px-5" whileHover={{ scale: 1.02 }}>
+              <motion.div className="flex w-full items-center justify-center gap-2 px-5 py-4 sm:flex-1 sm:py-0" whileHover={{ scale: 1.02 }}>
                 <motion.div whileHover={{ scale: 1.2, rotate: 15 }} transition={{ type: 'spring', stiffness: 400 }}>
                   <Star className="w-6 h-6 text-amber-500 fill-amber-400" />
                 </motion.div>
@@ -186,10 +183,11 @@ const HomePage = () => {
                 </div>
               </motion.div>
 
-              <div className="w-px h-10 bg-border/60" />
+              <div className="h-px w-full bg-border/60 sm:hidden" />
+              <div className="hidden h-10 w-px bg-border/60 sm:block" />
 
               {/* Games */}
-              <motion.div className="flex-1 flex items-center justify-center gap-2 px-5" whileHover={{ scale: 1.02 }}>
+              <motion.div className="flex w-full items-center justify-center gap-2 px-5 py-4 sm:flex-1 sm:py-0" whileHover={{ scale: 1.02 }}>
                 <motion.div whileHover={{ scale: 1.2, rotate: -10 }} transition={{ type: 'spring', stiffness: 400 }}>
                   <Gamepad2 className="w-6 h-6 text-primary" />
                 </motion.div>
@@ -199,10 +197,11 @@ const HomePage = () => {
                 </div>
               </motion.div>
 
-              <div className="w-px h-10 bg-border/60" />
+              <div className="h-px w-full bg-border/60 sm:hidden" />
+              <div className="hidden h-10 w-px bg-border/60 sm:block" />
 
               {/* Streak */}
-              <motion.div className="flex-1 flex items-center justify-center gap-2 px-5" whileHover={{ scale: 1.02 }}>
+              <motion.div className="flex w-full items-center justify-center gap-2 px-5 py-4 sm:flex-1 sm:py-0" whileHover={{ scale: 1.02 }}>
                 <motion.div whileHover={{ scale: 1.2 }} transition={{ type: 'spring', stiffness: 400 }}>
                   <Flame className="w-6 h-6 text-orange-500" />
                 </motion.div>
@@ -214,10 +213,10 @@ const HomePage = () => {
             </motion.div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-4 mt-8 justify-center lg:justify-start flex-wrap">
+            <div className="flex items-center gap-3 sm:gap-4 mt-8 justify-center lg:justify-start flex-wrap">
               <motion.button
                 onClick={() => navigate('/chat')}
-                className="relative overflow-hidden px-7 py-3.5 rounded-3xl font-bold text-white shadow-lg"
+                className="relative w-full sm:w-auto overflow-hidden px-6 sm:px-7 py-3 rounded-3xl font-bold text-white shadow-lg"
                 style={{
                   background: 'linear-gradient(135deg, hsl(260 85% 60%), hsl(270 80% 70%))',
                   boxShadow: '0 6px 25px rgba(124,58,237,0.35)',
@@ -237,7 +236,7 @@ const HomePage = () => {
 
               <motion.button
                 onClick={() => navigate('/games')}
-                className="px-7 py-3.5 rounded-3xl font-bold text-primary"
+                className="w-full sm:w-auto px-6 sm:px-7 py-3 rounded-3xl font-bold text-primary"
                 style={{
                   background: 'rgba(255,255,255,0.8)',
                   backdropFilter: 'blur(10px)',
@@ -256,14 +255,13 @@ const HomePage = () => {
 
           {/* Right Side – 55% — 3D Character Card */}
           <motion.div
-            className="w-full lg:w-[55%] flex justify-center"
+            className="w-full flex justify-center"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, delay: 0.2 }}
           >
             <div
-              className="relative w-full max-w-[580px]"
-              style={{ height: 480 }}
+              className="relative w-full max-w-[580px] h-[340px] sm:h-[420px] lg:h-[480px]"
             >
               {/* Card background */}
               <div
@@ -358,7 +356,7 @@ const HomePage = () => {
 
               {/* "Tap me" text */}
               <motion.div
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full"
+                className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 sm:px-5 py-2 rounded-full"
                 style={{
                   background: 'rgba(255,255,255,0.85)',
                   backdropFilter: 'blur(10px)',
@@ -367,7 +365,7 @@ const HomePage = () => {
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <span className="text-sm font-bold text-primary">✨ Tap me to play!</span>
+                <span className="text-xs sm:text-sm font-bold text-primary">✨ Tap me to play!</span>
               </motion.div>
             </div>
           </motion.div>
@@ -375,7 +373,7 @@ const HomePage = () => {
 
         {/* Feature Cards */}
         <motion.div
-          className="grid grid-cols-2 lg:grid-cols-4 gap-5"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
           variants={container}
           initial="hidden"
           animate="show"
@@ -385,7 +383,7 @@ const HomePage = () => {
               key={s.path}
               variants={item}
               onClick={() => navigate(s.path)}
-              className="group cursor-pointer p-6 text-center rounded-3xl"
+              className="group cursor-pointer p-5 sm:p-6 text-center rounded-3xl"
               style={{
                 background: 'rgba(255,255,255,0.8)',
                 backdropFilter: 'blur(20px)',

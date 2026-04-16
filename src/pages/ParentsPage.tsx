@@ -19,10 +19,10 @@ const ParentsPage = () => {
       <FloatingBubbles />
       <NavBar />
 
-      <div className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
-        <motion.div className="text-center mb-8" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <h1 className="font-display text-4xl font-bold text-gradient-primary flex items-center justify-center gap-3">
-            <Shield className="w-10 h-10 text-primary" /> Parent Dashboard
+      <div className="page-shell max-w-5xl">
+        <motion.div className="page-header" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
+            <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Parent Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">Monitor your child's learning journey</p>
         </motion.div>
@@ -33,7 +33,7 @@ const ParentsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-lavender flex items-center justify-center text-2xl font-display font-bold text-primary-foreground">
               {profile?.name?.[0]?.toUpperCase() || '?'}
             </div>
@@ -41,7 +41,7 @@ const ParentsPage = () => {
               <h2 className="font-display text-2xl font-bold text-foreground">{profile?.name}</h2>
               <p className="text-muted-foreground">Age: {profile?.age} • Favorite Color: {profile?.favoriteColor}</p>
             </div>
-            <div className="ml-auto">
+            <div className="sm:ml-auto">
               <span className={`px-3 py-1 rounded-full text-sm font-bold ${
                 profile?.isPremium
                   ? 'bg-gradient-to-r from-premium to-sunshine text-primary-foreground'
@@ -55,7 +55,7 @@ const ParentsPage = () => {
 
         {/* Stats Grid */}
         <motion.div
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
@@ -89,14 +89,14 @@ const ParentsPage = () => {
           {(profile?.completedGames.length || 0) + (profile?.completedStories.length || 0) > 0 ? (
             <div className="space-y-3">
               {profile?.completedGames.map((g) => (
-                <div key={g} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                <div key={g} className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-xl bg-muted/50">
                   <Gamepad2 className="w-5 h-5 text-sky" />
                   <span className="font-body text-sm text-foreground">Completed game: <b>{g}</b></span>
                   <span className="ml-auto text-xs text-muted-foreground">✅</span>
                 </div>
               ))}
               {profile?.completedStories.map((s) => (
-                <div key={s} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                <div key={s} className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-xl bg-muted/50">
                   <BookOpen className="w-5 h-5 text-mint" />
                   <span className="font-body text-sm text-foreground">Read story: <b>{s}</b></span>
                   <span className="ml-auto text-xs text-muted-foreground">✅</span>

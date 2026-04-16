@@ -55,7 +55,7 @@ const MathGame = ({ onComplete, type }: { onComplete: (stars: number) => void; t
 
   return (
     <motion.div
-      className="glass-card-strong p-8 max-w-sm mx-auto text-center"
+      className="glass-card-strong p-5 sm:p-8 max-w-sm mx-auto text-center"
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
     >
@@ -84,11 +84,11 @@ const MathGame = ({ onComplete, type }: { onComplete: (stars: number) => void; t
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -30, opacity: 0 }}
         >
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <span className="glass-card px-5 py-3 text-3xl font-display font-bold">{displayA}</span>
-            <span className="text-3xl font-bold text-primary">{displayOp}</span>
-            <span className="glass-card px-5 py-3 text-3xl font-display font-bold">{displayB}</span>
-            <span className="text-3xl font-bold text-primary">=</span>
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6">
+            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">{displayA}</span>
+            <span className="text-2xl sm:text-3xl font-bold text-primary">{displayOp}</span>
+            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">{displayB}</span>
+            <span className="text-2xl sm:text-3xl font-bold text-primary">=</span>
           </div>
 
           <input
@@ -97,7 +97,7 @@ const MathGame = ({ onComplete, type }: { onComplete: (stars: number) => void; t
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && answer && checkAnswer()}
             placeholder="?"
-            className="w-24 px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-2xl font-bold focus:outline-none focus:border-primary transition-colors mx-auto block"
+            className="w-20 sm:w-24 px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-xl sm:text-2xl font-bold focus:outline-none focus:border-primary transition-colors mx-auto block"
             autoFocus
           />
 
@@ -153,14 +153,14 @@ const GamesPage = () => {
       <NavBar />
       <StarBurst show={showStarBurst} count={earnedStars} />
 
-      <div className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
+      <div className="page-shell max-w-5xl">
         <motion.div
-          className="text-center mb-8"
+          className="page-header"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          <h1 className="font-display text-4xl font-bold text-gradient-primary flex items-center justify-center gap-3">
-            <Gamepad2 className="w-10 h-10 text-primary" /> Games Zone
+          <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
+            <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Games Zone
           </h1>
           <p className="text-muted-foreground mt-1">Play games and earn stars! ⭐</p>
         </motion.div>
@@ -181,7 +181,7 @@ const GamesPage = () => {
               />
             )}
             {!['math-add', 'math-sub'].includes(activeGame) && (
-              <div className="glass-card-strong p-12 text-center max-w-sm mx-auto">
+              <div className="glass-card-strong p-8 sm:p-12 text-center max-w-sm mx-auto">
                 <p className="font-display text-xl font-bold text-muted-foreground">🚧 Coming Soon!</p>
                 <p className="text-muted-foreground text-sm mt-2">This game is being built!</p>
               </div>
@@ -189,7 +189,7 @@ const GamesPage = () => {
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.1 } } }}
@@ -205,7 +205,7 @@ const GamesPage = () => {
                     show: { y: 0, opacity: 1 },
                   }}
                   onClick={() => !locked && setActiveGame(game.id)}
-                  className={`glass-card-strong p-6 text-center relative group ${locked ? 'opacity-70' : ''}`}
+                  className={`glass-card-strong p-5 sm:p-6 text-center relative group ${locked ? 'opacity-70' : ''}`}
                   whileHover={locked ? {} : { scale: 1.05, y: -5 }}
                   whileTap={locked ? {} : { scale: 0.95 }}
                 >

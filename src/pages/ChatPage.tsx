@@ -73,10 +73,10 @@ const ChatPage = () => {
       <FloatingBubbles />
       <NavBar />
 
-      <div className="pt-24 pb-4 px-4 max-w-2xl mx-auto relative z-10 flex-1 flex flex-col w-full">
-        <motion.div className="text-center mb-4" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <h1 className="font-display text-3xl font-bold text-gradient-primary flex items-center justify-center gap-2">
-            <MessageCircle className="w-8 h-8 text-primary" /> Chat with Buddy
+      <div className="page-shell-compact flex-1 flex flex-col w-full">
+        <motion.div className="page-header mb-4" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-gradient-primary flex items-center justify-center gap-2">
+            <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-primary" /> Chat with Buddy
           </h1>
         </motion.div>
 
@@ -93,7 +93,7 @@ const ChatPage = () => {
               }`}>
                 {msg.role === 'bot' ? <Bot className="w-4 h-4 text-primary-foreground" /> : <User className="w-4 h-4 text-primary-foreground" />}
               </div>
-              <div className={`glass-card px-4 py-2 max-w-[75%] ${
+              <div className={`glass-card px-4 py-2 max-w-[85%] sm:max-w-[75%] ${
                 msg.role === 'user' ? 'bg-primary/10' : ''
               }`}>
                 <p className="text-sm font-body">{msg.text}</p>
