@@ -83,18 +83,19 @@ const LoginPage = () => {
     "w-full px-4 py-3 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 text-center text-lg font-bold focus:outline-none focus:border-amber-200 focus:bg-white/25 transition-all shadow-inner";
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center md:justify-end p-3 sm:p-6 md:pr-12 lg:pr-20 relative overflow-hidden">
       {/* Magical forest background */}
       <ForestScene />
 
       {/* Ambient sound toggle */}
       <AmbientSoundToggle />
 
-      {/* Card glow halo */}
-      <div className="absolute z-[5] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.35)_0%,rgba(180,140,220,0.2)_45%,transparent_75%)] blur-2xl pointer-events-none" />
+      {/* Card glow halo - positioned behind card */}
+      <div className="hidden md:block absolute z-[5] right-12 lg:right-20 w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.4)_0%,rgba(180,140,220,0.2)_45%,transparent_75%)] blur-2xl pointer-events-none" />
+      <div className="md:hidden absolute z-[5] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.4)_0%,rgba(180,140,220,0.2)_45%,transparent_75%)] blur-2xl pointer-events-none" />
 
       <motion.div
-        className="relative z-10 w-full max-w-[460px] p-7 sm:p-9 rounded-[36px] border border-white/30 backdrop-blur-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-[360px] sm:max-w-[400px] p-5 sm:p-7 rounded-[28px] sm:rounded-[36px] border border-white/30 backdrop-blur-2xl overflow-hidden"
         style={{
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,235,200,0.12) 100%)",
