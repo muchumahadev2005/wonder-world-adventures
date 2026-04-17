@@ -31,21 +31,23 @@ const ForestScene = () => {
       {/* Soft warm overlay to blend with card */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
 
-      {/* Running kid */}
-      <motion.div
-        className="absolute bottom-[6%] pointer-events-none"
-        initial={{ x: "-15vw" }}
-        animate={{ x: ["-15vw", "115vw"] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-      >
-        <motion.img
-          src={kidRunning}
-          alt=""
-          className="w-28 sm:w-36 drop-shadow-2xl"
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 0.4, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </motion.div>
+      {/* Boy standing on the left, gentle bobbing */}
+      <motion.img
+        src={kidBoy}
+        alt=""
+        className="absolute bottom-[6%] left-[6%] w-24 sm:w-32 drop-shadow-2xl pointer-events-none"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Girl standing on the right, gentle bobbing */}
+      <motion.img
+        src={kidGirl}
+        alt=""
+        className="absolute bottom-[6%] right-[6%] w-24 sm:w-32 drop-shadow-2xl pointer-events-none"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+      />
 
       {/* Floating clouds (subtle, on top of painted sky) */}
       {[
