@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import forestBg from "@/assets/forest-bg.jpg";
-import kidRunning from "@/assets/kid-running.png";
+import kidBoy from "@/assets/kid-running.png";
+import kidGirl from "@/assets/kid-girl.png";
 
 const ForestScene = () => {
   const fireflies = Array.from({ length: 22 }, (_, i) => ({
