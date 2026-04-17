@@ -2,8 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useChild } from "@/context/ChildContext";
-import Scene3D from "@/components/Scene3D";
-import { Sparkles, ArrowRight, Palette } from "lucide-react";
+import ForestScene from "@/components/ForestScene";
+import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import { Sparkles, ArrowRight, Moon, Star } from "lucide-react";
 
 const colorOptions = [
   { name: "Red", value: "#ef4444", bg: "bg-red-400" },
@@ -78,26 +79,81 @@ const LoginPage = () => {
     }
   };
 
+  const inputClass =
+    "w-full px-4 py-3 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 text-center text-lg font-bold focus:outline-none focus:border-amber-200 focus:bg-white/25 transition-all shadow-inner";
+
   return (
-    <div className="min-h-screen bubble-gradient flex items-center justify-center p-4 relative overflow-hidden">
-      {/* 3D Background */}
-      <div className="absolute inset-0 opacity-30">
-        <Scene3D />
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Magical forest background */}
+      <ForestScene />
+
+      {/* Ambient sound toggle */}
+      <AmbientSoundToggle />
+
+      {/* Card glow halo */}
+      <div className="absolute z-[5] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.35)_0%,rgba(180,140,220,0.2)_45%,transparent_75%)] blur-2xl pointer-events-none" />
 
       <motion.div
-        className="glass-card-strong p-5 sm:p-8 w-full max-w-md relative z-10"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 200 }}
+        className="relative z-10 w-full max-w-[460px] p-7 sm:p-9 rounded-[36px] border border-white/30 backdrop-blur-2xl overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,235,200,0.12) 100%)",
+          boxShadow:
+            "0 20px 60px -10px rgba(255,180,80,0.35), 0 10px 40px -10px rgba(140,100,200,0.4), inset 0 1px 0 rgba(255,255,255,0.5)",
+        }}
+        initial={{ scale: 0.85, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 180, damping: 18 }}
       >
+        {/* Subtle inner star pattern */}
+        <div className="absolute inset-0 pointer-events-none opacity-30">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <Star
+              key={i}
+              className="absolute text-white/60"
+              style={{
+                width: 6 + (i % 3) * 3,
+                height: 6 + (i % 3) * 3,
+                left: `${(i * 41) % 95}%`,
+                top: `${(i * 27) % 95}%`,
+              }}
+              fill="currentColor"
+            />
+          ))}
+        </div>
+
+        {/* Top icon */}
+        <div className="relative flex justify-center mb-3">
+          <motion.div
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-200 to-amber-400 shadow-[0_0_25px_rgba(255,210,120,0.8)]"
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Moon className="w-7 h-7 text-amber-900" fill="currentColor" />
+          </motion.div>
+        </div>
+
+        <div className="relative text-center mb-5">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+            Welcome Back
+          </h1>
+          <p className="text-white/80 text-sm mt-1 italic">
+            Enter your magical world
+          </p>
+        </div>
+
         {/* Progress dots */}
-        <div className="flex justify-center gap-2 mb-6">
+        <div className="relative flex justify-center gap-2 mb-6">
           {[0, 1, 2, 3].map((i) => (
             <motion.div
               key={i}
-              className={`w-3 h-3 rounded-full ${i <= step ? "bg-primary" : "bg-muted"}`}
-              animate={{ scale: i === step ? 1.3 : 1 }}
+              className={`h-2 rounded-full ${
+                i <= step
+                  ? "bg-gradient-to-r from-amber-300 to-amber-500 shadow-[0_0_8px_rgba(255,200,100,0.8)]"
+                  : "bg-white/30"
+              }`}
+              animate={{ width: i === step ? 24 : 8 }}
+              transition={{ type: "spring", stiffness: 300 }}
             />
           ))}
         </div>
@@ -105,16 +161,17 @@ const LoginPage = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ x: 50, opacity: 0 }}
+            initial={{ x: 40, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -50, opacity: 0 }}
+            exit={{ x: -40, opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="relative"
           >
-            <div className="text-center mb-6">
-              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground">
+            <div className="text-center mb-5">
+              <h2 className="font-display text-lg sm:text-xl font-bold text-white drop-shadow-md">
                 {steps[step].title}
-              </h1>
-              <p className="text-muted-foreground mt-1">
+              </h2>
+              <p className="text-white/75 text-sm mt-1">
                 {steps[step].subtitle}
               </p>
             </div>
@@ -125,7 +182,7 @@ const LoginPage = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your awesome name..."
-                className="w-full px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-lg font-bold focus:outline-none focus:border-primary transition-colors"
+                className={inputClass}
                 onKeyDown={(e) => e.key === "Enter" && handleNext()}
                 autoFocus
               />
@@ -139,7 +196,7 @@ const LoginPage = () => {
                 placeholder="Your age..."
                 min={3}
                 max={15}
-                className="w-full px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-lg font-bold focus:outline-none focus:border-primary transition-colors"
+                className={inputClass}
                 onKeyDown={(e) => e.key === "Enter" && handleNext()}
                 autoFocus
               />
@@ -147,29 +204,23 @@ const LoginPage = () => {
 
             {step === 2 && (
               <div className="text-center">
-                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-                  <span className="glass-card px-3 sm:px-4 py-2 text-xl sm:text-2xl font-display font-bold">
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 text-white">
+                  <span className="px-3 sm:px-4 py-2 text-xl sm:text-2xl font-display font-bold rounded-2xl bg-white/20 border border-white/30 backdrop-blur-md">
                     {mathA}
                   </span>
-                  <span className="text-xl sm:text-2xl font-bold text-primary">
-                    +
-                  </span>
-                  <span className="glass-card px-3 sm:px-4 py-2 text-xl sm:text-2xl font-display font-bold">
+                  <span className="text-xl sm:text-2xl font-bold text-amber-200">+</span>
+                  <span className="px-3 sm:px-4 py-2 text-xl sm:text-2xl font-display font-bold rounded-2xl bg-white/20 border border-white/30 backdrop-blur-md">
                     {mathB}
                   </span>
-                  <span className="text-xl sm:text-2xl font-bold text-primary">
-                    =
-                  </span>
-                  <span className="text-xl sm:text-2xl font-bold text-primary">
-                    ?
-                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-200">=</span>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-200">?</span>
                 </div>
                 <input
                   type="number"
                   value={mathAnswer}
                   onChange={(e) => setMathAnswer(e.target.value)}
                   placeholder="?"
-                  className="w-20 sm:w-24 px-4 py-3 rounded-2xl border-2 border-primary/20 bg-card text-foreground text-center text-xl sm:text-2xl font-bold focus:outline-none focus:border-primary transition-colors mx-auto"
+                  className={`${inputClass} w-24 mx-auto text-2xl`}
                   onKeyDown={(e) => e.key === "Enter" && handleNext()}
                   autoFocus
                 />
@@ -184,8 +235,8 @@ const LoginPage = () => {
                     onClick={() => setColor(c.name)}
                     className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${c.bg} border-4 transition-all ${
                       color === c.name
-                        ? "border-foreground scale-110 shadow-lg"
-                        : "border-transparent"
+                        ? "border-white scale-110 shadow-[0_0_20px_rgba(255,255,255,0.8)]"
+                        : "border-white/30"
                     }`}
                     whileHover={{ scale: 1.15 }}
                     whileTap={{ scale: 0.9 }}
@@ -198,7 +249,7 @@ const LoginPage = () => {
 
         {error && (
           <motion.p
-            className="text-destructive text-center mt-3 font-bold text-sm"
+            className="relative text-amber-200 text-center mt-3 font-bold text-sm drop-shadow"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
           >
@@ -206,22 +257,51 @@ const LoginPage = () => {
           </motion.p>
         )}
 
-        <motion.button
-          onClick={handleNext}
-          className="glossy-btn w-full mt-6 px-6 py-3 text-primary-foreground font-display text-base sm:text-lg flex items-center justify-center gap-2"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          {step === 3 ? (
-            <>
-              <Sparkles className="w-5 h-5" /> Let's Go!
-            </>
-          ) : (
-            <>
-              Next <ArrowRight className="w-5 h-5" />
-            </>
-          )}
-        </motion.button>
+        <div className="relative mt-6">
+          {/* Sparkles around button */}
+          <motion.div
+            className="absolute -top-1 -left-1 text-amber-200"
+            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.4, 1, 0.4], rotate: [0, 180, 360] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Sparkles className="w-4 h-4" />
+          </motion.div>
+          <motion.div
+            className="absolute -top-2 right-2 text-amber-100"
+            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2.5, repeat: Infinity, delay: 0.6 }}
+          >
+            <Sparkles className="w-3 h-3" />
+          </motion.div>
+
+          <motion.button
+            onClick={handleNext}
+            className="w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50 relative overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+              boxShadow:
+                "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
+            }}
+            whileHover={{
+              scale: 1.03,
+              y: -2,
+              boxShadow:
+                "0 15px 40px -5px rgba(255,200,100,0.8), inset 0 1px 0 rgba(255,255,255,0.8)",
+            }}
+            whileTap={{ scale: 0.97 }}
+          >
+            {step === 3 ? (
+              <>
+                <Sparkles className="w-5 h-5" /> Let's Go!
+              </>
+            ) : (
+              <>
+                Next <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </motion.button>
+        </div>
       </motion.div>
     </div>
   );
