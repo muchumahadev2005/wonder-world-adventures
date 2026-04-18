@@ -337,6 +337,25 @@ const LoginPage = () => {
           </motion.button>
         </div>
       </motion.div>
+
+        {/* Right child - peeking */}
+        <motion.img
+          src={childRight}
+          alt="Friendly girl character smiling"
+          width={512}
+          height={832}
+          loading="lazy"
+          className="hidden md:block w-full max-w-[260px] lg:max-w-[300px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.35)] -ml-8 lg:-ml-12 relative z-20 pointer-events-none select-none"
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0, y: [0, -8, 0], rotate: [2, -2, 2] }}
+          transition={{
+            opacity: { duration: 0.8, delay: 0.2 },
+            x: { duration: 0.8, delay: 0.2 },
+            y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+          }}
+        />
+      </div>
     </div>
   );
 };
