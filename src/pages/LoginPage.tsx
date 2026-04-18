@@ -92,53 +92,56 @@ const LoginPage = () => {
       {/* Ambient sound toggle */}
       <AmbientSoundToggle />
 
-      {/* Centered hero composition: left child + form + right child */}
-      <div className="relative z-10 w-full max-w-[1200px] grid grid-cols-1 md:grid-cols-[22%_56%_22%] items-center justify-items-center gap-4 md:gap-2 px-2 sm:px-4">
-        {/* Left child - peeking */}
-        <motion.img
-          src={childLeft}
-          alt="Friendly boy character waving"
-          width={512}
-          height={832}
-          loading="lazy"
-          className="hidden md:block w-full max-w-[260px] lg:max-w-[300px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.35)] -mr-8 lg:-mr-12 relative z-20 pointer-events-none select-none"
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0, y: [0, -10, 0], rotate: [-2, 2, -2] }}
-          transition={{
-            opacity: { duration: 0.8 },
-            x: { duration: 0.8 },
-            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-          }}
-        />
+      {/* Soft glow halo behind the whole card */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] max-w-[1100px] h-[520px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,210,140,0.45)_0%,rgba(180,140,220,0.22)_45%,transparent_75%)] blur-3xl pointer-events-none z-0" />
 
-        {/* Mobile-only single child above the form */}
-        <motion.img
-          src={childLeft}
-          alt="Friendly boy character waving"
-          width={512}
-          height={832}
-          loading="lazy"
-          className="md:hidden w-40 h-auto drop-shadow-[0_10px_20px_rgba(0,0,0,0.3)] -mb-6 relative z-20 pointer-events-none select-none"
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* Glow halo behind form */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.45)_0%,rgba(180,140,220,0.22)_45%,transparent_75%)] blur-2xl pointer-events-none z-0" />
-
+      {/* ONE centered glassmorphism card containing 3 columns */}
       <motion.div
-        className="relative z-10 w-[90vw] max-w-[360px] sm:max-w-[420px] md:max-w-none md:w-full p-5 sm:p-7 rounded-[28px] sm:rounded-[36px] border border-white/30 backdrop-blur-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-[1200px] mx-auto rounded-[28px] sm:rounded-[36px] border border-white/35 backdrop-blur-2xl px-4 sm:px-8 md:px-10 py-8 sm:py-10"
         style={{
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,235,200,0.12) 100%)",
           boxShadow:
-            "0 20px 60px -10px rgba(255,180,80,0.35), 0 10px 40px -10px rgba(140,100,200,0.4), inset 0 1px 0 rgba(255,255,255,0.5)",
+            "0 25px 70px -15px rgba(255,180,80,0.4), 0 10px 50px -10px rgba(140,100,200,0.4), inset 0 1px 0 rgba(255,255,255,0.5)",
+          overflow: "visible",
         }}
-        initial={{ scale: 0.85, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 180, damping: 18 }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
       >
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] items-center gap-4 md:gap-2">
+          {/* Mobile-only child above form */}
+          <motion.img
+            src={childLeft}
+            alt="Friendly boy character waving"
+            width={512}
+            height={832}
+            loading="lazy"
+            className="md:hidden w-36 h-auto mx-auto -mt-16 mb-2 drop-shadow-[0_10px_20px_rgba(0,0,0,0.3)] relative z-20 pointer-events-none select-none"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          {/* Left child - peeking outside card edge */}
+          <motion.img
+            src={childLeft}
+            alt="Friendly boy character waving"
+            width={512}
+            height={832}
+            loading="lazy"
+            className="hidden md:block w-full max-w-[240px] lg:max-w-[280px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.35)] -ml-6 lg:-ml-12 relative z-20 pointer-events-none select-none"
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0, y: [0, -10, 0], rotate: [-2, 2, -2] }}
+            transition={{
+              opacity: { duration: 0.8 },
+              x: { duration: 0.8 },
+              y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+              rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+            }}
+          />
+
+          {/* Center: form section */}
+          <div className="relative w-full max-w-[440px] mx-auto">
         {/* Subtle inner star pattern */}
         <div className="absolute inset-0 pointer-events-none opacity-30">
           {Array.from({ length: 14 }).map((_, i) => (
@@ -336,26 +339,28 @@ const LoginPage = () => {
             )}
           </motion.button>
         </div>
-      </motion.div>
+          </div>
+          {/* /Center form */}
 
-        {/* Right child - peeking */}
-        <motion.img
-          src={childRight}
-          alt="Friendly girl character smiling"
-          width={512}
-          height={832}
-          loading="lazy"
-          className="hidden md:block w-full max-w-[260px] lg:max-w-[300px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.35)] -ml-8 lg:-ml-12 relative z-20 pointer-events-none select-none"
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0, y: [0, -8, 0], rotate: [2, -2, 2] }}
-          transition={{
-            opacity: { duration: 0.8, delay: 0.2 },
-            x: { duration: 0.8, delay: 0.2 },
-            y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
-          }}
-        />
-      </div>
+          {/* Right child - peeking outside card edge */}
+          <motion.img
+            src={childRight}
+            alt="Friendly girl character smiling"
+            width={512}
+            height={832}
+            loading="lazy"
+            className="hidden md:block w-full max-w-[240px] lg:max-w-[280px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.35)] -mr-6 lg:-mr-12 ml-auto relative z-20 pointer-events-none select-none"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0, y: [0, -8, 0], rotate: [2, -2, 2] }}
+            transition={{
+              opacity: { duration: 0.8, delay: 0.2 },
+              x: { duration: 0.8, delay: 0.2 },
+              y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
+              rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+            }}
+          />
+        </div>
+      </motion.div>
     </div>
   );
 };
