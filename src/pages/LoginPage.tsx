@@ -307,28 +307,8 @@ const LoginPage = () => {
             )}
           </motion.button>
         </div>
-          </div>
-          {/* /Center form */}
-        </motion.div>
-
-        {/* Right child - outside card */}
-        <motion.img
-          src={childRight}
-          alt="Friendly girl character smiling"
-          width={512}
-          height={832}
-          loading="lazy"
-          className="hidden md:block w-[220px] lg:w-[260px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.4)] -ml-8 lg:-ml-10 relative z-20 pointer-events-none select-none flex-shrink-0"
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0, y: [0, -8, 0], rotate: [2, -2, 2] }}
-          transition={{
-            opacity: { duration: 0.8, delay: 0.2 },
-            x: { duration: 0.8, delay: 0.2 },
-            y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
-          }}
-        />
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
