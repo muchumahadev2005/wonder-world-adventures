@@ -5,6 +5,8 @@ import { useChild } from "@/context/ChildContext";
 import ForestScene from "@/components/ForestScene";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import { Sparkles, ArrowRight, Moon, Star } from "lucide-react";
+import childLeft from "@/assets/child-left.png";
+import childRight from "@/assets/child-right.png";
 
 const colorOptions = [
   { name: "Red", value: "#ef4444", bg: "bg-red-400" },
@@ -83,19 +85,50 @@ const LoginPage = () => {
     "w-full px-4 py-3 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 text-center text-lg font-bold focus:outline-none focus:border-amber-200 focus:bg-white/25 transition-all shadow-inner";
 
   return (
-    <div className="min-h-screen flex items-center justify-center md:justify-end p-3 sm:p-6 md:pr-12 lg:pr-20 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 relative overflow-hidden">
       {/* Magical forest background */}
       <ForestScene />
 
       {/* Ambient sound toggle */}
       <AmbientSoundToggle />
 
-      {/* Card glow halo - positioned behind card */}
-      <div className="hidden md:block absolute z-[5] right-12 lg:right-20 w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.4)_0%,rgba(180,140,220,0.2)_45%,transparent_75%)] blur-2xl pointer-events-none" />
-      <div className="md:hidden absolute z-[5] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.4)_0%,rgba(180,140,220,0.2)_45%,transparent_75%)] blur-2xl pointer-events-none" />
+      {/* Centered hero composition: left child + form + right child */}
+      <div className="relative z-10 w-full max-w-[1200px] grid grid-cols-1 md:grid-cols-[22%_56%_22%] items-center justify-items-center gap-4 md:gap-2 px-2 sm:px-4">
+        {/* Left child - peeking */}
+        <motion.img
+          src={childLeft}
+          alt="Friendly boy character waving"
+          width={512}
+          height={832}
+          loading="lazy"
+          className="hidden md:block w-full max-w-[260px] lg:max-w-[300px] h-auto drop-shadow-[0_15px_25px_rgba(0,0,0,0.35)] -mr-8 lg:-mr-12 relative z-20 pointer-events-none select-none"
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0, y: [0, -10, 0], rotate: [-2, 2, -2] }}
+          transition={{
+            opacity: { duration: 0.8 },
+            x: { duration: 0.8 },
+            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+          }}
+        />
+
+        {/* Mobile-only single child above the form */}
+        <motion.img
+          src={childLeft}
+          alt="Friendly boy character waving"
+          width={512}
+          height={832}
+          loading="lazy"
+          className="md:hidden w-40 h-auto drop-shadow-[0_10px_20px_rgba(0,0,0,0.3)] -mb-6 relative z-20 pointer-events-none select-none"
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* Glow halo behind form */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] rounded-full bg-[radial-gradient(circle,rgba(255,210,140,0.45)_0%,rgba(180,140,220,0.22)_45%,transparent_75%)] blur-2xl pointer-events-none z-0" />
 
       <motion.div
-        className="relative z-10 w-full max-w-[360px] sm:max-w-[400px] p-5 sm:p-7 rounded-[28px] sm:rounded-[36px] border border-white/30 backdrop-blur-2xl overflow-hidden"
+        className="relative z-10 w-[90vw] max-w-[360px] sm:max-w-[420px] md:max-w-none md:w-full p-5 sm:p-7 rounded-[28px] sm:rounded-[36px] border border-white/30 backdrop-blur-2xl overflow-hidden"
         style={{
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,235,200,0.12) 100%)",
