@@ -5,8 +5,6 @@ import { useChild } from "@/context/ChildContext";
 import ForestScene from "@/components/ForestScene";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import { Sparkles, ArrowRight, Moon, Star } from "lucide-react";
-import childLeft from "@/assets/child-left.png";
-import childRight from "@/assets/child-right.png";
 
 const colorOptions = [
   { name: "Red", value: "#ef4444", bg: "bg-red-400" },
