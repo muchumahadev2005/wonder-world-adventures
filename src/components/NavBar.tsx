@@ -19,12 +19,54 @@ const navItems = [
   { icon: UsersRound, label: "Parents", path: "/parents" },
 ];
 
+// Magical glass navbar — warm cream tint, glowing active pill, sparkles
 const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, logout } = useChild();
 
   if (!profile) return null;
+
+  const glassStyle = {
+    background:
+      "linear-gradient(135deg, rgba(255,245,225,0.55) 0%, rgba(255,225,210,0.35) 50%, rgba(220,200,255,0.45) 100%)",
+    backdropFilter: "blur(22px)",
+    WebkitBackdropFilter: "blur(22px)",
+    borderRadius: 28,
+    boxShadow:
+      "0 12px 40px rgba(120,70,30,0.18), 0 2px 10px rgba(160,100,200,0.18), inset 0 1px 0 rgba(255,255,255,0.55)",
+    border: "1px solid rgba(255,255,255,0.45)",
+  } as const;
+
+  const activeBg =
+    "linear-gradient(135deg, hsl(35 95% 60%) 0%, hsl(280 70% 65%) 100%)";
+
+  const renderActiveSparkles = (idPrefix: string) => (
+    <>
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={`${idPrefix}-${i}`}
+          className="pointer-events-none absolute"
+          style={{
+            top: i === 0 ? -4 : i === 1 ? "50%" : "100%",
+            left: i === 0 ? "20%" : i === 1 ? -4 : "70%",
+          }}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0.4, 1.1, 0.4],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 2 + i * 0.4,
+            repeat: Infinity,
+            delay: i * 0.5,
+          }}
+        >
+          <Sparkles className="h-3 w-3 text-amber-200" />
+        </motion.span>
+      ))}
+    </>
+  );
 
   return (
     <motion.nav
@@ -36,16 +78,9 @@ const NavBar = () => {
     >
       <div
         className="w-[96%] max-w-[1240px] px-3 py-3 md:w-[92%] md:px-4 lg:px-6"
-        style={{
-          background: "rgba(255,255,255,0.75)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderRadius: 28,
-          boxShadow:
-            "0 8px 32px rgba(124,58,237,0.08), 0 2px 8px rgba(0,0,0,0.04)",
-          border: "1px solid rgba(255,255,255,0.5)",
-        }}
+        style={glassStyle}
       >
+        {/* MOBILE */}
         <div className="md:hidden">
           <div className="flex items-center justify-between gap-2">
             <motion.div
@@ -54,10 +89,17 @@ const NavBar = () => {
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(35 95% 60%), hsl(280 70% 65%))",
+                  boxShadow: "0 4px 14px rgba(255,170,80,0.45)",
+                }}
+              >
                 <span className="text-sm font-bold text-white">K</span>
               </div>
-              <span className="font-display text-xl font-bold text-gradient-primary">
+              <span className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(120,60,20,0.4)]">
                 KidsPal
               </span>
             </motion.div>
@@ -67,19 +109,17 @@ const NavBar = () => {
                 className="flex h-10 items-center gap-1.5 rounded-full px-3"
                 style={{
                   background:
-                    "linear-gradient(135deg, hsl(45 100% 92%), hsl(45 100% 85%))",
-                  border: "1px solid hsl(45 100% 75%)",
+                    "linear-gradient(135deg, hsl(45 100% 88%), hsl(35 95% 80%))",
+                  border: "1px solid hsl(45 100% 70%)",
+                  boxShadow: "0 4px 14px rgba(255,180,80,0.35)",
                 }}
                 whileHover={{ scale: 1.04 }}
               >
-                <Sparkles
-                  className="h-4 w-4 text-amber-600"
-                  strokeWidth={2.3}
-                />
+                <Sparkles className="h-4 w-4 text-amber-700" strokeWidth={2.3} />
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={profile.stars}
-                    className="text-base font-bold text-amber-700"
+                    className="text-base font-bold text-amber-800"
                     initial={{ y: -5, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: 5, opacity: 0 }}
@@ -97,14 +137,15 @@ const NavBar = () => {
                 }}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70"
                 style={{
-                  background: `hsl(${profile.favoriteColor === "blue" ? "200 90% 90%" : profile.favoriteColor === "pink" ? "330 85% 90%" : profile.favoriteColor === "green" ? "160 70% 90%" : "270 80% 90%"})`,
+                  background:
+                    "linear-gradient(135deg, rgba(255,240,220,0.9), rgba(220,200,255,0.85))",
                 }}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
                 title="Logout"
               >
                 <CircleUserRound
-                  className="h-5 w-5 text-foreground/75"
+                  className="h-5 w-5 text-amber-900/80"
                   strokeWidth={2.2}
                 />
               </motion.button>
@@ -122,35 +163,41 @@ const NavBar = () => {
                   style={
                     isActive
                       ? {
-                          background:
-                            "linear-gradient(135deg, hsl(260 85% 60%), hsl(270 80% 70%))",
                           color: "white",
-                          boxShadow: "0 4px 15px rgba(124,58,237,0.3)",
                         }
                       : {
-                          color: "hsl(220 10% 50%)",
-                          backgroundColor: "rgba(255,255,255,0.45)",
+                          color: "hsl(30 30% 25%)",
+                          backgroundColor: "rgba(255,255,255,0.35)",
                         }
                   }
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {isActive && (
-                    <motion.div
-                      layoutId="nav-active-pill-mobile"
-                      className="absolute inset-0 rounded-2xl"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, hsl(260 85% 60%), hsl(270 80% 70%))",
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 350,
-                        damping: 30,
-                      }}
-                    />
+                    <>
+                      <motion.div
+                        layoutId="nav-active-pill-mobile"
+                        className="absolute inset-0 rounded-2xl"
+                        style={{
+                          background: activeBg,
+                          boxShadow:
+                            "0 6px 20px rgba(255,150,60,0.5), 0 2px 8px rgba(160,80,200,0.4)",
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 350,
+                          damping: 30,
+                        }}
+                      />
+                      {renderActiveSparkles(`m-${item.path}`)}
+                    </>
                   )}
                   <span
-                    className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full ${isActive ? "bg-white/20 text-white" : "bg-primary/10 text-primary/80"}`}
+                    className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full ${
+                      isActive
+                        ? "bg-white/25 text-white"
+                        : "bg-amber-100/70 text-amber-800"
+                    }`}
                   >
                     <item.icon className="h-4 w-4" strokeWidth={2.3} />
                   </span>
@@ -163,6 +210,7 @@ const NavBar = () => {
           </div>
         </div>
 
+        {/* DESKTOP */}
         <div className="hidden h-[82px] items-center gap-2 md:grid md:grid-cols-[minmax(165px,auto),1fr,minmax(165px,auto)] md:gap-4">
           <motion.div
             className="flex items-center gap-2 cursor-pointer select-none pr-1"
@@ -170,10 +218,17 @@ const NavBar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(35 95% 60%), hsl(280 70% 65%))",
+                boxShadow: "0 6px 20px rgba(255,170,80,0.5)",
+              }}
+            >
               <span className="text-white font-bold text-base">K</span>
             </div>
-            <span className="font-display text-2xl font-bold text-gradient-primary">
+            <span className="font-display text-2xl font-bold text-white drop-shadow-[0_2px_8px_rgba(120,60,20,0.45)]">
               KidsPal
             </span>
           </motion.div>
@@ -188,46 +243,43 @@ const NavBar = () => {
                   className="group relative flex h-12 items-center gap-2.5 rounded-2xl px-3 py-2.5 transition-all duration-200 lg:px-4"
                   style={
                     isActive
-                      ? {
-                          background:
-                            "linear-gradient(135deg, hsl(260 85% 60%), hsl(270 80% 70%))",
-                          color: "white",
-                          boxShadow: "0 4px 15px rgba(124,58,237,0.3)",
-                        }
-                      : {
-                          color: "hsl(220 10% 50%)",
-                        }
+                      ? { color: "white" }
+                      : { color: "hsl(30 35% 22%)" }
                   }
                   whileHover={
                     !isActive
                       ? {
-                          scale: 1.05,
-                          backgroundColor: "rgba(124,58,237,0.08)",
+                          y: -3,
+                          backgroundColor: "rgba(255,240,220,0.55)",
                         }
-                      : { scale: 1.02 }
+                      : { y: -2 }
                   }
                   whileTap={{ scale: 0.95 }}
                 >
                   {isActive && (
-                    <motion.div
-                      layoutId="nav-active-pill-desktop"
-                      className="absolute inset-0 rounded-2xl"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, hsl(260 85% 60%), hsl(270 80% 70%))",
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 350,
-                        damping: 30,
-                      }}
-                    />
+                    <>
+                      <motion.div
+                        layoutId="nav-active-pill-desktop"
+                        className="absolute inset-0 rounded-2xl"
+                        style={{
+                          background: activeBg,
+                          boxShadow:
+                            "0 8px 25px rgba(255,150,60,0.5), 0 2px 10px rgba(160,80,200,0.45)",
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 350,
+                          damping: 30,
+                        }}
+                      />
+                      {renderActiveSparkles(`d-${item.path}`)}
+                    </>
                   )}
                   <span
                     className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
                       isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-primary/10 text-primary/80 group-hover:bg-primary/15 group-hover:text-primary"
+                        ? "bg-white/25 text-white"
+                        : "bg-amber-100/80 text-amber-800 group-hover:bg-amber-200 group-hover:text-amber-900"
                     }`}
                   >
                     <item.icon
@@ -248,16 +300,17 @@ const NavBar = () => {
               className="flex h-12 items-center gap-2 rounded-full px-3 sm:px-4"
               style={{
                 background:
-                  "linear-gradient(135deg, hsl(45 100% 92%), hsl(45 100% 85%))",
-                border: "1px solid hsl(45 100% 75%)",
+                  "linear-gradient(135deg, hsl(45 100% 88%), hsl(35 95% 78%))",
+                border: "1px solid hsl(45 100% 68%)",
+                boxShadow: "0 6px 20px rgba(255,180,80,0.4)",
               }}
-              whileHover={{ scale: 1.08 }}
+              whileHover={{ scale: 1.06, y: -2 }}
             >
-              <Sparkles className="h-5 w-5 text-amber-600" strokeWidth={2.3} />
+              <Sparkles className="h-5 w-5 text-amber-700" strokeWidth={2.3} />
               <AnimatePresence mode="wait">
                 <motion.span
                   key={profile.stars}
-                  className="text-xl font-bold text-amber-700"
+                  className="text-xl font-bold text-amber-800"
                   initial={{ y: -6, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 6, opacity: 0 }}
@@ -276,14 +329,16 @@ const NavBar = () => {
               }}
               className="flex h-12 w-12 items-center justify-center rounded-full border border-white/70"
               style={{
-                background: `hsl(${profile.favoriteColor === "blue" ? "200 90% 90%" : profile.favoriteColor === "pink" ? "330 85% 90%" : profile.favoriteColor === "green" ? "160 70% 90%" : "270 80% 90%"})`,
+                background:
+                  "linear-gradient(135deg, rgba(255,240,220,0.9), rgba(220,200,255,0.85))",
+                boxShadow: "0 4px 14px rgba(160,100,200,0.3)",
               }}
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.9 }}
               title="Logout"
             >
               <CircleUserRound
-                className="h-6 w-6 text-foreground/75"
+                className="h-6 w-6 text-amber-900/80"
                 strokeWidth={2.2}
               />
             </motion.button>
