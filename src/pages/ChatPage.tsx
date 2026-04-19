@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
 import NavBar from "@/components/NavBar";
-import FloatingBubbles from "@/components/FloatingBubbles";
+import SceneBackground from "@/components/SceneBackground";
+import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import chatBg from "@/assets/chat-bg.jpg";
 import { MessageCircle, Send, Bot, User } from "lucide-react";
 
 interface Message {
@@ -91,9 +93,10 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
-      <FloatingBubbles />
+    <div className="min-h-screen relative overflow-hidden flex flex-col">
+      <SceneBackground image={chatBg} alt="Cozy magical treehouse interior at night" variant="treehouse" />
       <NavBar />
+      <AmbientSoundToggle />
 
       <div className="page-shell-compact flex-1 flex flex-col w-full">
         <motion.div

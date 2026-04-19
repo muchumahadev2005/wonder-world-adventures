@@ -2,9 +2,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
 import NavBar from "@/components/NavBar";
-import FloatingBubbles from "@/components/FloatingBubbles";
+import SceneBackground from "@/components/SceneBackground";
+import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import PremiumBadge from "@/components/PremiumBadge";
 import StarBurst from "@/components/StarBurst";
+import storiesBg from "@/assets/stories-bg.jpg";
 import { BookOpen, Star, Lock, ChevronRight } from "lucide-react";
 
 const stories = [
@@ -93,9 +95,10 @@ const StoriesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <FloatingBubbles />
+    <div className="min-h-screen relative overflow-hidden">
+      <SceneBackground image={storiesBg} alt="Enchanted moonlit library tree with lanterns" variant="library" />
       <NavBar />
+      <AmbientSoundToggle />
       <StarBurst show={showStarBurst} count={earnedStars} />
 
       <div className="page-shell max-w-5xl">

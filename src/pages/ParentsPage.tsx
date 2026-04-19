@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
 import NavBar from "@/components/NavBar";
-import FloatingBubbles from "@/components/FloatingBubbles";
+import SceneBackground from "@/components/SceneBackground";
+import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import parentsBg from "@/assets/parents-bg.jpg";
 import {
   Crown,
   Star,
@@ -43,9 +45,10 @@ const ParentsPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <FloatingBubbles />
+    <div className="min-h-screen relative overflow-hidden">
+      <SceneBackground image={parentsBg} alt="Cozy forest cottage interior with fireplace" variant="cottage" />
       <NavBar />
+      <AmbientSoundToggle />
 
       <div className="page-shell max-w-5xl">
         <motion.div
