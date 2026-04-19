@@ -1,48 +1,71 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useChild } from "@/context/ChildContext";
 import Scene3D from "@/components/Scene3D";
 import NavBar from "@/components/NavBar";
+import ForestScene from "@/components/ForestScene";
+import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import {
   Gamepad2,
   BookOpen,
   MessageCircle,
   Crown,
   Star,
-  Trophy,
   Flame,
   Sparkles,
-  Cloud,
+  TreePine,
+  Moon,
+  Home as HomeIcon,
 } from "lucide-react";
 
-const sections = [
+type Section = {
+  icon: typeof Gamepad2;
+  title: string;
+  desc: string;
+  path: string;
+  // Each card has its own mini scene gradient
+  bg: string;
+  glow: string;
+  accent: typeof TreePine;
+};
+
+const sections: Section[] = [
   {
     icon: Gamepad2,
     title: "Games",
-    desc: "Play & Learn!",
+    desc: "Magical Treehouse",
     path: "/games",
-    gradient: "from-sky to-lavender",
+    bg: "linear-gradient(160deg, #FFD68A 0%, #FF9E6E 60%, #C57BD4 100%)",
+    glow: "rgba(255,160,90,0.55)",
+    accent: TreePine,
   },
   {
     icon: BookOpen,
     title: "Stories",
-    desc: "Magical Tales!",
+    desc: "Glowing Library",
     path: "/stories",
-    gradient: "from-mint to-sky",
+    bg: "linear-gradient(160deg, #2E2270 0%, #5B3FA6 55%, #9D6FE0 100%)",
+    glow: "rgba(140,90,220,0.55)",
+    accent: Moon,
   },
   {
     icon: MessageCircle,
     title: "Chat Bot",
-    desc: "Talk to Buddy!",
+    desc: "Moonlit Buddy",
     path: "/chat",
-    gradient: "from-bubblegum to-coral",
+    bg: "linear-gradient(160deg, #3D2A66 0%, #7A4FB5 55%, #E89A4A 100%)",
+    glow: "rgba(232,154,74,0.55)",
+    accent: Sparkles,
   },
   {
     icon: Crown,
     title: "Parents",
-    desc: "Parent Zone",
+    desc: "Cozy Cottage",
     path: "/parents",
-    gradient: "from-sunshine to-coral",
+    bg: "linear-gradient(160deg, #FFE0A8 0%, #E8A87C 55%, #8E6FAD 100%)",
+    glow: "rgba(232,168,124,0.55)",
+    accent: HomeIcon,
   },
 ];
 
@@ -52,7 +75,7 @@ const container = {
 };
 
 const item = {
-  hidden: { y: 40, opacity: 0, scale: 0.8 },
+  hidden: { y: 40, opacity: 0, scale: 0.85 },
   show: {
     y: 0,
     opacity: 1,
@@ -61,435 +84,261 @@ const item = {
   },
 };
 
-// Tiny sparkle dots
-const SparkleParticles = () => (
-  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-    {[...Array(12)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-1.5 h-1.5 rounded-full"
-        style={{
-          background:
-            i % 3 === 0
-              ? "hsl(45 100% 60%)"
-              : i % 3 === 1
-                ? "hsl(260 85% 70%)"
-                : "hsl(330 85% 70%)",
-          left: `${10 + Math.random() * 80}%`,
-          top: `${10 + Math.random() * 80}%`,
-        }}
-        animate={{
-          opacity: [0, 1, 0],
-          scale: [0.5, 1.2, 0.5],
-          y: [0, -8, 0],
-        }}
-        transition={{
-          duration: 2 + Math.random() * 2,
-          repeat: Infinity,
-          delay: Math.random() * 3,
-          ease: "easeInOut",
-        }}
-      />
-    ))}
-  </div>
-);
-
 const HomePage = () => {
   const navigate = useNavigate();
   const { profile } = useChild();
+  const [tapBurst, setTapBurst] = useState(0);
+
+  const triggerTap = () => setTapBurst((n) => n + 1);
 
   return (
-    <div
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(180deg, #F7F8FF 0%, #EEF3FF 50%, #F5F0FF 100%)",
-      }}
-    >
-      {/* Background blobs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Large purple blob behind character (right) */}
-        <div
-          className="absolute"
-          style={{
-            width: 600,
-            height: 600,
-            right: -80,
-            top: 60,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, hsla(260 85% 75% / 0.2) 0%, transparent 70%)",
-            filter: "blur(60px)",
-          }}
-        />
-        {/* Soft blue blob behind left content */}
-        <div
-          className="absolute"
-          style={{
-            width: 500,
-            height: 500,
-            left: -100,
-            top: 100,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, hsla(200 90% 70% / 0.15) 0%, transparent 70%)",
-            filter: "blur(50px)",
-          }}
-        />
-        {/* Tiny animated stars */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "hsl(45 100% 60%)",
-              left: `${15 + i * 14}%`,
-              top: `${20 + (i % 3) * 20}%`,
-            }}
-            animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.3, 0.8] }}
-            transition={{
-              duration: 2.5 + i * 0.4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Magical sunset forest background (shared world) */}
+      <ForestScene />
+
+      {/* Soft warm wash so navbar/cards pop */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
       <NavBar />
+      <AmbientSoundToggle />
 
       <div className="page-shell md:pt-28 sm:pb-16">
-        {/* Hero Section – 2 columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-6 mb-16">
-          {/* Left Side – 45% */}
+        {/* Hero */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-8 mb-14">
+          {/* Left – greeting glass card */}
           <motion.div
-            className="w-full max-w-xl mx-auto lg:mx-0 text-center lg:text-left relative"
-            initial={{ x: -60, opacity: 0 }}
+            className="relative w-full max-w-xl mx-auto lg:mx-0"
+            initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
-            <SparkleParticles />
-
-            <h1
-              className="font-display leading-tight"
-              style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}
-            >
-              <span className="text-gradient-primary">
-                Hey {profile?.name}!
-              </span>{" "}
-              <motion.span
-                className="inline-block"
-                animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3 }}
-              >
-                👋
-              </motion.span>
-            </h1>
-            <p className="text-muted-foreground text-base sm:text-lg lg:text-xl mt-3 font-body max-w-md mx-auto lg:mx-0">
-              Ready for some fun learning today?
-            </p>
-
-            {/* Progress Card */}
-            <motion.div
-              className="mt-8 mx-auto lg:mx-0 flex w-full max-w-[560px] flex-col items-stretch gap-0 overflow-hidden rounded-[30px] sm:inline-flex sm:flex-row"
+            <div
+              className="relative rounded-[32px] p-6 sm:p-8 border border-white/40"
               style={{
-                background: "rgba(255,255,255,0.85)",
-                backdropFilter: "blur(20px)",
+                background:
+                  "linear-gradient(135deg, rgba(255,245,225,0.35) 0%, rgba(255,220,200,0.22) 100%)",
+                backdropFilter: "blur(22px)",
+                WebkitBackdropFilter: "blur(22px)",
                 boxShadow:
-                  "0 8px 30px rgba(124,58,237,0.08), 0 2px 8px rgba(0,0,0,0.03)",
-                border: "1px solid rgba(255,255,255,0.6)",
+                  "0 25px 70px -15px rgba(120,60,20,0.45), 0 10px 40px -10px rgba(160,90,200,0.35), inset 0 1px 0 rgba(255,255,255,0.55)",
               }}
-              whileHover={{
-                y: -3,
-                boxShadow:
-                  "0 12px 40px rgba(124,58,237,0.12), 0 4px 12px rgba(0,0,0,0.05)",
-              }}
-              transition={{ duration: 0.2 }}
             >
-              {/* Stars */}
-              <motion.div
-                className="flex w-full items-center justify-center gap-2 px-5 py-4 sm:flex-1 sm:py-0"
-                whileHover={{ scale: 1.02 }}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.2, rotate: 15 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+              {/* Inner glow */}
+              <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_30%_20%,rgba(255,220,150,0.35),transparent_60%)]" />
+
+              <div className="relative text-center lg:text-left">
+                <h1
+                  className="font-display leading-tight text-white drop-shadow-[0_3px_12px_rgba(80,30,10,0.55)]"
+                  style={{ fontSize: "clamp(2.2rem, 4.5vw, 3.8rem)" }}
                 >
-                  <Star className="w-6 h-6 text-amber-500 fill-amber-400" />
-                </motion.div>
-                <div className="text-left">
-                  <div className="font-bold text-lg text-foreground leading-tight">
-                    {profile?.stars || 0}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Stars
-                  </div>
-                </div>
-              </motion.div>
+                  Hey {profile?.name}!{" "}
+                  <motion.span
+                    className="inline-block"
+                    animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
+                    transition={{
+                      duration: 2.5,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                    }}
+                  >
+                    👋
+                  </motion.span>
+                </h1>
+                <p className="text-amber-50/95 text-base sm:text-lg mt-3 font-body drop-shadow-[0_2px_6px_rgba(60,20,10,0.5)]">
+                  Step into the magical forest — what shall we explore today?
+                </p>
 
-              <div className="h-px w-full bg-border/60 sm:hidden" />
-              <div className="hidden h-10 w-px bg-border/60 sm:block" />
-
-              {/* Games */}
-              <motion.div
-                className="flex w-full items-center justify-center gap-2 px-5 py-4 sm:flex-1 sm:py-0"
-                whileHover={{ scale: 1.02 }}
-              >
+                {/* Stat strip */}
                 <motion.div
-                  whileHover={{ scale: 1.2, rotate: -10 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+                  className="mt-6 grid grid-cols-3 gap-2 sm:gap-3"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <Gamepad2 className="w-6 h-6 text-primary" />
+                  {[
+                    {
+                      icon: Star,
+                      label: "Stars",
+                      value: profile?.stars || 0,
+                      color: "text-amber-300",
+                      fill: "fill-amber-300",
+                    },
+                    {
+                      icon: Gamepad2,
+                      label: "Games",
+                      value: profile?.completedGames.length || 0,
+                      color: "text-purple-200",
+                    },
+                    {
+                      icon: Flame,
+                      label: "Streak",
+                      value: 3,
+                      color: "text-orange-300",
+                    },
+                  ].map((s, i) => (
+                    <motion.div
+                      key={i}
+                      className="rounded-2xl px-3 py-3 border border-white/35 text-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,235,200,0.12))",
+                        backdropFilter: "blur(10px)",
+                      }}
+                      whileHover={{ y: -3, scale: 1.04 }}
+                    >
+                      <s.icon
+                        className={`mx-auto w-5 h-5 ${s.color} ${s.fill || ""}`}
+                      />
+                      <div className="font-display font-bold text-lg text-white mt-1">
+                        {s.value}
+                      </div>
+                      <div className="text-[11px] uppercase tracking-wide text-amber-50/80">
+                        {s.label}
+                      </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
-                <div className="text-left">
-                  <div className="font-bold text-lg text-foreground leading-tight">
-                    {profile?.completedGames.length || 0}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Games
-                  </div>
+
+                {/* CTAs */}
+                <div className="flex items-center gap-3 mt-7 justify-center lg:justify-start flex-wrap">
+                  <motion.button
+                    onClick={() => navigate("/chat")}
+                    className="relative overflow-hidden px-6 py-3 rounded-2xl font-display text-base text-amber-950 border border-white/55"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+                      boxShadow:
+                        "0 10px 30px -5px rgba(255,170,80,0.55), inset 0 1px 0 rgba(255,255,255,0.7)",
+                    }}
+                    whileHover={{
+                      scale: 1.05,
+                      y: -3,
+                      boxShadow:
+                        "0 16px 40px -5px rgba(255,200,100,0.7), inset 0 1px 0 rgba(255,255,255,0.85)",
+                    }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5" />
+                      Play with Buddy
+                    </span>
+                  </motion.button>
+
+                  <motion.button
+                    onClick={() => navigate("/games")}
+                    className="px-6 py-3 rounded-2xl font-display text-base text-white border border-white/45"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(140,90,200,0.55), rgba(80,50,140,0.55))",
+                      backdropFilter: "blur(12px)",
+                      boxShadow: "0 8px 25px -5px rgba(100,60,180,0.5)",
+                    }}
+                    whileHover={{ scale: 1.05, y: -3 }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      Explore
+                    </span>
+                  </motion.button>
                 </div>
-              </motion.div>
-
-              <div className="h-px w-full bg-border/60 sm:hidden" />
-              <div className="hidden h-10 w-px bg-border/60 sm:block" />
-
-              {/* Streak */}
-              <motion.div
-                className="flex w-full items-center justify-center gap-2 px-5 py-4 sm:flex-1 sm:py-0"
-                whileHover={{ scale: 1.02 }}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.2 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <Flame className="w-6 h-6 text-orange-500" />
-                </motion.div>
-                <div className="text-left">
-                  <div className="font-bold text-lg text-foreground leading-tight">
-                    3
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Streak
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 sm:gap-4 mt-8 justify-center lg:justify-start flex-wrap">
-              <motion.button
-                onClick={() => navigate("/chat")}
-                className="relative w-full sm:w-auto overflow-hidden px-6 sm:px-7 py-3 rounded-3xl font-bold text-white shadow-lg"
-                style={{
-                  background:
-                    "linear-gradient(135deg, hsl(260 85% 60%), hsl(270 80% 70%))",
-                  boxShadow: "0 6px 25px rgba(124,58,237,0.35)",
-                }}
-                whileHover={{
-                  scale: 1.05,
-                  y: -2,
-                  boxShadow: "0 10px 35px rgba(124,58,237,0.45)",
-                }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  Play with Buddy
-                </span>
-                {/* Glossy overlay */}
-                <div
-                  className="absolute inset-0 rounded-3xl"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)",
-                  }}
-                />
-              </motion.button>
-
-              <motion.button
-                onClick={() => navigate("/games")}
-                className="w-full sm:w-auto px-6 sm:px-7 py-3 rounded-3xl font-bold text-primary"
-                style={{
-                  background: "rgba(255,255,255,0.8)",
-                  backdropFilter: "blur(10px)",
-                  border: "2px solid hsl(260 85% 85%)",
-                }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Explore
-                </span>
-              </motion.button>
+              </div>
             </div>
           </motion.div>
 
-          {/* Right Side – 55% — 3D Character Card */}
+          {/* Right – 3D Buddy floating in glass orb */}
           <motion.div
             className="w-full flex justify-center"
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 120, delay: 0.2 }}
+            transition={{ type: "spring", stiffness: 110, delay: 0.2 }}
           >
-            <div className="relative w-full max-w-[580px] h-[340px] sm:h-[420px] lg:h-[480px]">
-              {/* Card background */}
+            <div className="relative w-full max-w-[560px] h-[360px] sm:h-[440px] lg:h-[480px]">
+              {/* Glow halo */}
+              <div className="absolute -inset-6 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(255,210,140,0.55)_0%,rgba(180,130,220,0.2)_50%,transparent_75%)] blur-2xl" />
+
+              {/* Glass orb card */}
               <div
-                className="absolute inset-0 rounded-[40px] overflow-hidden"
+                className="absolute inset-0 rounded-[44px] overflow-hidden border border-white/45"
                 style={{
                   background:
-                    "linear-gradient(160deg, hsla(270 80% 95% / 0.9) 0%, hsla(260 85% 90% / 0.6) 50%, hsla(200 90% 92% / 0.5) 100%)",
-                  backdropFilter: "blur(20px)",
+                    "linear-gradient(160deg, rgba(255,235,200,0.4) 0%, rgba(255,200,160,0.25) 50%, rgba(180,140,220,0.3) 100%)",
+                  backdropFilter: "blur(24px)",
                   boxShadow:
-                    "0 20px 60px rgba(124,58,237,0.12), 0 4px 20px rgba(0,0,0,0.04)",
-                  border: "1px solid rgba(255,255,255,0.6)",
+                    "0 25px 70px -15px rgba(120,60,20,0.55), inset 0 1px 0 rgba(255,255,255,0.55)",
                 }}
               >
-                {/* Radial light behind character */}
-                <div
-                  className="absolute"
-                  style={{
-                    width: "70%",
-                    height: "70%",
-                    left: "15%",
-                    top: "10%",
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle, hsla(260 85% 80% / 0.3) 0%, transparent 70%)",
-                  }}
-                />
-
-                {/* Decorative clouds */}
-                <motion.div
-                  className="absolute top-8 left-8"
-                  animate={{ x: [0, 10, 0], opacity: [0.4, 0.7, 0.4] }}
-                  transition={{
-                    duration: 6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <Cloud className="w-10 h-10 text-white/50" />
-                </motion.div>
-                <motion.div
-                  className="absolute top-12 right-12"
-                  animate={{ x: [0, -8, 0], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    delay: 1,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <Cloud className="w-8 h-8 text-white/40" />
-                </motion.div>
-
-                {/* Decorative stars */}
-                {[
-                  { left: "10%", top: "25%", size: 14, delay: 0 },
-                  { right: "12%", top: "20%", size: 12, delay: 0.5 },
-                  { left: "18%", bottom: "20%", size: 10, delay: 1 },
-                  { right: "20%", bottom: "25%", size: 16, delay: 1.5 },
-                ].map((s, i) => (
+                {/* Sparkle particles */}
+                {Array.from({ length: 10 }).map((_, i) => (
                   <motion.div
                     key={i}
                     className="absolute"
                     style={{
-                      left: s.left,
-                      right: (s as any).right,
-                      top: s.top,
-                      bottom: (s as any).bottom,
+                      left: `${10 + ((i * 41) % 80)}%`,
+                      top: `${10 + ((i * 27) % 75)}%`,
                     }}
                     animate={{
-                      opacity: [0.3, 1, 0.3],
-                      scale: [0.8, 1.2, 0.8],
+                      opacity: [0, 1, 0],
+                      scale: [0.5, 1.2, 0.5],
                       rotate: [0, 180, 360],
                     }}
                     transition={{
-                      duration: 3 + i * 0.5,
-                      repeat: Infinity,
-                      delay: s.delay,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    <Star
-                      className="fill-amber-300 text-amber-400"
-                      style={{ width: s.size, height: s.size }}
-                    />
-                  </motion.div>
-                ))}
-
-                {/* Sparkle particles */}
-                {[...Array(6)].map((_, i) => (
-                  <motion.div
-                    key={`sp-${i}`}
-                    className="absolute rounded-full"
-                    style={{
-                      width: 3,
-                      height: 3,
-                      background:
-                        i % 2 === 0 ? "hsl(45 100% 65%)" : "hsl(260 85% 75%)",
-                      left: `${20 + Math.random() * 60}%`,
-                      top: `${15 + Math.random() * 60}%`,
-                    }}
-                    animate={{ opacity: [0, 1, 0], y: [0, -12, 0] }}
-                    transition={{
-                      duration: 2 + Math.random(),
+                      duration: 3 + (i % 3),
                       repeat: Infinity,
                       delay: i * 0.4,
                     }}
-                  />
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-200" />
+                  </motion.div>
                 ))}
+
+                {/* Tap burst */}
+                {tapBurst > 0 &&
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <motion.div
+                      key={`burst-${tapBurst}-${i}`}
+                      className="absolute left-1/2 top-1/2"
+                      initial={{ x: 0, y: 0, opacity: 1, scale: 0.5 }}
+                      animate={{
+                        x: Math.cos((i / 8) * Math.PI * 2) * 120,
+                        y: Math.sin((i / 8) * Math.PI * 2) * 120,
+                        opacity: 0,
+                        scale: 1.4,
+                      }}
+                      transition={{ duration: 0.8 }}
+                    >
+                      <Star className="w-4 h-4 text-amber-300 fill-amber-300" />
+                    </motion.div>
+                  ))}
               </div>
 
               {/* 3D Scene */}
-              <div
-                className="absolute inset-0 rounded-[40px] overflow-hidden"
-                style={{ top: 10 }}
-              >
-                <Scene3D />
+              <div className="absolute inset-0 rounded-[44px] overflow-hidden">
+                <Scene3D onTap={triggerTap} />
               </div>
 
-              {/* Ground shadow */}
-              <div
-                className="absolute bottom-12 left-1/2 -translate-x-1/2"
+              {/* Tap me pill */}
+              <motion.button
+                onClick={triggerTap}
+                className="absolute bottom-5 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full font-display text-sm text-amber-950 border border-white/55"
                 style={{
-                  width: "50%",
-                  height: 16,
-                  borderRadius: "50%",
                   background:
-                    "radial-gradient(ellipse, rgba(124,58,237,0.15) 0%, transparent 70%)",
-                }}
-              />
-
-              {/* "Tap me" text */}
-              <motion.div
-                className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 sm:px-5 py-2 rounded-full"
-                style={{
-                  background: "rgba(255,255,255,0.85)",
-                  backdropFilter: "blur(10px)",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.06)",
+                    "linear-gradient(135deg, #FFE9C0 0%, #FFC58A 100%)",
+                  boxShadow:
+                    "0 8px 25px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
                 }}
                 animate={{ y: [0, -4, 0] }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
               >
-                <span className="text-xs sm:text-sm font-bold text-primary">
-                  ✨ Tap me to play!
-                </span>
-              </motion.div>
+                ✨ Tap me to play!
+              </motion.button>
             </div>
           </motion.div>
         </div>
 
-        {/* Feature Cards */}
+        {/* Themed feature cards */}
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
           variants={container}
@@ -501,30 +350,65 @@ const HomePage = () => {
               key={s.path}
               variants={item}
               onClick={() => navigate(s.path)}
-              className="group cursor-pointer p-5 sm:p-6 text-center rounded-3xl"
+              className="group relative cursor-pointer p-5 sm:p-6 text-left rounded-3xl overflow-hidden border border-white/35"
               style={{
-                background: "rgba(255,255,255,0.8)",
-                backdropFilter: "blur(20px)",
-                boxShadow:
-                  "0 4px 20px rgba(124,58,237,0.06), 0 2px 8px rgba(0,0,0,0.03)",
-                border: "1px solid rgba(255,255,255,0.6)",
+                background: s.bg,
+                boxShadow: `0 14px 40px -10px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.4)`,
               }}
               whileHover={{
-                scale: 1.05,
+                scale: 1.04,
                 y: -6,
-                boxShadow: "0 12px 35px rgba(124,58,237,0.12)",
+                rotate: -0.5,
+                boxShadow: `0 22px 55px -10px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.55)`,
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.96 }}
             >
+              {/* Floating particles inside card */}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <motion.span
+                  key={i}
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `${15 + i * 22}%`,
+                    top: `${10 + (i % 2) * 20}%`,
+                  }}
+                  animate={{
+                    opacity: [0.2, 0.9, 0.2],
+                    y: [0, -10, 0],
+                  }}
+                  transition={{
+                    duration: 2.5 + i * 0.4,
+                    repeat: Infinity,
+                    delay: i * 0.3,
+                  }}
+                >
+                  <Sparkles className="w-3 h-3 text-white/90" />
+                </motion.span>
+              ))}
+
+              {/* Background accent silhouette */}
+              <s.accent
+                className="absolute -right-3 -bottom-3 w-24 h-24 text-white/15"
+                strokeWidth={1.2}
+              />
+
               <div
-                className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${s.gradient} flex items-center justify-center mx-auto mb-3 shadow-lg`}
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 border border-white/40"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.1))",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.18)",
+                }}
               >
-                <s.icon className="w-8 h-8 text-primary-foreground" />
+                <s.icon className="w-7 h-7 text-white drop-shadow" />
               </div>
-              <h3 className="font-display text-lg font-bold text-foreground">
+              <h3 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                 {s.title}
               </h3>
-              <p className="text-muted-foreground text-sm">{s.desc}</p>
+              <p className="text-white/85 text-sm mt-0.5 drop-shadow">
+                {s.desc}
+              </p>
             </motion.button>
           ))}
         </motion.div>
