@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useChild } from "@/context/ChildContext";
 import Scene3D from "@/components/Scene3D";
 import NavBar from "@/components/NavBar";
-import ForestScene from "@/components/ForestScene";
+import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import homeBg from "@/assets/home-bg.jpg";
 import {
   Gamepad2,
   BookOpen,
@@ -93,11 +94,8 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Magical sunset forest background (shared world) */}
-      <ForestScene />
-
-      {/* Soft warm wash so navbar/cards pop */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/10 via-transparent to-black/30" />
+      {/* Sunrise meadow background — unique to Home */}
+      <SceneBackground image={homeBg} alt="Magical sunrise meadow with rolling hills" variant="meadow" />
 
       <NavBar />
       <AmbientSoundToggle />

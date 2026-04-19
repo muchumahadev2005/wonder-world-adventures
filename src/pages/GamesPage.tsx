@@ -2,9 +2,11 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
 import NavBar from "@/components/NavBar";
-import FloatingBubbles from "@/components/FloatingBubbles";
+import SceneBackground from "@/components/SceneBackground";
+import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import PremiumBadge from "@/components/PremiumBadge";
 import StarBurst from "@/components/StarBurst";
+import gamesBg from "@/assets/games-bg.jpg";
 import {
   Gamepad2,
   Star,
@@ -217,9 +219,10 @@ const GamesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <FloatingBubbles />
+    <div className="min-h-screen relative overflow-hidden">
+      <SceneBackground image={gamesBg} alt="Magical treehouse playground village" variant="playground" />
       <NavBar />
+      <AmbientSoundToggle />
       <StarBurst show={showStarBurst} count={earnedStars} />
 
       <div className="page-shell max-w-5xl">
