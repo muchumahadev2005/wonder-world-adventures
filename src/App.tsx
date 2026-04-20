@@ -11,6 +11,7 @@ import StoriesPage from "./pages/StoriesPage";
 import ChatPage from "./pages/ChatPage";
 import ParentsPage from "./pages/ParentsPage";
 import NotFound from "./pages/NotFound";
+import BottomNav from "./components/BottomNav";
 
 const queryClient = new QueryClient();
 
@@ -23,15 +24,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   const { isLoggedIn } = useChild();
   return (
-    <Routes>
-      <Route path="/login" element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-      <Route path="/games" element={<ProtectedRoute><GamesPage /></ProtectedRoute>} />
-      <Route path="/stories" element={<ProtectedRoute><StoriesPage /></ProtectedRoute>} />
-      <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-      <Route path="/parents" element={<ProtectedRoute><ParentsPage /></ProtectedRoute>} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/games" element={<ProtectedRoute><GamesPage /></ProtectedRoute>} />
+        <Route path="/stories" element={<ProtectedRoute><StoriesPage /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="/parents" element={<ProtectedRoute><ParentsPage /></ProtectedRoute>} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      {isLoggedIn && <BottomNav />}
+    </>
   );
 };
 

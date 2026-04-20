@@ -100,12 +100,12 @@ const HomePage = () => {
       <NavBar />
       <AmbientSoundToggle />
 
-      <div className="page-shell md:pt-28 sm:pb-16">
+      <div className="page-shell">
         {/* Hero */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-8 mb-14">
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-6 sm:gap-8 mb-10 sm:mb-14">
           {/* Left – greeting glass card */}
           <motion.div
-            className="relative w-full max-w-xl mx-auto lg:mx-0"
+            className="relative w-full max-w-xl mx-auto lg:mx-0 order-2 lg:order-1"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
@@ -246,12 +246,12 @@ const HomePage = () => {
 
           {/* Right – 3D Buddy floating in glass orb */}
           <motion.div
-            className="w-full flex justify-center"
+            className="w-full flex justify-center order-1 lg:order-2"
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 110, delay: 0.2 }}
           >
-            <div className="relative w-full max-w-[560px] h-[360px] sm:h-[440px] lg:h-[480px]">
+            <div className="relative w-full max-w-[560px] h-[300px] sm:h-[440px] lg:h-[480px]">
               {/* Glow halo */}
               <div className="absolute -inset-6 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(255,210,140,0.55)_0%,rgba(180,130,220,0.2)_50%,transparent_75%)] blur-2xl" />
 
@@ -336,9 +336,9 @@ const HomePage = () => {
           </motion.div>
         </div>
 
-        {/* Themed feature cards */}
+        {/* Themed feature cards — horizontal snap on mobile, grid on desktop */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           variants={container}
           initial="hidden"
           animate="show"
@@ -348,7 +348,7 @@ const HomePage = () => {
               key={s.path}
               variants={item}
               onClick={() => navigate(s.path)}
-              className="group relative cursor-pointer p-5 sm:p-6 text-left rounded-3xl overflow-hidden border border-white/35"
+              className="group relative cursor-pointer p-5 sm:p-6 text-left rounded-3xl overflow-hidden border border-white/35 snap-center flex-shrink-0 w-[78%] sm:w-auto sm:flex-shrink"
               style={{
                 background: s.bg,
                 boxShadow: `0 14px 40px -10px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.4)`,
