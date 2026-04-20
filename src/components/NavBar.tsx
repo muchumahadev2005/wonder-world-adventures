@@ -80,133 +80,72 @@ const NavBar = () => {
         className="w-[96%] max-w-[1240px] px-3 py-3 md:w-[92%] md:px-4 lg:px-6"
         style={glassStyle}
       >
-        {/* MOBILE */}
-        <div className="md:hidden">
-          <div className="flex items-center justify-between gap-2">
-            <motion.div
-              className="flex items-center gap-2 cursor-pointer select-none"
-              onClick={() => navigate("/")}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
+        {/* MOBILE — compact top bar (nav lives in BottomNav) */}
+        <div className="md:hidden flex items-center justify-between gap-2">
+          <motion.div
+            className="flex items-center gap-2 cursor-pointer select-none min-w-0"
+            onClick={() => navigate("/")}
+            whileTap={{ scale: 0.96 }}
+          >
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl shadow-lg flex-shrink-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(35 95% 60%), hsl(280 70% 65%))",
+                boxShadow: "0 4px 14px rgba(255,170,80,0.45)",
+              }}
             >
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg"
-                style={{
-                  background:
-                    "linear-gradient(135deg, hsl(35 95% 60%), hsl(280 70% 65%))",
-                  boxShadow: "0 4px 14px rgba(255,170,80,0.45)",
-                }}
-              >
-                <span className="text-sm font-bold text-white">K</span>
-              </div>
-              <span className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(120,60,20,0.4)]">
-                KidsPal
-              </span>
+              <span className="text-xs font-bold text-white">K</span>
+            </div>
+            <span className="font-display text-base font-bold text-white drop-shadow-[0_2px_6px_rgba(120,60,20,0.4)] truncate">
+              Hi, {profile.name?.split(" ")[0]}!
+            </span>
+          </motion.div>
+
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <motion.div
+              className="flex h-9 items-center gap-1 rounded-full px-2.5"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(45 100% 88%), hsl(35 95% 80%))",
+                border: "1px solid hsl(45 100% 70%)",
+                boxShadow: "0 4px 14px rgba(255,180,80,0.35)",
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-700" strokeWidth={2.4} />
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={profile.stars}
+                  className="text-sm font-bold text-amber-800"
+                  initial={{ y: -5, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 5, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {profile.stars}
+                </motion.span>
+              </AnimatePresence>
             </motion.div>
 
-            <div className="flex items-center gap-2">
-              <motion.div
-                className="flex h-10 items-center gap-1.5 rounded-full px-3"
-                style={{
-                  background:
-                    "linear-gradient(135deg, hsl(45 100% 88%), hsl(35 95% 80%))",
-                  border: "1px solid hsl(45 100% 70%)",
-                  boxShadow: "0 4px 14px rgba(255,180,80,0.35)",
-                }}
-                whileHover={{ scale: 1.04 }}
-              >
-                <Sparkles className="h-4 w-4 text-amber-700" strokeWidth={2.3} />
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={profile.stars}
-                    className="text-base font-bold text-amber-800"
-                    initial={{ y: -5, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 5, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {profile.stars}
-                  </motion.span>
-                </AnimatePresence>
-              </motion.div>
-
-              <motion.button
-                onClick={() => {
-                  logout();
-                  navigate("/login");
-                }}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,240,220,0.9), rgba(220,200,255,0.85))",
-                }}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                title="Logout"
-              >
-                <CircleUserRound
-                  className="h-5 w-5 text-amber-900/80"
-                  strokeWidth={2.2}
-                />
-              </motion.button>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <motion.button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className="group relative flex h-11 min-w-[102px] items-center justify-center gap-2 rounded-2xl px-3 py-2"
-                  style={
-                    isActive
-                      ? {
-                          color: "white",
-                        }
-                      : {
-                          color: "hsl(30 30% 25%)",
-                          backgroundColor: "rgba(255,255,255,0.35)",
-                        }
-                  }
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {isActive && (
-                    <>
-                      <motion.div
-                        layoutId="nav-active-pill-mobile"
-                        className="absolute inset-0 rounded-2xl"
-                        style={{
-                          background: activeBg,
-                          boxShadow:
-                            "0 6px 20px rgba(255,150,60,0.5), 0 2px 8px rgba(160,80,200,0.4)",
-                        }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 350,
-                          damping: 30,
-                        }}
-                      />
-                      {renderActiveSparkles(`m-${item.path}`)}
-                    </>
-                  )}
-                  <span
-                    className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full ${
-                      isActive
-                        ? "bg-white/25 text-white"
-                        : "bg-amber-100/70 text-amber-800"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" strokeWidth={2.3} />
-                  </span>
-                  <span className="relative z-10 text-sm font-semibold">
-                    {item.label}
-                  </span>
-                </motion.button>
-              );
-            })}
+            <motion.button
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255,240,220,0.9), rgba(220,200,255,0.85))",
+              }}
+              whileTap={{ scale: 0.9 }}
+              title="Logout"
+            >
+              <CircleUserRound
+                className="h-4 w-4 text-amber-900/80"
+                strokeWidth={2.2}
+              />
+            </motion.button>
           </div>
         </div>
 
