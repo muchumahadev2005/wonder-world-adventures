@@ -42,7 +42,7 @@ const AmbientSoundToggle = () => {
       onClick={toggle}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.95 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-full backdrop-blur-xl bg-white/20 border border-white/40 text-white shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
+      className="fixed bottom-24 right-4 md:bottom-5 md:right-5 z-[60] flex items-center gap-2 px-3 py-2.5 md:px-4 md:py-3 rounded-full backdrop-blur-xl bg-white/20 border border-white/40 text-white shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
       aria-label={on ? "Mute forest sounds" : "Play forest sounds"}
       title={on ? "Mute forest sounds" : "Play forest sounds"}
     >
