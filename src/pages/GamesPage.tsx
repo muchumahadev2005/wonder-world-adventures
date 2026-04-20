@@ -268,7 +268,7 @@ const GamesPage = () => {
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.1 } } }}
@@ -284,7 +284,7 @@ const GamesPage = () => {
                     show: { y: 0, opacity: 1 },
                   }}
                   onClick={() => !locked && setActiveGame(game.id)}
-                  className={`glass-card-strong p-5 sm:p-6 text-center relative group ${locked ? "opacity-70" : ""}`}
+                  className={`glass-card-strong p-5 sm:p-6 text-center relative group snap-center flex-shrink-0 w-[78%] sm:w-auto sm:flex-shrink ${locked ? "opacity-70" : ""}`}
                   whileHover={locked ? {} : { scale: 1.05, y: -5 }}
                   whileTap={locked ? {} : { scale: 0.95 }}
                 >
