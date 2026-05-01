@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
-import { House, Gamepad2, BookText, MessagesSquare, UsersRound } from "lucide-react";
+import { House, Gamepad2, BookText, MessagesSquare, UsersRound, GraduationCap } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const items = [
   { icon: House, label: "Home", path: "/" },
-  { icon: Gamepad2, label: "Words", path: "/games" },
-  { icon: BookText, label: "Learn", path: "/stories" },
+  { icon: BookText, label: "Stories", path: "/stories" },
+  { icon: GraduationCap, label: "Learn", path: "/learn" },
   { icon: MessagesSquare, label: "Chat", path: "/chat" },
   { icon: UsersRound, label: "Parents", path: "/parents" },
 ];

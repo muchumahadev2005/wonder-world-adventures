@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-interface ChildProfile {
+export interface ChildProfile {
   name: string;
   age: number;
   favoriteColor: string;
   stars: number;
+  coins: number;
+  xp: number;
+  level: number;
+  streak: number;
   completedGames: string[];
   completedStories: string[];
+  completedLessons: string[];
+  unlockedLessons: string[];
   isPremium: boolean;
 }
 
@@ -14,8 +20,12 @@ interface ChildContextType {
   profile: ChildProfile | null;
   setProfile: (profile: ChildProfile) => void;
   addStars: (count: number) => void;
+  addCoins: (count: number) => void;
+  addXP: (amount: number) => void;
+  incrementStreak: () => void;
   completeGame: (gameId: string) => void;
   completeStory: (storyId: string) => void;
+  completeLesson: (lessonId: string, nextLessonId?: string) => void;
   isLoggedIn: boolean;
   logout: () => void;
 }
@@ -28,6 +38,8 @@ export const useChild = () => {
   return ctx;
 };
 
+const XP_PER_LEVEL = 100;
+
 export const ChildProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfileState] = useState<ChildProfile | null>(null);
 
@@ -35,6 +47,23 @@ export const ChildProvider = ({ children }: { children: ReactNode }) => {
 
   const addStars = (count: number) => {
     setProfileState(prev => prev ? { ...prev, stars: prev.stars + count } : prev);
+  };
+
+  const addCoins = (count: number) => {
+    setProfileState(prev => prev ? { ...prev, coins: prev.coins + count } : prev);
+  };
+
+  const addXP = (amount: number) => {
+    setProfileState(prev => {
+      if (!prev) return prev;
+      const newXP = prev.xp + amount;
+      const newLevel = Math.floor(newXP / XP_PER_LEVEL) + 1;
+      return { ...prev, xp: newXP, level: newLevel };
+    });
+  };
+
+  const incrementStreak = () => {
+    setProfileState(prev => prev ? { ...prev, streak: prev.streak + 1 } : prev);
   };
 
   const completeGame = (gameId: string) => {
@@ -53,6 +82,18 @@ export const ChildProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const completeLesson = (lessonId: string, nextLessonId?: string) => {
+    setProfileState(prev => {
+      if (!prev) return prev;
+      const alreadyDone = prev.completedLessons.includes(lessonId);
+      const newCompleted = alreadyDone ? prev.completedLessons : [...prev.completedLessons, lessonId];
+      const newUnlocked = nextLessonId && !prev.unlockedLessons.includes(nextLessonId)
+        ? [...prev.unlockedLessons, nextLessonId]
+        : prev.unlockedLessons;
+      return { ...prev, completedLessons: newCompleted, unlockedLessons: newUnlocked };
+    });
+  };
+
   const logout = () => setProfileState(null);
 
   return (
@@ -60,8 +101,12 @@ export const ChildProvider = ({ children }: { children: ReactNode }) => {
       profile,
       setProfile,
       addStars,
+      addCoins,
+      addXP,
+      incrementStreak,
       completeGame,
       completeStory,
+      completeLesson,
       isLoggedIn: !!profile,
       logout,
     }}>

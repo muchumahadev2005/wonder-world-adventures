@@ -71,8 +71,14 @@ const LoginPage = () => {
         age: parseInt(age),
         favoriteColor: color,
         stars: 0,
+        coins: 10,
+        xp: 0,
+        level: 1,
+        streak: 1,
         completedGames: [],
         completedStories: [],
+        completedLessons: [],
+        unlockedLessons: ['fruits'],
         isPremium: false,
       });
       navigate("/");

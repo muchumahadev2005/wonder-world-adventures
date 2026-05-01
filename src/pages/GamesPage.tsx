@@ -203,7 +203,7 @@ const MathGame = ({
 };
 
 const GamesPage = () => {
-  const { profile, addStars, completeGame } = useChild();
+  const { profile, addStars, addXP, addCoins, completeGame } = useChild();
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [showStarBurst, setShowStarBurst] = useState(false);
   const [earnedStars, setEarnedStars] = useState(0);
@@ -214,6 +214,8 @@ const GamesPage = () => {
     const stars = Math.ceil((score / 5) * game.stars);
     setEarnedStars(stars);
     addStars(stars);
+    addXP(stars * 10);
+    addCoins(stars * 3);
     completeGame(gameId);
     setShowStarBurst(true);
     setTimeout(() => {

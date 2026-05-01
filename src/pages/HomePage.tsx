@@ -18,6 +18,8 @@ import {
   TreePine,
   Moon,
   Home as HomeIcon,
+  GraduationCap,
+  Zap,
 } from "lucide-react";
 
 type Section = {
@@ -34,7 +36,7 @@ type Section = {
 const sections: Section[] = [
   {
     icon: Gamepad2,
-    title: "Play with Words",
+    title: "Play Games",
     desc: "Magical Treehouse",
     path: "/games",
     bg: "linear-gradient(160deg, #FFD68A 0%, #FF9E6E 60%, #C57BD4 100%)",
@@ -43,12 +45,21 @@ const sections: Section[] = [
   },
   {
     icon: BookOpen,
-    title: "Learn English",
+    title: "Stories",
     desc: "Glowing Library",
     path: "/stories",
     bg: "linear-gradient(160deg, #2E2270 0%, #5B3FA6 55%, #9D6FE0 100%)",
     glow: "rgba(140,90,220,0.55)",
     accent: Moon,
+  },
+  {
+    icon: GraduationCap,
+    title: "Learn",
+    desc: "Lesson Path",
+    path: "/learn",
+    bg: "linear-gradient(160deg, #1A5F3F 0%, #2E9E6A 55%, #72D6A0 100%)",
+    glow: "rgba(50,180,120,0.55)",
+    accent: Sparkles,
   },
   {
     icon: MessageCircle,
@@ -162,15 +173,15 @@ const HomePage = () => {
                       fill: "fill-amber-300",
                     },
                     {
-                      icon: Gamepad2,
-                      label: "Games",
-                      value: profile?.completedGames.length || 0,
-                      color: "text-purple-200",
+                      icon: Zap,
+                      label: "XP",
+                      value: profile?.xp || 0,
+                      color: "text-purple-300",
                     },
                     {
                       icon: Flame,
                       label: "Streak",
-                      value: 3,
+                      value: profile?.streak || 0,
                       color: "text-orange-300",
                     },
                   ].map((s, i) => (
@@ -338,7 +349,7 @@ const HomePage = () => {
 
         {/* Themed feature cards — horizontal snap on mobile, grid on desktop */}
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5"
           variants={container}
           initial="hidden"
           animate="show"
