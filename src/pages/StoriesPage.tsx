@@ -108,8 +108,7 @@ const StoriesPage = () => {
           animate={{ y: 0, opacity: 1 }}
         >
           <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
-            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Story
-            Time
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Learn English
           </h1>
           <p className="text-muted-foreground mt-1">
             Read stories and earn stars! 📚
@@ -118,7 +117,11 @@ const StoriesPage = () => {
 
         {activeStory ? (
           <motion.div
-            className="glass-card-strong p-5 sm:p-8 max-w-lg mx-auto"
+            className="relative p-6 sm:p-10 max-w-lg mx-auto rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-2xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+              boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)",
+            }}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
           >
@@ -131,7 +134,7 @@ const StoriesPage = () => {
             >
               ← Back
             </button>
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold text-center mb-2 text-white drop-shadow-md">
               {activeStory.title}
             </h2>
             <div className="text-center text-4xl mb-4">{activeStory.cover}</div>
@@ -148,7 +151,7 @@ const StoriesPage = () => {
             <AnimatePresence mode="wait">
               <motion.p
                 key={page}
-                className="text-base sm:text-lg font-body text-foreground leading-relaxed text-center min-h-[120px]"
+                className="text-base sm:text-lg font-body text-white leading-relaxed text-center min-h-[120px] drop-shadow-sm"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -188,7 +191,7 @@ const StoriesPage = () => {
           </motion.div>
         ) : (
           <motion.div
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.1 } } }}
@@ -204,8 +207,16 @@ const StoriesPage = () => {
                     show: { y: 0, opacity: 1 },
                   }}
                   onClick={() => !locked && setActiveStory(story)}
-                  className={`glass-card-strong p-5 sm:p-6 text-center relative snap-center flex-shrink-0 w-[78%] sm:w-auto sm:flex-shrink ${locked ? "opacity-70" : ""}`}
-                  whileHover={locked ? {} : { scale: 1.05, y: -5 }}
+                  className={`relative p-5 sm:p-6 text-center rounded-3xl border border-white/50 shadow-xl backdrop-blur-2xl transition-all overflow-hidden ${locked ? "opacity-70" : ""}`}
+                  style={{
+                    background: `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%)`,
+                    boxShadow: `0 12px 35px -10px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)`,
+                  }}
+                  whileHover={locked ? {} : { 
+                    scale: 1.05, 
+                    y: -5,
+                    background: `linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)`,
+                  }}
                   whileTap={locked ? {} : { scale: 0.95 }}
                 >
                   {story.premium && (
@@ -228,12 +239,12 @@ const StoriesPage = () => {
                   >
                     {story.cover}
                   </div>
-                  <h3 className="font-display text-base sm:text-sm font-bold text-foreground">
+                  <h3 className="font-display text-base sm:text-sm font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                     {story.title}
                   </h3>
-                  <div className="flex items-center justify-center gap-1 mt-1">
-                    <Star className="w-3 h-3 text-star fill-star" />
-                    <span className="text-xs text-muted-foreground font-bold">
+                  <div className="flex items-center justify-center gap-1 mt-1.5">
+                    <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
+                    <span className="text-xs text-white/90 font-bold drop-shadow-sm">
                       {story.stars}
                     </span>
                   </div>

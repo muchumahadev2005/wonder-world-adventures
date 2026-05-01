@@ -116,7 +116,11 @@ const MathGame = ({
 
   return (
     <motion.div
-      className="glass-card-strong p-5 sm:p-8 max-w-sm mx-auto text-center"
+      className="relative p-6 sm:p-10 max-w-sm mx-auto text-center rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-2xl"
+      style={{
+        background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+        boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)",
+      }}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
     >
@@ -146,13 +150,13 @@ const MathGame = ({
           exit={{ x: -30, opacity: 0 }}
         >
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6">
-            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">
+            <span className="rounded-2xl border border-white/40 bg-white/10 px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold text-white shadow-lg backdrop-blur-md">
               {displayA}
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-primary">
+            <span className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
               {displayOp}
             </span>
-            <span className="glass-card px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold">
+            <span className="rounded-2xl border border-white/40 bg-white/10 px-3 sm:px-5 py-2.5 sm:py-3 text-2xl sm:text-3xl font-display font-bold text-white shadow-lg backdrop-blur-md">
               {displayB}
             </span>
             <span className="text-2xl sm:text-3xl font-bold text-primary">
@@ -232,8 +236,7 @@ const GamesPage = () => {
           animate={{ y: 0, opacity: 1 }}
         >
           <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
-            <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Games
-            Zone
+            <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Play with Words
           </h1>
           <p className="text-muted-foreground mt-1">
             Play games and earn stars! ⭐
@@ -256,11 +259,16 @@ const GamesPage = () => {
               />
             )}
             {!["math-add", "math-sub"].includes(activeGame) && (
-              <div className="glass-card-strong p-8 sm:p-12 text-center max-w-sm mx-auto">
-                <p className="font-display text-xl font-bold text-muted-foreground">
+              <div 
+                className="p-8 sm:p-12 text-center max-w-sm mx-auto rounded-[32px] border border-white/40 backdrop-blur-2xl shadow-2xl"
+                style={{
+                  background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+                }}
+              >
+                <p className="font-display text-xl font-extrabold text-white drop-shadow-md">
                   🚧 Coming Soon!
                 </p>
-                <p className="text-muted-foreground text-sm mt-2">
+                <p className="text-white/80 text-sm mt-2 font-bold drop-shadow-sm">
                   This game is being built!
                 </p>
               </div>
@@ -268,7 +276,7 @@ const GamesPage = () => {
           </div>
         ) : (
           <motion.div
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.1 } } }}
@@ -284,8 +292,16 @@ const GamesPage = () => {
                     show: { y: 0, opacity: 1 },
                   }}
                   onClick={() => !locked && setActiveGame(game.id)}
-                  className={`glass-card-strong p-5 sm:p-6 text-center relative group snap-center flex-shrink-0 w-[78%] sm:w-auto sm:flex-shrink ${locked ? "opacity-70" : ""}`}
-                  whileHover={locked ? {} : { scale: 1.05, y: -5 }}
+                  className={`relative p-5 sm:p-6 text-center rounded-3xl border border-white/50 shadow-xl backdrop-blur-2xl transition-all overflow-hidden ${locked ? "opacity-70" : ""}`}
+                  style={{
+                    background: `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%)`,
+                    boxShadow: `0 12px 35px -10px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)`,
+                  }}
+                  whileHover={locked ? {} : { 
+                    scale: 1.05, 
+                    y: -5,
+                    background: `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)`,
+                  }}
                   whileTap={locked ? {} : { scale: 0.95 }}
                 >
                   {game.premium && (
@@ -308,12 +324,12 @@ const GamesPage = () => {
                   >
                     <game.icon className="w-7 h-7 text-primary-foreground" />
                   </div>
-                  <h3 className="font-display text-base font-bold text-foreground">
+                  <h3 className="font-display text-base font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                     {game.title}
                   </h3>
-                  <div className="flex items-center justify-center gap-1 mt-1">
-                    <Star className="w-3 h-3 text-star fill-star" />
-                    <span className="text-xs text-muted-foreground font-bold">
+                  <div className="flex items-center justify-center gap-1 mt-1.5">
+                    <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
+                    <span className="text-xs text-white/90 font-bold drop-shadow-sm">
                       {game.stars} stars
                     </span>
                   </div>

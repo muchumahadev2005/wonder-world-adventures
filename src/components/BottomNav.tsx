@@ -4,8 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const items = [
   { icon: House, label: "Home", path: "/" },
-  { icon: Gamepad2, label: "Games", path: "/games" },
-  { icon: BookText, label: "Stories", path: "/stories" },
+  { icon: Gamepad2, label: "Words", path: "/games" },
+  { icon: BookText, label: "Learn", path: "/stories" },
   { icon: MessagesSquare, label: "Chat", path: "/chat" },
   { icon: UsersRound, label: "Parents", path: "/parents" },
 ];
@@ -19,18 +19,15 @@ const BottomNav = () => {
 
   return (
     <motion.nav
-      className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 md:hidden"
-      style={{
-        width: "min(94vw, 440px)",
-        paddingBottom: "max(0px, env(safe-area-inset-bottom))",
-      }}
+      className="fixed bottom-3 left-0 right-0 z-50 md:hidden flex justify-center px-3"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 220, damping: 24, delay: 0.1 }}
     >
       <div
-        className="flex items-center justify-between gap-1 px-2 py-2 rounded-[28px]"
+        className="flex w-full max-w-[440px] items-center justify-between gap-1 px-2 py-2 rounded-[28px]"
         style={{
+          paddingBottom: "max(8px, env(safe-area-inset-bottom))",
           background:
             "linear-gradient(135deg, rgba(255,245,225,0.75) 0%, rgba(255,225,210,0.55) 50%, rgba(220,200,255,0.65) 100%)",
           backdropFilter: "blur(22px)",

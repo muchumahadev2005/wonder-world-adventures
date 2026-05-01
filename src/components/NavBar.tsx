@@ -13,8 +13,8 @@ import { useChild } from "@/context/ChildContext";
 
 const navItems = [
   { icon: House, label: "Home", path: "/" },
-  { icon: Gamepad2, label: "Games", path: "/games" },
-  { icon: BookText, label: "Stories", path: "/stories" },
+  { icon: Gamepad2, label: "Words", path: "/games" },
+  { icon: BookText, label: "Learn", path: "/stories" },
   { icon: MessagesSquare, label: "Chat", path: "/chat" },
   { icon: UsersRound, label: "Parents", path: "/parents" },
 ];

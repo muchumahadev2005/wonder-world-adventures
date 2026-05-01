@@ -34,7 +34,7 @@ type Section = {
 const sections: Section[] = [
   {
     icon: Gamepad2,
-    title: "Games",
+    title: "Play with Words",
     desc: "Magical Treehouse",
     path: "/games",
     bg: "linear-gradient(160deg, #FFD68A 0%, #FF9E6E 60%, #C57BD4 100%)",
@@ -43,7 +43,7 @@ const sections: Section[] = [
   },
   {
     icon: BookOpen,
-    title: "Stories",
+    title: "Learn English",
     desc: "Glowing Library",
     path: "/stories",
     bg: "linear-gradient(160deg, #2E2270 0%, #5B3FA6 55%, #9D6FE0 100%)",
@@ -338,7 +338,7 @@ const HomePage = () => {
 
         {/* Themed feature cards — horizontal snap on mobile, grid on desktop */}
         <motion.div
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
           variants={container}
           initial="hidden"
           animate="show"
@@ -348,7 +348,7 @@ const HomePage = () => {
               key={s.path}
               variants={item}
               onClick={() => navigate(s.path)}
-              className="group relative cursor-pointer p-5 sm:p-6 text-left rounded-3xl overflow-hidden border border-white/35 snap-center flex-shrink-0 w-[78%] sm:w-auto sm:flex-shrink"
+              className="group relative cursor-pointer p-5 sm:p-6 text-left rounded-3xl overflow-hidden border border-white/35"
               style={{
                 background: s.bg,
                 boxShadow: `0 14px 40px -10px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.4)`,

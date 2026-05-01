@@ -67,7 +67,11 @@ const ParentsPage = () => {
 
         {/* Child Info */}
         <motion.div
-          className="glass-card-strong p-6 mb-8"
+          className="relative p-6 mb-8 rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-2xl"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+            boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)",
+          }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -76,10 +80,10 @@ const ParentsPage = () => {
               {profile?.name?.[0]?.toUpperCase() || "?"}
             </div>
             <div>
-              <h2 className="font-display text-2xl font-bold text-foreground">
+              <h2 className="font-display text-2xl font-extrabold text-white drop-shadow-md">
                 {profile?.name}
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-white/80 font-bold drop-shadow-sm">
                 Age: {profile?.age} • Favorite Color: {profile?.favoriteColor}
               </p>
             </div>
@@ -107,7 +111,10 @@ const ParentsPage = () => {
           {stats.map((stat) => (
             <motion.div
               key={stat.label}
-              className="glass-card-strong p-5 text-center"
+              className="relative p-5 text-center rounded-3xl border border-white/40 shadow-xl backdrop-blur-xl"
+              style={{
+                background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%)",
+              }}
               variants={{
                 hidden: { y: 20, opacity: 0 },
                 show: { y: 0, opacity: 1 },
@@ -119,10 +126,10 @@ const ParentsPage = () => {
               >
                 <stat.icon className="w-6 h-6 text-primary-foreground" />
               </div>
-              <p className="font-display text-2xl font-bold text-foreground">
+              <p className="font-display text-2xl font-extrabold text-white drop-shadow-md">
                 {stat.value}
               </p>
-              <p className="text-muted-foreground text-xs font-bold">
+              <p className="text-white/80 text-xs font-bold drop-shadow-sm uppercase tracking-wide">
                 {stat.label}
               </p>
             </motion.div>
@@ -131,13 +138,16 @@ const ParentsPage = () => {
 
         {/* Activity */}
         <motion.div
-          className="glass-card-strong p-6"
+          className="relative p-6 rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-2xl"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+          }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h3 className="font-display text-xl font-bold flex items-center gap-2 mb-4 text-foreground">
-            <TrendingUp className="w-5 h-5 text-primary" /> Recent Activity
+          <h3 className="font-display text-xl font-extrabold flex items-center gap-2 mb-4 text-white drop-shadow-md">
+            <TrendingUp className="w-5 h-5 text-amber-300" /> Recent Activity
           </h3>
           {(profile?.completedGames.length || 0) +
             (profile?.completedStories.length || 0) >
@@ -146,10 +156,10 @@ const ParentsPage = () => {
               {profile?.completedGames.map((g) => (
                 <div
                   key={g}
-                  className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-xl bg-muted/50"
+                  className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-xl border border-white/20 bg-white/10 text-white"
                 >
-                  <Gamepad2 className="w-5 h-5 text-sky" />
-                  <span className="font-body text-sm text-foreground">
+                  <Gamepad2 className="w-5 h-5 text-sky-light" />
+                  <span className="font-body text-sm font-bold">
                     Completed game: <b>{g}</b>
                   </span>
                   <span className="ml-auto text-xs text-muted-foreground">
@@ -160,10 +170,10 @@ const ParentsPage = () => {
               {profile?.completedStories.map((s) => (
                 <div
                   key={s}
-                  className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-xl bg-muted/50"
+                  className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-xl border border-white/20 bg-white/10 text-white"
                 >
-                  <BookOpen className="w-5 h-5 text-mint" />
-                  <span className="font-body text-sm text-foreground">
+                  <BookOpen className="w-5 h-5 text-mint-light" />
+                  <span className="font-body text-sm font-bold">
                     Read story: <b>{s}</b>
                   </span>
                   <span className="ml-auto text-xs text-muted-foreground">

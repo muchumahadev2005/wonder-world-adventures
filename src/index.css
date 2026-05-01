@@ -78,9 +78,13 @@
     @apply border-border;
   }
 
-  body {
+  html,
+  body,
+  #root {
     @apply bg-background text-foreground font-body;
     font-family: "Nunito", sans-serif;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   h1,
