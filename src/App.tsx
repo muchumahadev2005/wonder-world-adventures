@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ChildProvider, useChild } from "@/context/ChildContext";
 import LoginPage from "./pages/LoginPage";
+import SignInPage from "./pages/SignInPage";
+import SignUpPage from "./pages/SignUpPage";
 import HomePage from "./pages/HomePage";
 import GamesPage from "./pages/GamesPage";
 import StoriesPage from "./pages/StoriesPage";
@@ -27,6 +29,8 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
+        <Route path="/signin" element={isLoggedIn ? <Navigate to="/" replace /> : <SignInPage />} />
+        <Route path="/signup" element={isLoggedIn ? <Navigate to="/" replace /> : <SignUpPage />} />
         <Route path="/login" element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/games" element={<ProtectedRoute><GamesPage /></ProtectedRoute>} />
