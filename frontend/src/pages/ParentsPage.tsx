@@ -3,6 +3,7 @@ import { useChild } from "@/context/ChildContext";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import { useNavigate } from "react-router-dom";
 import parentsBg from "@/assets/parents-bg.jpg";
 import {
   Crown,
@@ -15,10 +16,17 @@ import {
   Zap,
   Flame,
   Trophy,
+  LogOut,
 } from "lucide-react";
 
 const ParentsPage = () => {
-  const { profile } = useChild();
+  const { profile, logout } = useChild();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/signin");
+  };
 
   const stats = [
     {
@@ -75,7 +83,6 @@ const ParentsPage = () => {
     <div className="min-h-screen relative overflow-hidden">
       <SceneBackground image={parentsBg} alt="Cozy forest cottage interior with fireplace" variant="cottage" />
       <NavBar />
-      <AmbientSoundToggle />
 
       <div className="page-shell max-w-5xl">
         <motion.div
@@ -204,6 +211,19 @@ const ParentsPage = () => {
             </p>
           )}
         </motion.div>
+
+        {/* Logout Button */}
+        <div className="flex justify-center mt-2 mb-2">
+          <motion.button
+            onClick={handleLogout}
+            className="w-full max-w-[320px] flex justify-center items-center gap-3 px-8 py-4 rounded-[28px] bg-gradient-to-r from-red-500 to-rose-500 text-white font-display text-xl font-bold shadow-[0_15px_30px_-10px_rgba(239,68,68,0.5)] border border-white/20 transition-all"
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <LogOut className="w-6 h-6" />
+            Logout
+          </motion.button>
+        </div>
       </div>
     </div>
   );

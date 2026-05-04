@@ -228,7 +228,6 @@ const GamesPage = () => {
     <div className="min-h-screen relative overflow-hidden">
       <SceneBackground image={gamesBg} alt="Magical treehouse playground village" variant="playground" />
       <NavBar />
-      <AmbientSoundToggle />
       <StarBurst show={showStarBurst} count={earnedStars} />
 
       <div className="page-shell max-w-5xl">

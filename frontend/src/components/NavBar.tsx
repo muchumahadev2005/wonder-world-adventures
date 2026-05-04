@@ -129,25 +129,6 @@ const NavBar = () => {
                 </motion.span>
               </AnimatePresence>
             </motion.div>
-
-            <motion.button
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,240,220,0.9), rgba(220,200,255,0.85))",
-              }}
-              whileTap={{ scale: 0.9 }}
-              title="Logout"
-            >
-              <CircleUserRound
-                className="h-4 w-4 text-amber-900/80"
-                strokeWidth={2.2}
-              />
-            </motion.button>
           </div>
         </div>
 

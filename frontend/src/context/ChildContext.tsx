@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface ChildProfile {
   name: string;
@@ -41,7 +41,25 @@ export const useChild = () => {
 const XP_PER_LEVEL = 100;
 
 export const ChildProvider = ({ children }: { children: ReactNode }) => {
-  const [profile, setProfileState] = useState<ChildProfile | null>(null);
+  const [profile, setProfileState] = useState<ChildProfile | null>(() => {
+    const saved = localStorage.getItem("child_profile");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (profile) {
+      localStorage.setItem("child_profile", JSON.stringify(profile));
+    } else {
+      localStorage.removeItem("child_profile");
+    }
+  }, [profile]);
 
   const setProfile = (p: ChildProfile) => setProfileState(p);
 

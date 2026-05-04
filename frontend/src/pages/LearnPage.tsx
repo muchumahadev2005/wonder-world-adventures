@@ -667,7 +667,6 @@ const LearnPage = () => {
     <div className="min-h-screen relative overflow-hidden">
       <SceneBackground image={storiesBg} alt="Enchanted learning library" variant="library" />
       <NavBar />
-      <AmbientSoundToggle />
 
       <RewardPopup
         show={showReward}

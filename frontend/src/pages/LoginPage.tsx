@@ -93,9 +93,6 @@ const LoginPage = () => {
       {/* Magical forest background */}
       <ForestScene />
 
-      {/* Ambient sound toggle */}
-      <AmbientSoundToggle />
-
       {/* Soft glow halo behind the card */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] max-w-[90vw] h-[520px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,210,140,0.45)_0%,rgba(180,140,220,0.22)_45%,transparent_75%)] blur-3xl pointer-events-none z-0" />
 

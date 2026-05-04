@@ -101,7 +101,6 @@ const ChatPage = () => {
     <div className="min-h-screen relative overflow-hidden flex flex-col">
       <SceneBackground image={chatBg} alt="Cozy magical treehouse interior at night" variant="treehouse" />
       <NavBar />
-      <AmbientSoundToggle />
 
       <div className="page-shell-compact flex-1 flex flex-col w-full">
         <motion.div
