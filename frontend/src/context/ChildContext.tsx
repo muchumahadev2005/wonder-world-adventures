@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 export interface ChildProfile {
   name: string;
-  age: number;
+  ageGroup: "3-5" | "6-8" | "9-11";
   favoriteColor: string;
+  favoriteCharacter: string;
   stars: number;
   coins: number;
   xp: number;

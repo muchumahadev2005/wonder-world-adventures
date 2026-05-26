@@ -2,41 +2,113 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import ForestScene from "@/components/ForestScene";
-import AmbientSoundToggle from "@/components/AmbientSoundToggle";
-import { ArrowRight, Moon, Star, Mail, Lock, User, Sparkles } from "lucide-react";
+import { ArrowRight, Star, Mail, Lock, Sparkles } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { useChild } from "@/context/ChildContext";
 
 const inputClass =
   "w-full pl-11 pr-4 py-3 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 text-base font-medium focus:outline-none focus:border-amber-200 focus:bg-white/25 transition-all shadow-inner";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
+  const { setAuth } = useAuth();
+  const { setProfile, logout: clearProfile } = useChild();
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSendOtp = () => {
+  const applyChildProfile = (profile: {
+    name: string;
+    ageGroup: "3-5" | "6-8" | "9-11";
+    favoriteColor: string;
+    favoriteCharacter: string;
+  }) => {
+    setProfile({
+      name: profile.name,
+      ageGroup: profile.ageGroup,
+      favoriteColor: profile.favoriteColor,
+      favoriteCharacter: profile.favoriteCharacter,
+      stars: 0,
+      coins: 10,
+      xp: 0,
+      level: 1,
+      streak: 1,
+      completedGames: [],
+      completedStories: [],
+      completedLessons: [],
+      unlockedLessons: ["fruits"],
+      isPremium: false,
+    });
+  };
+
+  const handlePostAuth = async (token: string) => {
+    const data = await apiFetch<{ profile: any }>("/children/me", { method: "GET" }, token);
+    if (data.profile) {
+      applyChildProfile(data.profile);
+      navigate("/");
+    } else {
+      clearProfile();
+      navigate("/login");
+    }
+  };
+
+  const handleSendOtp = async () => {
     setError("");
     if (!email.trim() || !email.includes("@")) return setError("Enter a valid email");
-    // Mock OTP sending
-    setStep("otp");
+    try {
+      setLoading(true);
+      await apiFetch("/auth/request-verification", {
+        method: "POST",
+        body: { email },
+      });
+      setStep("otp");
+    } catch (err: any) {
+      setError(err.message || "Failed to send verification email");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     setError("");
     if (otp.length < 4) return setError("Enter a valid OTP");
-    // Mock OTP verification
-    setStep("password");
+    try {
+      setLoading(true);
+      await apiFetch("/auth/verify-email", {
+        method: "POST",
+        body: { email, code: otp },
+      });
+      setStep("password");
+    } catch (err: any) {
+      setError(err.message || "Verification failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setError("");
     if (password.length < 6) return setError("Password must be 6+ characters");
     if (password !== confirm) return setError("Passwords do not match");
-    // Continue to child profile setup (existing /login wizard)
-    navigate("/login");
+    try {
+      setLoading(true);
+      const name = email.split("@")[0];
+      const data = await apiFetch<{ user: any; token: string }>("/auth/signup", {
+        method: "POST",
+        body: { email, password, name },
+      });
+      setAuth(data.user, data.token);
+      await handlePostAuth(data.token);
+    } catch (err: any) {
+      setError(err.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -175,6 +247,7 @@ const SignUpPage = () => {
           {step === "email" && (
             <motion.button
               onClick={handleSendOtp}
+              disabled={loading}
               className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50"
               style={{
                 background:
@@ -192,6 +265,7 @@ const SignUpPage = () => {
           {step === "otp" && (
             <motion.button
               onClick={handleVerifyOtp}
+              disabled={loading}
               className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50"
               style={{
                 background:
@@ -209,6 +283,7 @@ const SignUpPage = () => {
           {step === "password" && (
             <motion.button
               onClick={handleSignup}
+              disabled={loading}
               className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50"
               style={{
                 background:

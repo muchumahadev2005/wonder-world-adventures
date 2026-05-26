@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
+import { useAuth } from "@/context/AuthContext";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
@@ -20,10 +21,12 @@ import {
 } from "lucide-react";
 
 const ParentsPage = () => {
-  const { profile, logout } = useChild();
+  const { profile, logout: clearProfile } = useChild();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    clearProfile();
     logout();
     navigate("/signin");
   };
@@ -115,7 +118,7 @@ const ParentsPage = () => {
                 {profile?.name}
               </h2>
               <p className="text-white/80 font-bold drop-shadow-sm">
-                Age: {profile?.age} • Fav Color: {profile?.favoriteColor}
+                Age Group: {profile?.ageGroup} • Fav Color: {profile?.favoriteColor} • Fav Character: {profile?.favoriteCharacter}
               </p>
               {/* XP level bar */}
               <div className="mt-2">

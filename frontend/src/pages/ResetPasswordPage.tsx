@@ -1,98 +1,48 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import { useGoogleLogin } from "@react-oauth/google";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ForestScene from "@/components/ForestScene";
-import { Sparkles, ArrowRight, Moon, Star, Mail, Lock } from "lucide-react";
+import { Lock, Mail, Sparkles, Star } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
-import { useChild } from "@/context/ChildContext";
 
 const inputClass =
   "w-full pl-11 pr-4 py-3 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 text-base font-medium focus:outline-none focus:border-amber-200 focus:bg-white/25 transition-all shadow-inner";
 
-const SignInPage = () => {
+const ResetPasswordPage = () => {
+  const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { setAuth } = useAuth();
-  const { setProfile, logout: clearProfile } = useChild();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(params.get("email") || "");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
-  const applyChildProfile = (profile: {
-    name: string;
-    ageGroup: "3-5" | "6-8" | "9-11";
-    favoriteColor: string;
-    favoriteCharacter: string;
-  }) => {
-    setProfile({
-      name: profile.name,
-      ageGroup: profile.ageGroup,
-      favoriteColor: profile.favoriteColor,
-      favoriteCharacter: profile.favoriteCharacter,
-      stars: 0,
-      coins: 10,
-      xp: 0,
-      level: 1,
-      streak: 1,
-      completedGames: [],
-      completedStories: [],
-      completedLessons: [],
-      unlockedLessons: ["fruits"],
-      isPremium: false,
-    });
-  };
+  const token = useMemo(() => params.get("token") || "", [params]);
 
-  const handlePostAuth = async (token: string) => {
-    const data = await apiFetch<{ profile: any }>("/children/me", { method: "GET" }, token);
-    if (data.profile) {
-      applyChildProfile(data.profile);
-      navigate("/");
-    } else {
-      clearProfile();
-      navigate("/login");
-    }
-  };
-
-  const handleLogin = async () => {
+  const handleReset = async () => {
     setError("");
-    if (!email.trim()) return setError("Please enter your email");
-    if (password.length < 4) return setError("Password is too short");
+    setSuccess("");
+    if (!email.trim() || !email.includes("@")) return setError("Enter a valid email");
+    if (password.length < 6) return setError("Password must be 6+ characters");
+    if (password !== confirm) return setError("Passwords do not match");
+    if (!token && code.trim().length < 4) return setError("Enter the reset code");
+
     try {
       setLoading(true);
-      const data = await apiFetch<{ user: any; token: string }>("/auth/login", {
+      await apiFetch("/auth/reset-password", {
         method: "POST",
-        body: { email, password },
+        body: { email, password, code: token ? undefined : code, token: token || undefined },
       });
-      setAuth(data.user, data.token);
-      await handlePostAuth(data.token);
+      setSuccess("Password updated! Please sign in.");
+      setTimeout(() => navigate("/signin"), 1200);
     } catch (err: any) {
-      setError(err.message || "Login failed");
+      setError(err.message || "Reset failed");
     } finally {
       setLoading(false);
     }
   };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        setLoading(true);
-        const data = await apiFetch<{ user: any; token: string }>("/auth/google", {
-          method: "POST",
-          body: { accessToken: tokenResponse.access_token },
-        });
-        setAuth(data.user, data.token);
-        await handlePostAuth(data.token);
-      } catch (err: any) {
-        setError(err.message || "Google login failed");
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: () => setError("Google login failed"),
-  });
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 relative overflow-hidden">
@@ -135,16 +85,16 @@ const SignInPage = () => {
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Moon className="w-7 h-7 text-amber-900" fill="currentColor" />
+              <Sparkles className="w-7 h-7 text-amber-900" fill="currentColor" />
             </motion.div>
           </div>
 
           <div className="text-center mb-6">
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
-              Welcome Back
+              Reset Password
             </h1>
             <p className="text-white/80 text-sm mt-1 italic">
-              Sign in to your magical world
+              Choose a new magical password
             </p>
           </div>
 
@@ -152,10 +102,32 @@ const SignInPage = () => {
             <div className="relative">
               <Mail className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70" />
               <input
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
+                className={inputClass}
+              />
+            </div>
+            {!token && (
+              <div className="relative">
+                <Sparkles className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70" />
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="Reset code"
+                  className={inputClass}
+                />
+              </div>
+            )}
+            <div className="relative">
+              <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="New password"
                 className={inputClass}
               />
             </div>
@@ -163,23 +135,23 @@ const SignInPage = () => {
               <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70" />
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Confirm password"
                 className={inputClass}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
             </div>
           </div>
 
-          <div className="flex justify-end mt-2">
-            <Link
-              to="/forgot-password"
-              className="text-white/80 hover:text-amber-200 text-sm font-medium transition"
+          {success && (
+            <motion.p
+              className="text-amber-200 text-center mt-3 font-bold text-sm drop-shadow"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
             >
-              Forgot Password?
-            </Link>
-          </div>
+              {success}
+            </motion.p>
+          )}
 
           {error && (
             <motion.p
@@ -192,9 +164,9 @@ const SignInPage = () => {
           )}
 
           <motion.button
-            onClick={handleLogin}
+            onClick={handleReset}
             disabled={loading}
-            className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50 relative overflow-hidden"
+            className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50"
             style={{
               background:
                 "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
@@ -204,29 +176,13 @@ const SignInPage = () => {
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.97 }}
           >
-            Login <ArrowRight className="w-5 h-5" />
-          </motion.button>
-
-          <motion.button
-            onClick={() => hasGoogle && googleLogin()}
-            disabled={loading || !hasGoogle}
-            className="mt-3 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-white border border-white/50"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(120,190,255,0.4) 0%, rgba(140,120,220,0.35) 100%)",
-              boxShadow:
-                "0 10px 30px -5px rgba(120,170,255,0.45), inset 0 1px 0 rgba(255,255,255,0.35)",
-            }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Continue with Google <Sparkles className="w-5 h-5" />
+            Reset Password
           </motion.button>
 
           <p className="text-center text-white/85 text-sm mt-6">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-amber-200 font-bold hover:underline">
-              Sign Up
+            Back to{" "}
+            <Link to="/signin" className="text-amber-200 font-bold hover:underline">
+              Login
             </Link>
           </p>
         </div>
@@ -235,4 +191,4 @@ const SignInPage = () => {
   );
 };
 
-export default SignInPage;
+export default ResetPasswordPage;

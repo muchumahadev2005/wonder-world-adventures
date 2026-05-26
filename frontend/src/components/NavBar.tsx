@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChild } from "@/context/ChildContext";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { icon: House, label: "Home", path: "/" },
@@ -25,9 +26,13 @@ const navItems = [
 const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, logout } = useChild();
+  const { profile, logout: clearProfile } = useChild();
+  const { user, isAuthenticated, logout } = useAuth();
 
-  if (!profile) return null;
+  if (!isAuthenticated) return null;
+
+  const displayName = profile?.name || user?.name || "Explorer";
+  const starCount = profile?.stars ?? 0;
 
   const glassStyle = {
     background:
@@ -100,7 +105,7 @@ const NavBar = () => {
               <span className="text-xs font-bold text-white">K</span>
             </div>
             <span className="font-display text-base font-bold text-white drop-shadow-[0_2px_6px_rgba(120,60,20,0.4)] truncate">
-              Hi, {profile.name?.split(" ")[0]}!
+              Hi, {displayName.split(" ")[0]}!
             </span>
           </motion.div>
 
@@ -118,14 +123,14 @@ const NavBar = () => {
               <Sparkles className="h-3.5 w-3.5 text-amber-700" strokeWidth={2.4} />
               <AnimatePresence mode="wait">
                 <motion.span
-                  key={profile.stars}
+                  key={starCount}
                   className="text-sm font-bold text-amber-800"
                   initial={{ y: -5, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 5, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {profile.stars}
+                  {starCount}
                 </motion.span>
               </AnimatePresence>
             </motion.div>
@@ -231,24 +236,21 @@ const NavBar = () => {
               <Sparkles className="h-5 w-5 text-amber-700" strokeWidth={2.3} />
               <AnimatePresence mode="wait">
                 <motion.span
-                  key={profile.stars}
+                  key={starCount}
                   className="text-xl font-bold text-amber-800"
                   initial={{ y: -6, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 6, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {profile.stars}
+                  {starCount}
                   <span className="hidden lg:inline"> Stars</span>
                 </motion.span>
               </AnimatePresence>
             </motion.div>
 
             <motion.button
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
+              onClick={() => navigate("/parents")}
               className="flex h-12 w-12 items-center justify-center rounded-full border border-white/70"
               style={{
                 background:
