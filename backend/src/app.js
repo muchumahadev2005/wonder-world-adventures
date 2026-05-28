@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const routes = require("./routes");
 const errorMiddleware = require("./middleware/error.middleware");
-const { clientUrl, clientUrls } = require("./config/env");
+const { clientUrl, clientUrls, logRequests } = require("./config/env");
 const logger = require("./utils/logger");
 
 const app = express();
@@ -11,8 +11,6 @@ const normalizeOrigin = (origin) => origin?.replace(/\/$/, "");
 const allowedOrigins = new Set([
 	normalizeOrigin(clientUrl),
 	...clientUrls.map(normalizeOrigin),
-	"http://localhost:5173",
-	"http://localhost:8080",
 ]);
 const isVercelPreview = (origin) => /https:\/\/.+\.vercel\.app$/.test(origin || "");
 const isAllowedOrigin = (origin) => {
@@ -37,6 +35,22 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+
+app.use((req, res, next) => {
+	if (!logRequests) return next();
+	if (!req.path.startsWith("/api/auth")) return next();
+	const startedAt = Date.now();
+	res.on("finish", () => {
+		logger.info("Auth request", {
+			method: req.method,
+			path: req.originalUrl,
+			status: res.statusCode,
+			ms: Date.now() - startedAt,
+			origin: req.headers.origin || null,
+		});
+	});
+	return next();
+});
 app.use(express.json({ limit: "2mb" }));
 
 app.use("/api", routes);

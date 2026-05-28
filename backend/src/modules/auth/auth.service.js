@@ -3,12 +3,15 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const prisma = require("../../prisma/prismaClient");
+const logger = require("../../utils/logger");
 const {
 	jwtSecret,
 	smtpHost,
 	smtpPort,
 	smtpEmail,
 	smtpPassword,
+	smtpTimeoutMs,
+	authDebug,
 	clientUrl,
 } = require("../../config/env");
 
@@ -62,10 +65,26 @@ const mailer = nodemailer.createTransport({
 		user: smtpEmail,
 		pass: smtpPassword,
 	},
+	connectionTimeout: smtpTimeoutMs,
+	greetingTimeout: smtpTimeoutMs,
+	socketTimeout: smtpTimeoutMs,
 });
 
 const sendEmail = async ({ to, subject, html }) => {
-	await mailer.sendMail({ from: smtpEmail, to, subject, html });
+	const startedAt = Date.now();
+	try {
+		await mailer.sendMail({ from: smtpEmail, to, subject, html });
+		if (authDebug) {
+			logger.info("SMTP send success", { subject, ms: Date.now() - startedAt });
+		}
+	} catch (err) {
+		logger.error("SMTP send failed", {
+			message: err.message,
+			code: err.code,
+			ms: Date.now() - startedAt,
+		});
+		throw err;
+	}
 };
 
 const requestEmailVerification = async (email) => {

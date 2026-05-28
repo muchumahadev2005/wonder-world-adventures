@@ -1,7 +1,6 @@
-const DEFAULT_SERVER_URL = import.meta.env.DEV
-  ? "http://localhost:5000"
-  : "https://wonder-world-adventures.onrender.com";
+const DEFAULT_SERVER_URL = "https://wonder-world-adventures.onrender.com";
 const API_BASE_URL = `${import.meta.env.VITE_SERVER_URL || DEFAULT_SERVER_URL}/api`;
+const apiDebug = import.meta.env.VITE_API_DEBUG === "true";
 
  type ApiOptions = Omit<RequestInit, "body"> & { body?: Record<string, unknown> };
 
@@ -15,7 +14,7 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV || apiDebug) {
     console.log("[api] request", {
       url,
       method: options.method || "GET",
@@ -30,7 +29,7 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
   });
 
   const data = await response.json();
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV || apiDebug) {
     console.log("[api] response", {
       url,
       status: response.status,

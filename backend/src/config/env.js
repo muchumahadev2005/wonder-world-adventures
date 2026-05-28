@@ -17,6 +17,11 @@ const parseList = (value) => {
 		.filter(Boolean);
 };
 
+const parseBool = (value, fallback = false) => {
+	if (value === undefined) return fallback;
+	return value === "true" || value === "1";
+};
+
 module.exports = {
 	env: getEnv("NODE_ENV", "development"),
 	port: Number(getEnv("PORT", 5000)),
@@ -28,7 +33,10 @@ module.exports = {
 	smtpPort: Number(getEnv("SMTP_PORT", 587)),
 	smtpEmail: getEnv("SMTP_EMAIL"),
 	smtpPassword: getEnv("SMTP_PASSWORD"),
-	clientUrl: getEnv("CLIENT_URL", "http://localhost:8080"),
+	smtpTimeoutMs: Number(getEnv("SMTP_TIMEOUT_MS", 10000)),
+	clientUrl: getEnv("CLIENT_URL", "https://wonder-world-adventures.vercel.app"),
 	clientUrls: parseList(getEnv("CLIENT_URLS", "")),
-	serverUrl: getEnv("SERVER_URL", "http://localhost:5000"),
+	serverUrl: getEnv("SERVER_URL", "https://wonder-world-adventures.onrender.com"),
+	logRequests: parseBool(getEnv("LOG_REQUESTS", "false")),
+	authDebug: parseBool(getEnv("AUTH_DEBUG", "false")),
 };
