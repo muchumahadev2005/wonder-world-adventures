@@ -1,16 +1,13 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const prisma = require("../../prisma/prismaClient");
 const logger = require("../../utils/logger");
 const {
 	jwtSecret,
-	smtpHost,
-	smtpPort,
-	smtpEmail,
-	smtpPassword,
-	smtpTimeoutMs,
+	resendApiKey,
+	resendFromEmail,
 	authDebug,
 	clientUrl,
 } = require("../../config/env");
@@ -57,43 +54,40 @@ const getSafeUser = (user) => ({
 	createdAt: user.createdAt,
 });
 
-const mailer = nodemailer.createTransport({
-	host: smtpHost,
-	port: smtpPort,
-	secure: smtpPort === 465,
-	auth: {
-		user: smtpEmail,
-		pass: smtpPassword,
-	},
-	connectionTimeout: smtpTimeoutMs,
-	greetingTimeout: smtpTimeoutMs,
-	socketTimeout: smtpTimeoutMs,
-});
+const resend = new Resend(resendApiKey);
 
 const sendEmail = async ({ to, subject, html }) => {
 	const startedAt = Date.now();
 	try {
 		if (authDebug) {
-			console.log("SMTP CONFIG:", {
-				host: smtpHost,
-				port: smtpPort,
-				user: smtpEmail,
+			console.log("RESEND CONFIG:", {
+				from: resendFromEmail,
 			});
 			console.log("Attempting to send OTP email...");
 		}
-		await mailer.verify();
-		await mailer.sendMail({ from: smtpEmail, to, subject, html });
+		const { data, error } = await resend.emails.send({
+			from: resendFromEmail,
+			to,
+			subject,
+			html,
+		});
+		if (error) {
+			const resendError = Object.assign(new Error(error.message || "Resend error"), {
+				code: error.name,
+			});
+			throw resendError;
+		}
 		if (authDebug) {
-			console.log("Email sent successfully");
+			console.log("Email sent successfully", { id: data?.id });
 		}
 	} catch (err) {
-		console.error("SMTP ERROR:", err);
-		logger.error("SMTP send failed", {
+		console.error("RESEND ERROR:", err);
+		logger.error("Resend send failed", {
 			message: err.message,
 			code: err.code,
 			ms: Date.now() - startedAt,
 		});
-		throw authError("Email service unavailable. Please try again.", 503, "SMTP_UNAVAILABLE");
+		throw authError("Email service unavailable. Please try again.", 503, "EMAIL_UNAVAILABLE");
 	}
 };
 
