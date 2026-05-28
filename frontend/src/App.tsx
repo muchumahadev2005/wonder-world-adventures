@@ -36,27 +36,89 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/signin" element={isAuthenticated ? <Navigate to="/" replace /> : <SignInPage />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/" replace /> : <SignUpPage />} />
+        <Route
+          path="/signin"
+          element={
+            isAuthenticated ? <Navigate to="/" replace /> : <SignInPage />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            isAuthenticated ? <Navigate to="/" replace /> : <SignUpPage />
+          }
+        />
         <Route
           path="/login"
           element={
-            !isAuthenticated
-              ? <Navigate to="/signin" replace />
-              : profile
-                ? <Navigate to="/" replace />
-                : <LoginPage />
+            !isAuthenticated ? (
+              <Navigate to="/signin" replace />
+            ) : profile ? (
+              <Navigate to="/" replace />
+            ) : (
+              <LoginPage />
+            )
           }
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-        <Route path="/games" element={<ProtectedRoute><GamesPage /></ProtectedRoute>} />
-        <Route path="/stories" element={<ProtectedRoute><StoriesPage /></ProtectedRoute>} />
-        <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-        <Route path="/parents" element={<ProtectedRoute><ParentsPage /></ProtectedRoute>} />
-        <Route path="/learn" element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games"
+          element={
+            <ProtectedRoute>
+              <GamesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stories"
+          element={
+            <ProtectedRoute>
+              <StoriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/parents"
+          element={
+            <ProtectedRoute>
+              <ParentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learn"
+          element={
+            <ProtectedRoute>
+              <LearnPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {isAuthenticated && <BottomNav />}

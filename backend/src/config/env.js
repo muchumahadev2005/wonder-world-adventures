@@ -9,6 +9,14 @@ const getEnv = (key, fallback) => {
 	return undefined;
 };
 
+const parseList = (value) => {
+	if (!value) return [];
+	return value
+		.split(",")
+		.map((entry) => entry.trim())
+		.filter(Boolean);
+};
+
 module.exports = {
 	env: getEnv("NODE_ENV", "development"),
 	port: Number(getEnv("PORT", 5000)),
@@ -21,5 +29,6 @@ module.exports = {
 	smtpEmail: getEnv("SMTP_EMAIL"),
 	smtpPassword: getEnv("SMTP_PASSWORD"),
 	clientUrl: getEnv("CLIENT_URL", "http://localhost:8080"),
+	clientUrls: parseList(getEnv("CLIENT_URLS", "")),
 	serverUrl: getEnv("SERVER_URL", "http://localhost:5000"),
 };
