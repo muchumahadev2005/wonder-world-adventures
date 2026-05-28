@@ -3,6 +3,7 @@ const cors = require("cors");
 const routes = require("./routes");
 const errorMiddleware = require("./middleware/error.middleware");
 const { clientUrl, clientUrls } = require("./config/env");
+const logger = require("./utils/logger");
 
 const app = express();
 
@@ -14,18 +15,28 @@ const allowedOrigins = new Set([
 	"http://localhost:8080",
 ]);
 const isVercelPreview = (origin) => /https:\/\/.+\.vercel\.app$/.test(origin || "");
+const isAllowedOrigin = (origin) => {
+	const normalized = normalizeOrigin(origin);
+	return Boolean(normalized) && (allowedOrigins.has(normalized) || isVercelPreview(normalized));
+};
 
-app.use(cors({
+const corsOptions = {
 	origin: (origin, callback) => {
 		if (!origin) return callback(null, true);
-		const normalized = normalizeOrigin(origin);
-		if (allowedOrigins.has(normalized) || isVercelPreview(normalized)) {
+		if (isAllowedOrigin(origin)) {
 			return callback(null, true);
 		}
+		logger.warn("CORS rejected origin", {
+			origin,
+			allowedOrigins: Array.from(allowedOrigins),
+		});
 		return callback(new Error("Not allowed by CORS"));
 	},
 	credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "2mb" }));
 
 app.use("/api", routes);
