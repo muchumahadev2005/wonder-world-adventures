@@ -1,6 +1,6 @@
 const API_BASE_URL = `${import.meta.env.VITE_SERVER_URL || "http://localhost:5000"}/api`;
 
-type ApiOptions = RequestInit & { body?: Record<string, unknown> };
+ type ApiOptions = Omit<RequestInit, "body"> & { body?: Record<string, unknown> };
 
 export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?: string | null) => {
   const url = `${API_BASE_URL}${path}`;
@@ -38,7 +38,11 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
   }
   if (!response.ok || data?.success === false) {
     const message = data?.message || "Request failed";
-    throw new Error(message);
+    const error = new Error(message) as Error & { code?: string };
+    if (data?.code) {
+      error.code = data.code;
+    }
+    throw error;
   }
 
   return data as T;

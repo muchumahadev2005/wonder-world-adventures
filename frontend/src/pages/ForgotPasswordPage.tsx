@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import ForestScene from "@/components/ForestScene";
 import { Mail, Moon, Star } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -9,22 +9,39 @@ const inputClass =
   "w-full pl-11 pr-4 py-3 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 text-base font-medium focus:outline-none focus:border-amber-200 focus:bg-white/25 transition-all shadow-inner";
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
+  const [params] = useSearchParams();
+  const [email, setEmail] = useState(params.get("email") || "");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [accountAction, setAccountAction] = useState<"google-only" | null>(null);
+
+  const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
+  const normalizedEmail = email.trim().toLowerCase();
+  useEffect(() => {
+    const paramEmail = params.get("email") || "";
+    if (paramEmail && paramEmail !== email) {
+      setEmail(paramEmail);
+    }
+  }, [params, email]);
 
   const handleSend = async () => {
     setError("");
-    if (!email.trim() || !email.includes("@")) return setError("Enter a valid email");
+    setAccountAction(null);
+    if (!isValidEmail(email)) return setError("Enter a valid email address.");
     try {
       setLoading(true);
       await apiFetch("/auth/forgot-password", {
         method: "POST",
-        body: { email },
+        body: { email: normalizedEmail },
       });
       setSent(true);
     } catch (err: any) {
+      if (err?.code === "ACCOUNT_GOOGLE_ONLY") {
+        setAccountAction("google-only");
+        setError("");
+        return;
+      }
       setError(err.message || "Failed to send reset email");
     } finally {
       setLoading(false);
@@ -91,7 +108,12 @@ const ForgotPasswordPage = () => {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (sent) setSent(false);
+                  if (error) setError("");
+                  if (accountAction) setAccountAction(null);
+                }}
                 placeholder="Email"
                 className={inputClass}
               />
@@ -118,21 +140,57 @@ const ForgotPasswordPage = () => {
             </motion.p>
           )}
 
-          <motion.button
-            onClick={handleSend}
-            disabled={loading}
-            className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50"
-            style={{
-              background:
-                "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
-              boxShadow:
-                "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
-            }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Send Reset Link
-          </motion.button>
+          {accountAction === "google-only" && (
+            <div className="mt-4">
+              <p className="text-white/85 text-center text-sm font-medium">
+                This account uses Google Sign-In.
+              </p>
+              <div className="mt-3 grid gap-2">
+                <Link
+                  to="/signin"
+                  className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-white border border-white/50"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(120,190,255,0.4) 0%, rgba(140,120,220,0.35) 100%)",
+                    boxShadow:
+                      "0 10px 30px -5px rgba(120,170,255,0.45), inset 0 1px 0 rgba(255,255,255,0.35)",
+                  }}
+                >
+                  Continue with Google
+                </Link>
+                <Link
+                  to="/signin"
+                  className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-amber-950 border border-white/50"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+                    boxShadow:
+                      "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
+                  }}
+                >
+                  Back to Login
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {!accountAction && (
+            <motion.button
+              onClick={handleSend}
+              disabled={loading || !isValidEmail(email)}
+              className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50"
+              style={{
+                background:
+                  "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+                boxShadow:
+                  "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
+              }}
+              whileHover={{ scale: 1.03, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Send Reset Link
+            </motion.button>
+          )}
 
           <p className="text-center text-white/85 text-sm mt-6">
             Remembered your password?{" "}

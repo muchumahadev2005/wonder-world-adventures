@@ -12,6 +12,7 @@ const errorMiddleware = (err, req, res, next) => {
 	res.status(status).json({
 		success: false,
 		message,
+		...(err.code ? { code: err.code } : {}),
 		...(env !== "production" ? { stack: err.stack } : {}),
 	});
 };

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
 import ForestScene from "@/components/ForestScene";
 import { ArrowRight, Star, Mail, Lock, Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -15,12 +16,20 @@ const SignUpPage = () => {
   const { setAuth } = useAuth();
   const { setProfile, logout: clearProfile } = useChild();
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [accountAction, setAccountAction] = useState<"google-only" | null>(null);
+  const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
+  const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
+  const isValidPassword = (value: string) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,30}$/.test(value);
+  const normalizedEmail = email.trim().toLowerCase();
 
   const applyChildProfile = (profile: {
     name: string;
@@ -59,15 +68,21 @@ const SignUpPage = () => {
 
   const handleSendOtp = async () => {
     setError("");
-    if (!email.trim() || !email.includes("@")) return setError("Enter a valid email");
+    setAccountAction(null);
+    if (!isValidEmail(email)) return setError("Enter a valid email");
     try {
       setLoading(true);
       await apiFetch("/auth/request-verification", {
         method: "POST",
-        body: { email },
+        body: { email: normalizedEmail },
       });
       setStep("otp");
     } catch (err: any) {
+      if (err?.code === "ACCOUNT_GOOGLE_ONLY") {
+        setAccountAction("google-only");
+        setError("");
+        return;
+      }
       setError(err.message || "Failed to send verification email");
     } finally {
       setLoading(false);
@@ -81,7 +96,7 @@ const SignUpPage = () => {
       setLoading(true);
       await apiFetch("/auth/verify-email", {
         method: "POST",
-        body: { email, code: otp },
+        body: { email: normalizedEmail, code: otp },
       });
       setStep("password");
     } catch (err: any) {
@@ -93,14 +108,17 @@ const SignUpPage = () => {
 
   const handleSignup = async () => {
     setError("");
-    if (password.length < 6) return setError("Password must be 6+ characters");
+    if (name.trim().length < 3) return setError("Name must be at least 3 characters");
+    if (name.trim().length > 50) return setError("Name must be 50 characters or less");
+    if (!isValidPassword(password)) {
+      return setError("Password must be 8-30 chars with upper, lower, number, and special character");
+    }
     if (password !== confirm) return setError("Passwords do not match");
     try {
       setLoading(true);
-      const name = email.split("@")[0];
       const data = await apiFetch<{ user: any; token: string }>("/auth/signup", {
         method: "POST",
-        body: { email, password, name },
+        body: { email: normalizedEmail, password, confirmPassword: confirm, name: name.trim() },
       });
       setAuth(data.user, data.token);
       await handlePostAuth(data.token);
@@ -110,6 +128,25 @@ const SignUpPage = () => {
       setLoading(false);
     }
   };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        const data = await apiFetch<{ user: any; token: string }>("/auth/google", {
+          method: "POST",
+          body: { accessToken: tokenResponse.access_token },
+        });
+        setAuth(data.user, data.token);
+        await handlePostAuth(data.token);
+      } catch (err: any) {
+        setError(err.message || "Google login failed");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError("Google login failed"),
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 relative overflow-hidden">
@@ -177,7 +214,11 @@ const SignUpPage = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError("");
+                    if (accountAction) setAccountAction(null);
+                  }}
                   placeholder="Email"
                   className={inputClass}
                   onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
@@ -195,7 +236,10 @@ const SignUpPage = () => {
                 <input
                   type="text"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (error) setError("");
+                  }}
                   placeholder="Enter OTP"
                   className={inputClass}
                   onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
@@ -210,11 +254,27 @@ const SignUpPage = () => {
                 className="space-y-3"
               >
                 <div className="relative">
+                  <Mail className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70" />
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (error) setError("");
+                    }}
+                    placeholder="Name"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="relative">
                   <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70" />
                   <input
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError("");
+                    }}
                     placeholder="Password"
                     className={inputClass}
                   />
@@ -224,7 +284,10 @@ const SignUpPage = () => {
                   <input
                     type="password"
                     value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
+                    onChange={(e) => {
+                      setConfirm(e.target.value);
+                      if (error) setError("");
+                    }}
                     placeholder="Confirm password"
                     className={inputClass}
                     onKeyDown={(e) => e.key === "Enter" && handleSignup()}
@@ -244,7 +307,47 @@ const SignUpPage = () => {
             </motion.p>
           )}
 
-          {step === "email" && (
+          {accountAction === "google-only" && (
+            <div className="mt-4">
+              <p className="text-white/85 text-center text-sm font-medium">
+                This account uses Google Sign-In.
+              </p>
+              <div className="mt-3 grid gap-2">
+                <motion.button
+                  onClick={() => hasGoogle && googleLogin()}
+                  disabled={loading || !hasGoogle}
+                  className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-white border border-white/50"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(120,190,255,0.4) 0%, rgba(140,120,220,0.35) 100%)",
+                    boxShadow:
+                      "0 10px 30px -5px rgba(120,170,255,0.45), inset 0 1px 0 rgba(255,255,255,0.35)",
+                  }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Continue with Google <Sparkles className="w-5 h-5" />
+                </motion.button>
+                <motion.button
+                  onClick={() => navigate("/signin")}
+                  disabled={loading}
+                  className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-amber-950 border border-white/50"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+                    boxShadow:
+                      "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
+                  }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Back to Login
+                </motion.button>
+              </div>
+            </div>
+          )}
+
+          {step === "email" && !accountAction && (
             <motion.button
               onClick={handleSendOtp}
               disabled={loading}
@@ -262,7 +365,7 @@ const SignUpPage = () => {
             </motion.button>
           )}
 
-          {step === "otp" && (
+          {step === "otp" && !accountAction && (
             <motion.button
               onClick={handleVerifyOtp}
               disabled={loading}
@@ -280,7 +383,7 @@ const SignUpPage = () => {
             </motion.button>
           )}
 
-          {step === "password" && (
+          {step === "password" && !accountAction && (
             <motion.button
               onClick={handleSignup}
               disabled={loading}

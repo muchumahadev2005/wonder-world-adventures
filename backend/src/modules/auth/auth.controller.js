@@ -31,6 +31,7 @@ const forgotPassword = catchAsync(async (req, res) => {
 	res.json({ success: true, message: "Reset email sent if account exists." });
 });
 
+
 const resetPassword = catchAsync(async (req, res) => {
 	await authService.resetPassword(req.body);
 	res.json({ success: true, message: "Password updated." });

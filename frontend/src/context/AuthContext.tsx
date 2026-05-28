@@ -5,7 +5,7 @@ export interface AuthUser {
   name: string;
   email: string;
   profileImage?: string | null;
-  provider: "email" | "google";
+  provider: Array<"email" | "google">;
   isVerified: boolean;
   createdAt: string;
 }
@@ -31,7 +31,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const saved = localStorage.getItem("auth_user");
     if (!saved) return null;
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed.provider === "string") {
+        parsed.provider = [parsed.provider];
+      }
+      return parsed;
     } catch (err) {
       return null;
     }

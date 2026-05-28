@@ -33,6 +33,17 @@ const createJwt = (user) => {
 	);
 };
 
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
+const authError = (message, status, code) => Object.assign(new Error(message), { status, code });
+
+const hasProvider = (user, provider) => {
+	if (!user?.provider) return false;
+	if (Array.isArray(user.provider)) return user.provider.includes(provider);
+	return user.provider === provider;
+};
+
+
 const getSafeUser = (user) => ({
 	id: user.id,
 	name: user.name,
@@ -58,29 +69,30 @@ const sendEmail = async ({ to, subject, html }) => {
 };
 
 const requestEmailVerification = async (email) => {
-	const existing = await prisma.user.findUnique({ where: { email } });
+	const normalizedEmail = normalizeEmail(email);
+	const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 	if (existing) {
-		if (existing.provider === "google") {
-			throw Object.assign(new Error("Use Google sign-in for this account."), { status: 400 });
+		if (hasProvider(existing, "google") && !hasProvider(existing, "email")) {
+			throw authError("This account uses Google Sign-In.", 400, "ACCOUNT_GOOGLE_ONLY");
 		}
-		throw Object.assign(new Error("Email already registered."), { status: 400 });
+		throw authError("Account already exists.", 400, "ACCOUNT_EXISTS");
 	}
 
-	await prisma.emailVerificationToken.deleteMany({ where: { email } });
+	await prisma.emailVerificationToken.deleteMany({ where: { email: normalizedEmail } });
 
 	const { token, code, tokenHash, codeHash } = generateTokenPair();
 	const expiresAt = new Date(Date.now() + 1000 * 60 * 15);
 
 	await prisma.emailVerificationToken.create({
 		data: {
-			email,
+			email: normalizedEmail,
 			tokenHash,
 			codeHash,
 			expiresAt,
 		},
 	});
 
-	const verifyLink = `${clientUrl}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+	const verifyLink = `${clientUrl}/verify-email?token=${token}&email=${encodeURIComponent(normalizedEmail)}`;
 	const html = `
 		<div style="font-family: Arial, sans-serif;">
 			<h2>Verify your StoryNest World email</h2>
@@ -92,16 +104,17 @@ const requestEmailVerification = async (email) => {
 		</div>
 	`;
 	await sendEmail({
-		to: email,
+		to: normalizedEmail,
 		subject: "Verify your StoryNest World account",
 		html,
 	});
 };
 
 const verifyEmail = async ({ email, code, token }) => {
+	const normalizedEmail = normalizeEmail(email);
 	const now = new Date();
 	const where = {
-		email,
+		email: normalizedEmail,
 		expiresAt: { gt: now },
 	};
 
@@ -119,7 +132,7 @@ const verifyEmail = async ({ email, code, token }) => {
 	}
 
 	if (!verification) {
-		throw Object.assign(new Error("Invalid or expired verification."), { status: 400 });
+		throw authError("Invalid or expired verification.", 400, "INVALID_VERIFICATION");
 	}
 
 	const updated = await prisma.emailVerificationToken.update({
@@ -131,9 +144,10 @@ const verifyEmail = async ({ email, code, token }) => {
 };
 
 const signup = async ({ email, password, name }) => {
+	const normalizedEmail = normalizeEmail(email);
 	const verified = await prisma.emailVerificationToken.findFirst({
 		where: {
-			email,
+			email: normalizedEmail,
 			verifiedAt: { not: null },
 			expiresAt: { gt: new Date() },
 		},
@@ -141,44 +155,48 @@ const signup = async ({ email, password, name }) => {
 	});
 
 	if (!verified) {
-		throw Object.assign(new Error("Email not verified."), { status: 400 });
+		throw authError("Email not verified.", 400, "EMAIL_NOT_VERIFIED");
 	}
 
-	const existing = await prisma.user.findUnique({ where: { email } });
+	const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 	if (existing) {
-		throw Object.assign(new Error("Email already registered."), { status: 400 });
+		throw authError("Account already exists.", 400, "ACCOUNT_EXISTS");
 	}
 
 	const hashedPassword = await bcrypt.hash(password, 10);
-	const displayName = name || email.split("@")[0];
+	const displayName = name || normalizedEmail.split("@")[0];
 
 	const user = await prisma.user.create({
 		data: {
 			name: displayName,
-			email,
+			email: normalizedEmail,
 			password: hashedPassword,
-			provider: "email",
+			provider: ["email"],
 			isVerified: true,
 		},
 	});
 
-	await prisma.emailVerificationToken.deleteMany({ where: { email } });
+	await prisma.emailVerificationToken.deleteMany({ where: { email: normalizedEmail } });
 
 	const token = createJwt(user);
 	return { user: getSafeUser(user), token };
 };
 
 const login = async ({ email, password }) => {
-	const user = await prisma.user.findUnique({ where: { email } });
-	if (!user || user.provider !== "email") {
-		throw Object.assign(new Error("Invalid credentials."), { status: 400 });
+	const normalizedEmail = normalizeEmail(email);
+	const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+	if (!user) {
+		throw authError("No account found.", 404, "ACCOUNT_NOT_FOUND");
+	}
+	if (!hasProvider(user, "email")) {
+		throw authError("This account uses Google Sign-In.", 400, "ACCOUNT_GOOGLE_ONLY");
 	}
 	if (!user.isVerified) {
-		throw Object.assign(new Error("Email not verified."), { status: 400 });
+		throw authError("Email not verified.", 400, "EMAIL_NOT_VERIFIED");
 	}
 	const isMatch = await bcrypt.compare(password, user.password || "");
 	if (!isMatch) {
-		throw Object.assign(new Error("Invalid credentials."), { status: 400 });
+		throw authError("Invalid credentials.", 400, "INVALID_CREDENTIALS");
 	}
 	return { user: getSafeUser(user), token: createJwt(user) };
 };
@@ -188,25 +206,29 @@ const googleAuth = async ({ accessToken }) => {
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
 	if (!response.ok) {
-		throw Object.assign(new Error("Google authentication failed."), { status: 400 });
+		throw authError("Google authentication failed.", 400, "GOOGLE_AUTH_FAILED");
 	}
 	const profile = await response.json();
 	if (!profile.email) {
-		throw Object.assign(new Error("Google account has no email."), { status: 400 });
+		throw authError("Google account has no email.", 400, "GOOGLE_EMAIL_MISSING");
 	}
+	const normalizedEmail = normalizeEmail(profile.email);
 
-	let user = await prisma.user.findUnique({ where: { email: profile.email } });
-	if (user && user.provider !== "google") {
-		throw Object.assign(new Error("Use email login for this account."), { status: 400 });
+	let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+	if (user) {
+		if (!hasProvider(user, "google")) {
+			throw authError("This account uses email and password.", 400, "ACCOUNT_EMAIL_ONLY");
+		}
+		return { user: getSafeUser(user), token: createJwt(user) };
 	}
 
 	if (!user) {
 		user = await prisma.user.create({
 			data: {
 				name: profile.name || profile.given_name || "StoryNest Adventurer",
-				email: profile.email,
+				email: normalizedEmail,
 				profileImage: profile.picture,
-				provider: "google",
+				provider: ["google"],
 				isVerified: true,
 			},
 		});
@@ -216,19 +238,29 @@ const googleAuth = async ({ accessToken }) => {
 };
 
 const forgotPassword = async (email) => {
-	const user = await prisma.user.findUnique({ where: { email } });
-	if (!user || user.provider !== "email") {
-		return;
+	const normalizedEmail = normalizeEmail(email);
+	const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+	if (!user) {
+		throw authError("No account found.", 404, "ACCOUNT_NOT_FOUND");
+	}
+	if (!hasProvider(user, "email") && hasProvider(user, "google")) {
+		throw authError("This account uses Google Sign-In.", 400, "ACCOUNT_GOOGLE_ONLY");
+	}
+	if (!hasProvider(user, "email")) {
+		throw authError("This account uses Google Sign-In.", 400, "ACCOUNT_GOOGLE_ONLY");
+	}
+	if (!user.isVerified) {
+		throw authError("Email is not verified.", 400, "EMAIL_NOT_VERIFIED");
 	}
 
-	await prisma.passwordResetToken.deleteMany({ where: { email } });
+	await prisma.passwordResetToken.deleteMany({ where: { email: normalizedEmail } });
 
 	const { token, code, tokenHash, codeHash } = generateTokenPair();
 	const expiresAt = new Date(Date.now() + 1000 * 60 * 20);
 
 	await prisma.passwordResetToken.create({
 		data: {
-			email,
+			email: normalizedEmail,
 			tokenHash,
 			codeHash,
 			expiresAt,
@@ -236,7 +268,7 @@ const forgotPassword = async (email) => {
 		},
 	});
 
-	const resetLink = `${clientUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+	const resetLink = `${clientUrl}/reset-password?token=${token}&email=${encodeURIComponent(normalizedEmail)}`;
 	const html = `
 		<div style="font-family: Arial, sans-serif;">
 			<h2>Reset your StoryNest World password</h2>
@@ -248,16 +280,17 @@ const forgotPassword = async (email) => {
 		</div>
 	`;
 	await sendEmail({
-		to: email,
+		to: normalizedEmail,
 		subject: "Reset your StoryNest World password",
 		html,
 	});
 };
 
 const resetPassword = async ({ email, password, code, token }) => {
+	const normalizedEmail = normalizeEmail(email);
 	const now = new Date();
 	let reset = null;
-	const baseWhere = { email, expiresAt: { gt: now }, usedAt: null };
+	const baseWhere = { email: normalizedEmail, expiresAt: { gt: now }, usedAt: null };
 
 	if (token) {
 		reset = await prisma.passwordResetToken.findFirst({
@@ -272,12 +305,20 @@ const resetPassword = async ({ email, password, code, token }) => {
 	}
 
 	if (!reset) {
-		throw Object.assign(new Error("Invalid or expired reset token."), { status: 400 });
+		throw authError("Invalid or expired reset token.", 400, "INVALID_RESET_TOKEN");
+	}
+
+	const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+	if (!user) {
+		throw authError("No account found.", 404, "ACCOUNT_NOT_FOUND");
+	}
+	if (!hasProvider(user, "email")) {
+		throw authError("This account uses Google Sign-In.", 400, "ACCOUNT_GOOGLE_ONLY");
 	}
 
 	const hashedPassword = await bcrypt.hash(password, 10);
 	await prisma.user.update({
-		where: { email },
+		where: { email: normalizedEmail },
 		data: { password: hashedPassword },
 	});
 

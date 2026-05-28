@@ -1,11 +1,21 @@
 const { z } = require("zod");
 
+const emailSchema = z.string().trim().email().transform((value) => value.toLowerCase());
+const nameSchema = z.string().trim().min(3).max(50);
+const passwordSchema = z
+	.string()
+	.min(8)
+	.max(30)
+	.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/, {
+		message: "Password must include upper, lower, number, and special character",
+	});
+
 const requestVerificationSchema = z.object({
-	email: z.string().email(),
+	email: emailSchema,
 });
 
 const verifyEmailSchema = z.object({
-	email: z.string().email(),
+	email: emailSchema,
 	code: z.string().min(4).optional(),
 	token: z.string().min(10).optional(),
 }).refine((data) => data.code || data.token, {
@@ -14,14 +24,18 @@ const verifyEmailSchema = z.object({
 });
 
 const signupSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(6),
-	name: z.string().min(1).optional(),
+	name: nameSchema,
+	email: emailSchema,
+	password: passwordSchema,
+	confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+	message: "Passwords do not match",
+	path: ["confirmPassword"],
 });
 
 const loginSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(4),
+	email: emailSchema,
+	password: z.string().min(8),
 });
 
 const googleSchema = z.object({
@@ -29,12 +43,12 @@ const googleSchema = z.object({
 });
 
 const forgotPasswordSchema = z.object({
-	email: z.string().email(),
+	email: emailSchema,
 });
 
 const resetPasswordSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(6),
+	email: emailSchema,
+	password: passwordSchema,
 	code: z.string().min(4).optional(),
 	token: z.string().min(10).optional(),
 }).refine((data) => data.code || data.token, {

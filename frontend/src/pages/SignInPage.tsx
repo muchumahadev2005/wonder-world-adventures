@@ -19,7 +19,11 @@ const SignInPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [accountAction, setAccountAction] = useState<"google-only" | null>(null);
   const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
+  const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
+  const normalizedEmail = email.trim().toLowerCase();
 
   const applyChildProfile = (profile: {
     name: string;
@@ -58,17 +62,23 @@ const SignInPage = () => {
 
   const handleLogin = async () => {
     setError("");
-    if (!email.trim()) return setError("Please enter your email");
-    if (password.length < 4) return setError("Password is too short");
+    setAccountAction(null);
+    if (!isValidEmail(email)) return setError("Please enter a valid email");
+    if (password.length < 8) return setError("Password must be at least 8 characters");
     try {
       setLoading(true);
       const data = await apiFetch<{ user: any; token: string }>("/auth/login", {
         method: "POST",
-        body: { email, password },
+        body: { email: normalizedEmail, password },
       });
       setAuth(data.user, data.token);
       await handlePostAuth(data.token);
     } catch (err: any) {
+      if (err?.code === "ACCOUNT_GOOGLE_ONLY") {
+        setAccountAction("google-only");
+        setError("");
+        return;
+      }
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);
@@ -154,7 +164,11 @@ const SignInPage = () => {
               <input
                 type="text"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError("");
+                  if (accountAction) setAccountAction(null);
+                }}
                 placeholder="Email"
                 className={inputClass}
               />
@@ -164,7 +178,11 @@ const SignInPage = () => {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                  if (accountAction) setAccountAction(null);
+                }}
                 placeholder="Password"
                 className={inputClass}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -172,14 +190,16 @@ const SignInPage = () => {
             </div>
           </div>
 
-          <div className="flex justify-end mt-2">
-            <Link
-              to="/forgot-password"
-              className="text-white/80 hover:text-amber-200 text-sm font-medium transition"
-            >
-              Forgot Password?
-            </Link>
-          </div>
+          {!accountAction && (
+            <div className="flex justify-end mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-white/80 hover:text-amber-200 text-sm font-medium transition"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+          )}
 
           {error && (
             <motion.p
@@ -191,37 +211,84 @@ const SignInPage = () => {
             </motion.p>
           )}
 
-          <motion.button
-            onClick={handleLogin}
-            disabled={loading}
-            className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50 relative overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
-              boxShadow:
-                "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
-            }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Login <ArrowRight className="w-5 h-5" />
-          </motion.button>
+          {accountAction === "google-only" && (
+            <div className="mt-4">
+              <p className="text-white/85 text-center text-sm font-medium">
+                This account uses Google Sign-In.
+              </p>
+              <div className="mt-3 grid gap-2">
+                <motion.button
+                  onClick={() => hasGoogle && googleLogin()}
+                  disabled={loading || !hasGoogle}
+                  className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-white border border-white/50"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(120,190,255,0.4) 0%, rgba(140,120,220,0.35) 100%)",
+                    boxShadow:
+                      "0 10px 30px -5px rgba(120,170,255,0.45), inset 0 1px 0 rgba(255,255,255,0.35)",
+                  }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Continue with Google <Sparkles className="w-5 h-5" />
+                </motion.button>
+                <motion.button
+                  onClick={() => {
+                    setAccountAction(null);
+                    setError("");
+                  }}
+                  disabled={loading}
+                  className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-amber-950 border border-white/50"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+                    boxShadow:
+                      "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
+                  }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Back to Login
+                </motion.button>
+              </div>
+            </div>
+          )}
 
-          <motion.button
-            onClick={() => hasGoogle && googleLogin()}
-            disabled={loading || !hasGoogle}
-            className="mt-3 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-white border border-white/50"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(120,190,255,0.4) 0%, rgba(140,120,220,0.35) 100%)",
-              boxShadow:
-                "0 10px 30px -5px rgba(120,170,255,0.45), inset 0 1px 0 rgba(255,255,255,0.35)",
-            }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Continue with Google <Sparkles className="w-5 h-5" />
-          </motion.button>
+          {!accountAction && (
+            <>
+              <motion.button
+                onClick={handleLogin}
+                disabled={loading}
+                className="mt-5 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-amber-950 border border-white/50 relative overflow-hidden"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #FFE0A3 0%, #FFB870 50%, #E89A4A 100%)",
+                  boxShadow:
+                    "0 10px 30px -5px rgba(255,180,90,0.6), inset 0 1px 0 rgba(255,255,255,0.7)",
+                }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Login <ArrowRight className="w-5 h-5" />
+              </motion.button>
+
+              <motion.button
+                onClick={() => hasGoogle && googleLogin()}
+                disabled={loading || !hasGoogle}
+                className="mt-3 w-full px-6 py-3.5 rounded-2xl font-display text-base sm:text-lg flex items-center justify-center gap-2 text-white border border-white/50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(120,190,255,0.4) 0%, rgba(140,120,220,0.35) 100%)",
+                  boxShadow:
+                    "0 10px 30px -5px rgba(120,170,255,0.45), inset 0 1px 0 rgba(255,255,255,0.35)",
+                }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Continue with Google <Sparkles className="w-5 h-5" />
+              </motion.button>
+            </>
+          )}
 
           <p className="text-center text-white/85 text-sm mt-6">
             Don't have an account?{" "}

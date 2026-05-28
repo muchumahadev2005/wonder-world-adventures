@@ -21,11 +21,18 @@ const ResetPasswordPage = () => {
 
   const token = useMemo(() => params.get("token") || "", [params]);
 
+  const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
+  const isValidPassword = (value: string) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,30}$/.test(value);
+  const normalizedEmail = email.trim().toLowerCase();
+
   const handleReset = async () => {
     setError("");
     setSuccess("");
-    if (!email.trim() || !email.includes("@")) return setError("Enter a valid email");
-    if (password.length < 6) return setError("Password must be 6+ characters");
+    if (!isValidEmail(email)) return setError("Enter a valid email");
+    if (!isValidPassword(password)) {
+      return setError("Password must be 8-30 chars with upper, lower, number, and special character");
+    }
     if (password !== confirm) return setError("Passwords do not match");
     if (!token && code.trim().length < 4) return setError("Enter the reset code");
 
@@ -33,7 +40,7 @@ const ResetPasswordPage = () => {
       setLoading(true);
       await apiFetch("/auth/reset-password", {
         method: "POST",
-        body: { email, password, code: token ? undefined : code, token: token || undefined },
+        body: { email: normalizedEmail, password, code: token ? undefined : code, token: token || undefined },
       });
       setSuccess("Password updated! Please sign in.");
       setTimeout(() => navigate("/signin"), 1200);
@@ -104,7 +111,10 @@ const ResetPasswordPage = () => {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError("");
+                }}
                 placeholder="Email"
                 className={inputClass}
               />
@@ -115,7 +125,10 @@ const ResetPasswordPage = () => {
                 <input
                   type="text"
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => {
+                    setCode(e.target.value);
+                    if (error) setError("");
+                  }}
                   placeholder="Reset code"
                   className={inputClass}
                 />
@@ -126,7 +139,10 @@ const ResetPasswordPage = () => {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                }}
                 placeholder="New password"
                 className={inputClass}
               />
@@ -136,7 +152,10 @@ const ResetPasswordPage = () => {
               <input
                 type="password"
                 value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                onChange={(e) => {
+                  setConfirm(e.target.value);
+                  if (error) setError("");
+                }}
                 placeholder="Confirm password"
                 className={inputClass}
               />
