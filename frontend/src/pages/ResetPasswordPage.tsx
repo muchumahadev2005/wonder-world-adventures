@@ -31,16 +31,24 @@ const ResetPasswordPage = () => {
     setSuccess("");
     if (!isValidEmail(email)) return setError("Enter a valid email");
     if (!isValidPassword(password)) {
-      return setError("Password must be 8-30 chars with upper, lower, number, and special character");
+      return setError(
+        "Password must be 8-30 chars with upper, lower, number, and special character",
+      );
     }
     if (password !== confirm) return setError("Passwords do not match");
-    if (!token && code.trim().length < 4) return setError("Enter the reset code");
+    if (!token && code.trim().length < 4)
+      return setError("Enter the reset code");
 
     try {
       setLoading(true);
       await apiFetch("/auth/reset-password", {
         method: "POST",
-        body: { email: normalizedEmail, password, code: token ? undefined : code, token: token || undefined },
+        body: {
+          email: normalizedEmail,
+          password,
+          code: token ? undefined : code,
+          token: token || undefined,
+        },
       });
       setSuccess("Password updated! Please sign in.");
       setTimeout(() => navigate("/signin"), 1200);
@@ -92,7 +100,10 @@ const ResetPasswordPage = () => {
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Sparkles className="w-7 h-7 text-amber-900" fill="currentColor" />
+              <Sparkles
+                className="w-7 h-7 text-amber-900"
+                fill="currentColor"
+              />
             </motion.div>
           </div>
 
@@ -200,7 +211,10 @@ const ResetPasswordPage = () => {
 
           <p className="text-center text-white/85 text-sm mt-6">
             Back to{" "}
-            <Link to="/signin" className="text-amber-200 font-bold hover:underline">
+            <Link
+              to="/signin"
+              className="text-amber-200 font-bold hover:underline"
+            >
               Login
             </Link>
           </p>

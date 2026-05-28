@@ -23,7 +23,9 @@ const SignUpPage = () => {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [accountAction, setAccountAction] = useState<"google-only" | null>(null);
+  const [accountAction, setAccountAction] = useState<"google-only" | null>(
+    null,
+  );
   const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
@@ -56,7 +58,11 @@ const SignUpPage = () => {
   };
 
   const handlePostAuth = async (token: string) => {
-    const data = await apiFetch<{ profile: any }>("/children/me", { method: "GET" }, token);
+    const data = await apiFetch<{ profile: any }>(
+      "/children/me",
+      { method: "GET" },
+      token,
+    );
     if (data.profile) {
       applyChildProfile(data.profile);
       navigate("/");
@@ -108,18 +114,30 @@ const SignUpPage = () => {
 
   const handleSignup = async () => {
     setError("");
-    if (name.trim().length < 3) return setError("Name must be at least 3 characters");
-    if (name.trim().length > 50) return setError("Name must be 50 characters or less");
+    if (name.trim().length < 3)
+      return setError("Name must be at least 3 characters");
+    if (name.trim().length > 50)
+      return setError("Name must be 50 characters or less");
     if (!isValidPassword(password)) {
-      return setError("Password must be 8-30 chars with upper, lower, number, and special character");
+      return setError(
+        "Password must be 8-30 chars with upper, lower, number, and special character",
+      );
     }
     if (password !== confirm) return setError("Passwords do not match");
     try {
       setLoading(true);
-      const data = await apiFetch<{ user: any; token: string }>("/auth/signup", {
-        method: "POST",
-        body: { email: normalizedEmail, password, confirmPassword: confirm, name: name.trim() },
-      });
+      const data = await apiFetch<{ user: any; token: string }>(
+        "/auth/signup",
+        {
+          method: "POST",
+          body: {
+            email: normalizedEmail,
+            password,
+            confirmPassword: confirm,
+            name: name.trim(),
+          },
+        },
+      );
       setAuth(data.user, data.token);
       await handlePostAuth(data.token);
     } catch (err: any) {
@@ -133,10 +151,13 @@ const SignUpPage = () => {
     onSuccess: async (tokenResponse) => {
       try {
         setLoading(true);
-        const data = await apiFetch<{ user: any; token: string }>("/auth/google", {
-          method: "POST",
-          body: { accessToken: tokenResponse.access_token },
-        });
+        const data = await apiFetch<{ user: any; token: string }>(
+          "/auth/google",
+          {
+            method: "POST",
+            body: { accessToken: tokenResponse.access_token },
+          },
+        );
         setAuth(data.user, data.token);
         await handlePostAuth(data.token);
       } catch (err: any) {
@@ -189,7 +210,10 @@ const SignUpPage = () => {
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Sparkles className="w-7 h-7 text-amber-900" fill="currentColor" />
+              <Sparkles
+                className="w-7 h-7 text-amber-900"
+                fill="currentColor"
+              />
             </motion.div>
           </div>
 
@@ -403,7 +427,10 @@ const SignUpPage = () => {
 
           <p className="text-center text-white/85 text-sm mt-6">
             Already have an account?{" "}
-            <Link to="/signin" className="text-amber-200 font-bold hover:underline">
+            <Link
+              to="/signin"
+              className="text-amber-200 font-bold hover:underline"
+            >
               Login
             </Link>
           </p>

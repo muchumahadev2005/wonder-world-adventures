@@ -19,7 +19,9 @@ const SignInPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [accountAction, setAccountAction] = useState<"google-only" | null>(null);
+  const [accountAction, setAccountAction] = useState<"google-only" | null>(
+    null,
+  );
   const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
@@ -50,7 +52,11 @@ const SignInPage = () => {
   };
 
   const handlePostAuth = async (token: string) => {
-    const data = await apiFetch<{ profile: any }>("/children/me", { method: "GET" }, token);
+    const data = await apiFetch<{ profile: any }>(
+      "/children/me",
+      { method: "GET" },
+      token,
+    );
     if (data.profile) {
       applyChildProfile(data.profile);
       navigate("/");
@@ -64,7 +70,8 @@ const SignInPage = () => {
     setError("");
     setAccountAction(null);
     if (!isValidEmail(email)) return setError("Please enter a valid email");
-    if (password.length < 8) return setError("Password must be at least 8 characters");
+    if (password.length < 8)
+      return setError("Password must be at least 8 characters");
     try {
       setLoading(true);
       const data = await apiFetch<{ user: any; token: string }>("/auth/login", {
@@ -89,10 +96,13 @@ const SignInPage = () => {
     onSuccess: async (tokenResponse) => {
       try {
         setLoading(true);
-        const data = await apiFetch<{ user: any; token: string }>("/auth/google", {
-          method: "POST",
-          body: { accessToken: tokenResponse.access_token },
-        });
+        const data = await apiFetch<{ user: any; token: string }>(
+          "/auth/google",
+          {
+            method: "POST",
+            body: { accessToken: tokenResponse.access_token },
+          },
+        );
         setAuth(data.user, data.token);
         await handlePostAuth(data.token);
       } catch (err: any) {
@@ -292,7 +302,10 @@ const SignInPage = () => {
 
           <p className="text-center text-white/85 text-sm mt-6">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-amber-200 font-bold hover:underline">
+            <Link
+              to="/signup"
+              className="text-amber-200 font-bold hover:underline"
+            >
               Sign Up
             </Link>
           </p>

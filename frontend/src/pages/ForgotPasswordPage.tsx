@@ -14,7 +14,9 @@ const ForgotPasswordPage = () => {
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [accountAction, setAccountAction] = useState<"google-only" | null>(null);
+  const [accountAction, setAccountAction] = useState<"google-only" | null>(
+    null,
+  );
 
   const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
   const normalizedEmail = email.trim().toLowerCase();
@@ -194,7 +196,10 @@ const ForgotPasswordPage = () => {
 
           <p className="text-center text-white/85 text-sm mt-6">
             Remembered your password?{" "}
-            <Link to="/signin" className="text-amber-200 font-bold hover:underline">
+            <Link
+              to="/signin"
+              className="text-amber-200 font-bold hover:underline"
+            >
               Back to login
             </Link>
           </p>
