@@ -73,17 +73,27 @@ const mailer = nodemailer.createTransport({
 const sendEmail = async ({ to, subject, html }) => {
 	const startedAt = Date.now();
 	try {
+		if (authDebug) {
+			console.log("SMTP CONFIG:", {
+				host: smtpHost,
+				port: smtpPort,
+				user: smtpEmail,
+			});
+			console.log("Attempting to send OTP email...");
+		}
+		await mailer.verify();
 		await mailer.sendMail({ from: smtpEmail, to, subject, html });
 		if (authDebug) {
-			logger.info("SMTP send success", { subject, ms: Date.now() - startedAt });
+			console.log("Email sent successfully");
 		}
 	} catch (err) {
+		console.error("SMTP ERROR:", err);
 		logger.error("SMTP send failed", {
 			message: err.message,
 			code: err.code,
 			ms: Date.now() - startedAt,
 		});
-		throw err;
+		throw authError("Email service unavailable. Please try again.", 503, "SMTP_UNAVAILABLE");
 	}
 };
 

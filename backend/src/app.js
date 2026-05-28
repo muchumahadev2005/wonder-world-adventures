@@ -38,6 +38,16 @@ app.options("*", cors(corsOptions));
 
 app.use((req, res, next) => {
 	if (!logRequests) return next();
+	logger.info("Incoming request", {
+		method: req.method,
+		path: req.originalUrl,
+		origin: req.headers.origin || null,
+	});
+	return next();
+});
+
+app.use((req, res, next) => {
+	if (!logRequests) return next();
 	if (!req.path.startsWith("/api/auth")) return next();
 	const startedAt = Date.now();
 	res.on("finish", () => {
