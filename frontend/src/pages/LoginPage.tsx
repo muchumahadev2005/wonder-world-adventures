@@ -31,7 +31,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { setProfile } = useChild();
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
 
   const steps = [
@@ -110,6 +110,11 @@ const LoginPage = () => {
       });
       navigate("/");
     } catch (err: any) {
+      if (err.message === "Invalid token" || err.message === "Unauthorized") {
+        logout();
+        navigate("/signin");
+        return;
+      }
       setError(err.message || "Failed to save profile");
     } finally {
       setLoading(false);
