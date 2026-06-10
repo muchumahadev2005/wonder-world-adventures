@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
+import { useAuth } from "@/context/AuthContext";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
@@ -8,13 +9,30 @@ import QuizScreen, { QuizQuestion } from "@/components/QuizScreen";
 import RewardPopup from "@/components/RewardPopup";
 import StarBurst from "@/components/StarBurst";
 import PremiumBadge from "@/components/PremiumBadge";
+import { contentApi, ApiStory } from "@/lib/api";
+import SubscribeModal from "@/components/SubscribeModal";
 import storiesBg from "@/assets/stories-bg.jpg";
 import {
   ArrowLeft, Heart, Headphones, BookOpen, Play, Pause,
   SkipBack, SkipForward, Star, Lock, ChevronRight, BookMarked
 } from "lucide-react";
 
-const stories = [
+type StoryItem = {
+  id: string;
+  title: string;
+  author: string;
+  tags: string[];
+  coverEmoji: string;
+  coverGradient: string;
+  duration: string;
+  description: string;
+  premium: boolean;
+  stars: number;
+  pages: string[];
+  quiz: QuizQuestion[];
+};
+
+const stories: StoryItem[] = [
   {
     id: "enchanted-forest",
     title: "The Enchanted Forest",
@@ -205,6 +223,29 @@ const stories = [
   },
 ];
 
+const normalizeApiStory = (story: ApiStory): StoryItem => {
+  const pages = Array.isArray(story.pages)
+    ? story.pages.filter((page): page is string => typeof page === "string")
+    : story.description
+    ? [story.description]
+    : ["This story is ready to read."];
+  const quiz = story.quiz || story.quizzes?.[0]?.questions || [];
+  return {
+    id: story.id,
+    title: story.title,
+    author: story.author || "Wonder World",
+    tags: story.tags || [],
+    coverEmoji: story.coverEmoji || "\u{1F4DA}\u2728",
+    coverGradient: story.coverGradient || "linear-gradient(160deg, #2E2270 0%, #5B3FA6 55%, #9D6FE0 100%)",
+    duration: story.duration || "8 min",
+    description: story.description || pages[0],
+    premium: Boolean(story.isPremium ?? story.premium),
+    stars: story.starsReward ?? story.stars ?? 2,
+    pages,
+    quiz: quiz as QuizQuestion[],
+  };
+};
+
 type Screen = "list" | "detail" | "read" | "quiz";
 
 const AudioPlayer = ({ duration, onFinish }: { duration: string; onFinish: () => void }) => {
@@ -298,8 +339,10 @@ const AudioPlayer = ({ duration, onFinish }: { duration: string; onFinish: () =>
 
 const StoriesPage = () => {
   const { profile, addStars, addXP, addCoins, incrementStreak, completeStory } = useChild();
+  const { token } = useAuth();
   const [screen, setScreen] = useState<Screen>("list");
-  const [activeStory, setActiveStory] = useState<typeof stories[0] | null>(null);
+  const [apiStories, setApiStories] = useState<StoryItem[]>(stories);
+  const [activeStory, setActiveStory] = useState<StoryItem | null>(null);
   const [tab, setTab] = useState<"audio" | "read">("audio");
   const [readPage, setReadPage] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -307,9 +350,29 @@ const StoriesPage = () => {
   const [earnedStars, setEarnedStars] = useState(0);
   const [showReward, setShowReward] = useState(false);
   const [rewardData, setRewardData] = useState({ stars: 0, xp: 0, coins: 0 });
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [isPremiumLocal, setIsPremiumLocal] = useState(false);
 
-  const openStory = (story: typeof stories[0]) => {
-    if (story.premium && !profile?.isPremium) return;
+  useEffect(() => {
+    let mounted = true;
+    contentApi
+      .listStories()
+      .then(({ stories }) => {
+        if (mounted && stories.length) setApiStories(stories.map(normalizeApiStory));
+      })
+      .catch(() => {
+        if (mounted) setApiStories(stories);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const openStory = (story: StoryItem) => {
+    if (story.premium && !profile?.isPremium && !isPremiumLocal) {
+      setShowSubscribeModal(true);
+      return;
+    }
     setActiveStory(story);
     setTab("audio");
     setReadPage(0);
@@ -328,6 +391,20 @@ const StoriesPage = () => {
       addCoins(coins);
       incrementStreak();
       completeStory(activeStory.id);
+      contentApi.updateProgress({
+        contentType: "STORY",
+        contentId: activeStory.id,
+        progressPercentage: 100,
+        isCompleted: true,
+      }, token).catch(() => undefined);
+      contentApi.claimReward({
+        stars: activeStory.stars + stars,
+        coins,
+        xp,
+        reason: `Completed story: ${activeStory.title}`,
+        sourceType: "STORY",
+        sourceId: activeStory.id,
+      }, token).catch(() => undefined);
       setEarnedStars(activeStory.stars + stars);
       setRewardData({ stars: activeStory.stars + stars, xp, coins });
       setShowStarBurst(true);
@@ -342,6 +419,12 @@ const StoriesPage = () => {
       <NavBar />
       <AmbientSoundToggle />
       <StarBurst show={showStarBurst} count={earnedStars} />
+
+      <SubscribeModal
+        open={showSubscribeModal}
+        onClose={() => setShowSubscribeModal(false)}
+        onSuccess={() => setIsPremiumLocal(true)}
+      />
 
       <RewardPopup
         show={showReward}
@@ -365,8 +448,8 @@ const StoriesPage = () => {
             </div>
 
             <div className="px-4 grid grid-cols-2 gap-4">
-              {stories.map((story, i) => {
-                const locked = story.premium && !profile?.isPremium;
+              {apiStories.map((story, i) => {
+                const locked = story.premium && !profile?.isPremium && !isPremiumLocal;
                 const completed = profile?.completedStories.includes(story.id);
                 return (
                   <motion.button

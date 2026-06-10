@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
+import { useAuth } from "@/context/AuthContext";
+import { contentApi } from "@/lib/api";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
@@ -67,6 +69,7 @@ const getResponse = (input: string): string => {
 
 const ChatPage = () => {
   const { profile } = useChild();
+  const { token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
@@ -82,7 +85,7 @@ const ChatPage = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = (text?: string) => {
+  const sendMessage = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg) return;
     const userMsg: Message = { role: "user", text: msg };
@@ -91,8 +94,15 @@ const ChatPage = () => {
     setIsTyping(true);
     setShowSuggestions(false);
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: "bot", text: getResponse(msg) }]);
+    setTimeout(async () => {
+      let reply = getResponse(msg);
+      try {
+        const data = await contentApi.chat(msg, token);
+        reply = data.reply || reply;
+      } catch (err) {
+        reply = getResponse(msg);
+      }
+      setMessages(prev => [...prev, { role: "bot", text: reply }]);
       setIsTyping(false);
     }, 800 + Math.random() * 800);
   };

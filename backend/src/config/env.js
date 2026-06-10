@@ -1,7 +1,33 @@
 const path = require("path");
 const dotenv = require("dotenv");
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+// ── Environment loading strategy ────────────────────────────────
+//
+// On Render (production):
+//   - Render pre-populates process.env from the dashboard BEFORE
+//     the app starts. dotenv.config() never overwrites existing
+//     process.env values, so production secrets are always safe.
+//   - NODE_ENV === "production", so .env.development is skipped.
+//
+// Local development:
+//   - .env.development is loaded first (local DB, localhost CORS).
+//   - .env is loaded second as a fallback for any keys not in
+//     .env.development (JWT_SECRET, Google keys, Razorpay, etc.).
+//   - override: false on the second call ensures .env never
+//     clobbers values already set by .env.development.
+//
+// ────────────────────────────────────────────────────────────────
+
+if (process.env.NODE_ENV !== "production") {
+	// Local: load .env.development first with override:true so it always
+	// wins — even if .env was somehow loaded earlier or values were inherited.
+	// Safe because this block never runs on Render (NODE_ENV=production there).
+	dotenv.config({ path: path.resolve(process.cwd(), ".env.development"), override: true });
+}
+
+// Fallback for keys not in .env.development, and the only source
+// for production (but Render vars are already in process.env by now).
+dotenv.config({ path: path.resolve(process.cwd(), ".env"), override: false });
 
 const getEnv = (key, fallback) => {
 	if (process.env[key]) return process.env[key];
@@ -36,4 +62,7 @@ module.exports = {
 	serverUrl: getEnv("SERVER_URL", "https://wonder-world-adventures.onrender.com"),
 	logRequests: parseBool(getEnv("LOG_REQUESTS", "false")),
 	authDebug: parseBool(getEnv("AUTH_DEBUG", "false")),
+	razorpayKeyId: getEnv("RAZORPAY_KEY_ID"),
+	razorpayKeySecret: getEnv("RAZORPAY_KEY_SECRET"),
 };
+

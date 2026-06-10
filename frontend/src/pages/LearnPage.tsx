@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
+import { useAuth } from "@/context/AuthContext";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import QuizScreen, { QuizQuestion } from "@/components/QuizScreen";
 import RewardPopup from "@/components/RewardPopup";
 import VoiceInteraction from "@/components/VoiceInteraction";
+import { contentApi, ApiLesson } from "@/lib/api";
 import storiesBg from "@/assets/stories-bg.jpg";
 import {
   Star,
@@ -589,8 +591,25 @@ const weekActivity = (): boolean[] => {
 
 type Screen = "language" | "level" | "list" | "topic" | "quiz";
 
+const normalizeApiLesson = (lesson: ApiLesson, nextId?: string): Lesson => ({
+  id: lesson.id,
+  title: lesson.title,
+  emoji: lesson.emoji || "\u{1F4D8}",
+  color: lesson.color || "from-sky-400 to-indigo-500",
+  intro: lesson.intro || lesson.description || "Practice these cards, then take the quiz.",
+  words: (lesson.words || []).map((word) => ({
+    word: word.word,
+    translit: word.translit || undefined,
+    meaning: word.meaning || undefined,
+    emoji: word.emoji || "\u2728",
+  })),
+  quiz: (lesson.quiz || lesson.quizzes?.[0]?.questions || []) as QuizQuestion[],
+  nextId,
+});
+
 const LearnPage = () => {
   const { profile, addStars, addXP, addCoins, incrementStreak, completeLesson } = useChild();
+  const { token } = useAuth();
 
   const [screen, setScreen] = useState<Screen>("language");
   const [lang, setLang] = useState<LangCode | null>(null);
@@ -601,11 +620,36 @@ const LearnPage = () => {
   const [showReward, setShowReward] = useState(false);
   const [rewardData, setRewardData] = useState({ stars: 0, xp: 0, coins: 0 });
   const [week, setWeek] = useState<boolean[]>(() => weekActivity());
+  const [remoteLessons, setRemoteLessons] = useState<Lesson[] | null>(null);
 
-  const lessons = useMemo<Lesson[]>(
+  const fallbackLessons = useMemo<Lesson[]>(
     () => (lang && level ? buildLessons(lang, level) : []),
     [lang, level]
   );
+
+  useEffect(() => {
+    if (!lang || !level) {
+      setRemoteLessons(null);
+      return;
+    }
+    let mounted = true;
+    setRemoteLessons(null);
+    contentApi
+      .listLessons({ language: lang, level })
+      .then(({ lessons }) => {
+        if (!mounted) return;
+        const normalized = lessons.map((lesson, index) => normalizeApiLesson(lesson, lessons[index + 1]?.id));
+        setRemoteLessons(normalized.length ? normalized : null);
+      })
+      .catch(() => {
+        if (mounted) setRemoteLessons(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [lang, level]);
+
+  const lessons = remoteLessons || fallbackLessons;
 
   // First lesson is always unlocked
   const firstLessonId = lessons[0]?.id;
@@ -642,6 +686,20 @@ const LearnPage = () => {
     }
 
     completeLesson(activeLesson.id, activeLesson.nextId);
+    contentApi.updateProgress({
+      contentType: "LESSON",
+      contentId: activeLesson.id,
+      progressPercentage: 100,
+      isCompleted: true,
+    }, token).catch(() => undefined);
+    contentApi.claimReward({
+      stars,
+      coins: coinsGained,
+      xp: xpGained,
+      reason: `Completed lesson: ${activeLesson.title}`,
+      sourceType: "LESSON",
+      sourceId: activeLesson.id,
+    }, token).catch(() => undefined);
     setRewardData({ stars, xp: xpGained, coins: coinsGained });
     setShowReward(true);
     setScreen("list");

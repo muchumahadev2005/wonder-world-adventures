@@ -6,10 +6,16 @@ datasource db {
 	provider = "postgresql"
 	url      = env("DATABASE_URL")
 }
-
 enum AuthProvider {
 	email
 	google
+}
+
+enum SubscriptionStatus {
+	ACTIVE
+	EXPIRED
+	CANCELLED
+	PENDING
 }
 
 model User {
@@ -24,6 +30,8 @@ model User {
 	childProfile     ChildProfile?
 	emailVerifications EmailVerificationToken[]
 	passwordResets   PasswordResetToken[]
+	subscriptions    UserSubscription[]
+	payments         Payment[]
 
 	@@map("users")
 }
@@ -38,6 +46,14 @@ model ChildProfile {
 	createdAt        DateTime @default(now()) @map("created_at")
 
 	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+	storyProgress StoryProgress[]
+	lessonProgress LessonProgress[]
+	quizAttempts QuizAttempt[]
+	gameProgress GameProgress[]
+	progressRecords ProgressRecord[]
+	rewardWallet RewardWallet?
+	childBadges ChildBadge[]
+	rewardTransactions RewardTransaction[]
 
 	@@map("child_profiles")
 }
@@ -69,3 +85,434 @@ model PasswordResetToken {
 
 	@@map("password_reset_tokens")
 }
+
+model SubscriptionPlan {
+	id           String                @id @default(cuid())
+	name         String
+	description  String?
+	price        Int
+	durationDays Int
+	isActive     Boolean               @default(true)
+	createdAt    DateTime              @default(now()) @map("created_at")
+	updatedAt    DateTime              @updatedAt @map("updated_at")
+	subscriptions UserSubscription[]
+	features     SubscriptionFeature[]
+
+	@@map("subscription_plans")
+}
+
+model UserSubscription {
+	id        String             @id @default(cuid())
+	userId    String             @map("user_id")
+	planId    String             @map("plan_id")
+	status    SubscriptionStatus @default(ACTIVE)
+	startDate DateTime           @map("start_date")
+	endDate   DateTime           @map("end_date")
+	createdAt DateTime           @default(now()) @map("created_at")
+	updatedAt DateTime           @updatedAt @map("updated_at")
+
+	user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+	plan     SubscriptionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+	features SubscriptionFeature[]
+	payments Payment[]
+
+	@@map("user_subscriptions")
+}
+
+model SubscriptionFeature {
+	id           String             @id @default(cuid())
+	planId       String             @map("plan_id")
+	subscriptionId String?          @map("subscription_id")
+	featureKey   String             @map("feature_key")
+	featureValue String             @map("feature_value")
+	createdAt    DateTime           @default(now()) @map("created_at")
+
+	plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+	subscription UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+	@@map("subscription_features")
+}
+
+enum ProgressContentType {
+	LANGUAGE
+	LESSON
+	STORY
+	GAME
+}
+
+enum RewardType {
+	STARS
+	COINS
+	BADGE
+}
+
+model Language {
+	id        String   @id @default(cuid())
+	code      String   @unique
+	name      String
+	native    String?
+	flag      String?
+	isActive  Boolean  @default(true) @map("is_active")
+	sortOrder Int      @default(0) @map("sort_order")
+	createdAt DateTime @default(now()) @map("created_at")
+	updatedAt DateTime @updatedAt @map("updated_at")
+
+	levels    LanguageLevel[]
+	stories   Story[]
+	lessons   Lesson[]
+	quizzes   Quiz[]
+	games     Game[]
+
+	@@map("languages")
+}
+
+model Level {
+	id          String   @id @default(cuid())
+	code        String   @unique
+	name        String
+	description String?
+	sortOrder   Int      @default(0) @map("sort_order")
+	createdAt   DateTime @default(now()) @map("created_at")
+	updatedAt   DateTime @updatedAt @map("updated_at")
+
+	languages LanguageLevel[]
+	lessons   Lesson[]
+	quizzes   Quiz[]
+	games     Game[]
+
+	@@map("levels")
+}
+
+model LanguageLevel {
+	id         String   @id @default(cuid())
+	languageId String   @map("language_id")
+	levelId    String   @map("level_id")
+	sortOrder  Int      @default(0) @map("sort_order")
+	createdAt  DateTime @default(now()) @map("created_at")
+	updatedAt  DateTime @updatedAt @map("updated_at")
+
+	language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+	level    Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+	@@unique([languageId, levelId])
+	@@map("language_levels")
+}
+
+model Story {
+	id           String   @id @default(cuid())
+	slug         String   @unique
+	title        String
+	description  String?
+	content      String
+	pages        Json?
+	author       String?
+	category     String?
+	ageGroup     String?  @map("age_group")
+	tags         String[] @default([])
+	thumbnail    String?
+	coverEmoji   String?  @map("cover_emoji")
+	coverGradient String? @map("cover_gradient")
+	readingTime  Int?     @map("reading_time")
+	duration     String?
+	isPremium    Boolean  @default(false) @map("is_premium")
+	audioUrl     String?  @map("audio_url")
+	starsReward  Int      @default(0) @map("stars_reward")
+	isPublished  Boolean  @default(true) @map("is_published")
+	sortOrder    Int      @default(0) @map("sort_order")
+	createdAt    DateTime @default(now()) @map("created_at")
+	updatedAt    DateTime @updatedAt @map("updated_at")
+
+	languageId String? @map("language_id")
+	language   Language? @relation(fields: [languageId], references: [id], onDelete: SetNull)
+	quizzes    Quiz[]
+	progress   StoryProgress[]
+
+	@@index([category])
+	@@index([languageId])
+	@@map("stories")
+}
+
+model StoryProgress {
+	id                 String   @id @default(cuid())
+	childProfileId     String   @map("child_profile_id")
+	storyId            String   @map("story_id")
+	progressPercentage Int      @default(0) @map("progress_percentage")
+	lastReadPosition   Int?     @map("last_read_position")
+	isCompleted        Boolean  @default(false) @map("is_completed")
+	completedAt        DateTime? @map("completed_at")
+	createdAt          DateTime @default(now()) @map("created_at")
+	updatedAt          DateTime @updatedAt @map("updated_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+	story        Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+	@@unique([childProfileId, storyId])
+	@@map("story_progress")
+}
+
+model Lesson {
+	id          String   @id @default(cuid())
+	slug        String   @unique
+	title       String
+	description String?
+	intro       String?
+	emoji       String?
+	color       String?
+	category    String?
+	isPremium   Boolean  @default(false) @map("is_premium")
+	isPublished Boolean  @default(true) @map("is_published")
+	sortOrder   Int      @default(0) @map("sort_order")
+	createdAt   DateTime @default(now()) @map("created_at")
+	updatedAt   DateTime @updatedAt @map("updated_at")
+
+	languageId String @map("language_id")
+	levelId    String @map("level_id")
+	language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+	level      Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+	cards      LessonCard[]
+	quizzes    Quiz[]
+	progress   LessonProgress[]
+
+	@@index([languageId, levelId])
+	@@map("lessons")
+}
+
+model LessonCard {
+	id        String   @id @default(cuid())
+	lessonId  String   @map("lesson_id")
+	word      String
+	translit  String?
+	meaning   String?
+	emoji     String?
+	imageUrl  String?  @map("image_url")
+	audioUrl  String?  @map("audio_url")
+	sortOrder Int      @default(0) @map("sort_order")
+	createdAt DateTime @default(now()) @map("created_at")
+	updatedAt DateTime @updatedAt @map("updated_at")
+
+	lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+	@@index([lessonId])
+	@@map("lesson_cards")
+}
+
+model LessonProgress {
+	id                 String   @id @default(cuid())
+	childProfileId     String   @map("child_profile_id")
+	lessonId           String   @map("lesson_id")
+	progressPercentage Int      @default(0) @map("progress_percentage")
+	isCompleted        Boolean  @default(false) @map("is_completed")
+	completedAt        DateTime? @map("completed_at")
+	createdAt          DateTime @default(now()) @map("created_at")
+	updatedAt          DateTime @updatedAt @map("updated_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+	lesson       Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+	@@unique([childProfileId, lessonId])
+	@@map("lesson_progress")
+}
+
+model Quiz {
+	id          String   @id @default(cuid())
+	title       String
+	description String?
+	isPremium   Boolean  @default(false) @map("is_premium")
+	isPublished Boolean  @default(true) @map("is_published")
+	createdAt   DateTime @default(now()) @map("created_at")
+	updatedAt   DateTime @updatedAt @map("updated_at")
+
+	languageId String? @map("language_id")
+	levelId    String? @map("level_id")
+	lessonId   String? @map("lesson_id")
+	storyId    String? @map("story_id")
+	language   Language? @relation(fields: [languageId], references: [id], onDelete: SetNull)
+	level      Level?    @relation(fields: [levelId], references: [id], onDelete: SetNull)
+	lesson     Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+	story      Story?    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+	questions  QuizQuestion[]
+	attempts   QuizAttempt[]
+
+	@@index([lessonId])
+	@@index([storyId])
+	@@map("quizzes")
+}
+
+model QuizQuestion {
+	id        String   @id @default(cuid())
+	quizId    String   @map("quiz_id")
+	type      String   @default("mcq")
+	question  String
+	emoji     String?
+	options   Json?
+	answer    String
+	hint      String?
+	points    Int      @default(1)
+	sortOrder Int      @default(0) @map("sort_order")
+	createdAt DateTime @default(now()) @map("created_at")
+	updatedAt DateTime @updatedAt @map("updated_at")
+
+	quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+	@@index([quizId])
+	@@map("quiz_questions")
+}
+
+model QuizAttempt {
+	id             String   @id @default(cuid())
+	childProfileId String   @map("child_profile_id")
+	quizId         String   @map("quiz_id")
+	score          Int      @default(0)
+	totalPoints    Int      @default(0) @map("total_points")
+	starsEarned    Int      @default(0) @map("stars_earned")
+	answers        Json?
+	isCompleted    Boolean  @default(true) @map("is_completed")
+	createdAt      DateTime @default(now()) @map("created_at")
+	updatedAt      DateTime @updatedAt @map("updated_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+	quiz         Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+	@@index([childProfileId])
+	@@index([quizId])
+	@@map("quiz_attempts")
+}
+
+model Game {
+	id          String   @id @default(cuid())
+	slug        String   @unique
+	title       String
+	description String?
+	category    String?
+	icon        String?
+	color       String?
+	starsReward Int     @default(0) @map("stars_reward")
+	isPremium   Boolean @default(false) @map("is_premium")
+	isActive    Boolean @default(true) @map("is_active")
+	sortOrder   Int     @default(0) @map("sort_order")
+	createdAt   DateTime @default(now()) @map("created_at")
+	updatedAt   DateTime @updatedAt @map("updated_at")
+
+	languageId String? @map("language_id")
+	levelId    String? @map("level_id")
+	language   Language? @relation(fields: [languageId], references: [id], onDelete: SetNull)
+	level      Level?    @relation(fields: [levelId], references: [id], onDelete: SetNull)
+	progress   GameProgress[]
+
+	@@index([languageId])
+	@@index([levelId])
+	@@map("games")
+}
+
+model GameProgress {
+	id             String   @id @default(cuid())
+	childProfileId String   @map("child_profile_id")
+	gameId         String   @map("game_id")
+	score          Int      @default(0)
+	highScore      Int      @default(0) @map("high_score")
+	attempts       Int      @default(0)
+	isCompleted    Boolean  @default(false) @map("is_completed")
+	lastPlayedAt   DateTime? @map("last_played_at")
+	createdAt      DateTime @default(now()) @map("created_at")
+	updatedAt      DateTime @updatedAt @map("updated_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+	game         Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+	@@unique([childProfileId, gameId])
+	@@map("game_progress")
+}
+
+model ProgressRecord {
+	id                 String              @id @default(cuid())
+	childProfileId     String              @map("child_profile_id")
+	contentType        ProgressContentType @map("content_type")
+	contentId          String              @map("content_id")
+	progressPercentage Int                 @default(0) @map("progress_percentage")
+	isCompleted        Boolean             @default(false) @map("is_completed")
+	metadata           Json?
+	completedAt        DateTime?           @map("completed_at")
+	createdAt          DateTime            @default(now()) @map("created_at")
+	updatedAt          DateTime            @updatedAt @map("updated_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+
+	@@unique([childProfileId, contentType, contentId])
+	@@map("progress_records")
+}
+
+model RewardWallet {
+	id             String   @id @default(cuid())
+	childProfileId String   @unique @map("child_profile_id")
+	stars          Int      @default(0)
+	coins          Int      @default(0)
+	xp             Int      @default(0)
+	level          Int      @default(1)
+	streak         Int      @default(0)
+	createdAt      DateTime @default(now()) @map("created_at")
+	updatedAt      DateTime @updatedAt @map("updated_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+
+	@@map("reward_wallets")
+}
+
+model Badge {
+	id          String   @id @default(cuid())
+	code        String   @unique
+	name        String
+	description String?
+	imageUrl    String?  @map("image_url")
+	createdAt   DateTime @default(now()) @map("created_at")
+	updatedAt   DateTime @updatedAt @map("updated_at")
+
+	children ChildBadge[]
+
+	@@map("badges")
+}
+
+model ChildBadge {
+	id             String   @id @default(cuid())
+	childProfileId String   @map("child_profile_id")
+	badgeId        String   @map("badge_id")
+	earnedAt       DateTime @default(now()) @map("earned_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+	badge        Badge        @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+	@@unique([childProfileId, badgeId])
+	@@map("child_badges")
+}
+
+model RewardTransaction {
+	id             String     @id @default(cuid())
+	childProfileId String     @map("child_profile_id")
+	type           RewardType
+	amount         Int        @default(0)
+	reason         String?
+	sourceType     String?    @map("source_type")
+	sourceId       String?    @map("source_id")
+	createdAt      DateTime   @default(now()) @map("created_at")
+
+	childProfile ChildProfile @relation(fields: [childProfileId], references: [id], onDelete: Cascade)
+
+	@@index([childProfileId])
+	@@map("reward_transactions")
+}
+
+model Payment {
+	id                 String   @id @default(cuid())
+	userId             String   @map("user_id")
+	subscriptionId     String?  @map("subscription_id")
+	amount             Int
+	status             String
+	razorpayOrderId    String   @map("razorpay_order_id")
+	razorpayPaymentId  String?  @map("razorpay_payment_id")
+	createdAt          DateTime @default(now()) @map("created_at")
+
+	user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+	subscription UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+	@@map("payments")
+}
+

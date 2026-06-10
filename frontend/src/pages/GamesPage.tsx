@@ -1,11 +1,14 @@
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
+import { useAuth } from "@/context/AuthContext";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import PremiumBadge from "@/components/PremiumBadge";
 import StarBurst from "@/components/StarBurst";
+import { contentApi, ApiGame } from "@/lib/api";
+import SubscribeModal from "@/components/SubscribeModal";
 import gamesBg from "@/assets/games-bg.jpg";
 import {
   Gamepad2,
@@ -18,7 +21,16 @@ import {
   Zap,
 } from "lucide-react";
 
-const games = [
+type GameItem = {
+  id: string;
+  title: string;
+  icon: typeof Gamepad2;
+  color: string;
+  stars: number;
+  premium: boolean;
+};
+
+const games: GameItem[] = [
   {
     id: "math-add",
     title: "Addition Fun",
@@ -68,6 +80,23 @@ const games = [
     premium: true,
   },
 ];
+
+const gameIconMap = {
+  calculator: Calculator,
+  shapes: Shapes,
+  puzzle: Puzzle,
+  brain: Brain,
+  zap: Zap,
+};
+
+const normalizeApiGame = (game: ApiGame) => ({
+  id: game.id || game.slug || "",
+  title: game.title,
+  icon: gameIconMap[(game.icon || "").toLowerCase() as keyof typeof gameIconMap] || Gamepad2,
+  color: game.color || "from-sky to-lavender",
+  stars: game.starsReward ?? game.stars ?? 3,
+  premium: Boolean(game.isPremium ?? game.premium),
+});
 
 const MathGame = ({
   onComplete,
@@ -204,12 +233,31 @@ const MathGame = ({
 
 const GamesPage = () => {
   const { profile, addStars, addXP, addCoins, completeGame } = useChild();
+  const { token } = useAuth();
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [showStarBurst, setShowStarBurst] = useState(false);
   const [earnedStars, setEarnedStars] = useState(0);
+  const [apiGames, setApiGames] = useState<GameItem[]>(games);
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [isPremiumLocal, setIsPremiumLocal] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    contentApi
+      .listGames()
+      .then(({ games }) => {
+        if (mounted && games.length) setApiGames(games.map(normalizeApiGame));
+      })
+      .catch(() => {
+        if (mounted) setApiGames(games);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleGameComplete = (gameId: string, score: number) => {
-    const game = games.find((g) => g.id === gameId);
+    const game = apiGames.find((g) => g.id === gameId);
     if (!game) return;
     const stars = Math.ceil((score / 5) * game.stars);
     setEarnedStars(stars);
@@ -217,6 +265,21 @@ const GamesPage = () => {
     addXP(stars * 10);
     addCoins(stars * 3);
     completeGame(gameId);
+    contentApi.updateProgress({
+      contentType: "GAME",
+      contentId: gameId,
+      progressPercentage: 100,
+      isCompleted: true,
+      score,
+    }, token).catch(() => undefined);
+    contentApi.claimReward({
+      stars,
+      coins: stars * 3,
+      xp: stars * 10,
+      reason: `Completed game: ${game.title}`,
+      sourceType: "GAME",
+      sourceId: gameId,
+    }, token).catch(() => undefined);
     setShowStarBurst(true);
     setTimeout(() => {
       setShowStarBurst(false);
@@ -229,6 +292,12 @@ const GamesPage = () => {
       <SceneBackground image={gamesBg} alt="Magical treehouse playground village" variant="playground" />
       <NavBar />
       <StarBurst show={showStarBurst} count={earnedStars} />
+
+      <SubscribeModal
+        open={showSubscribeModal}
+        onClose={() => setShowSubscribeModal(false)}
+        onSuccess={() => setIsPremiumLocal(true)}
+      />
 
       <div className="page-shell max-w-5xl">
         <motion.div
@@ -282,9 +351,9 @@ const GamesPage = () => {
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.1 } } }}
           >
-            {games.map((game) => {
+            {apiGames.map((game) => {
               const completed = profile?.completedGames.includes(game.id);
-              const locked = game.premium && !profile?.isPremium;
+              const locked = game.premium && !profile?.isPremium && !isPremiumLocal;
               return (
                 <motion.button
                   key={game.id}
@@ -292,14 +361,20 @@ const GamesPage = () => {
                     hidden: { y: 30, opacity: 0 },
                     show: { y: 0, opacity: 1 },
                   }}
-                  onClick={() => !locked && setActiveGame(game.id)}
+                  onClick={() => {
+                    if (locked) {
+                      setShowSubscribeModal(true);
+                    } else {
+                      setActiveGame(game.id);
+                    }
+                  }}
                   className={`relative p-5 sm:p-6 text-center rounded-3xl border border-white/50 shadow-xl backdrop-blur-2xl transition-all overflow-hidden ${locked ? "opacity-70" : ""}`}
                   style={{
                     background: `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%)`,
                     boxShadow: `0 12px 35px -10px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)`,
                   }}
-                  whileHover={locked ? {} : { 
-                    scale: 1.05, 
+                  whileHover={locked ? { scale: 1.02 } : {
+                    scale: 1.05,
                     y: -5,
                     background: `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)`,
                   }}

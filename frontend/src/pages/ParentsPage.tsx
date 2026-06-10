@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
 import { useAuth } from "@/context/AuthContext";
+import { contentApi } from "@/lib/api";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
@@ -22,8 +24,24 @@ import {
 
 const ParentsPage = () => {
   const { profile, logout: clearProfile } = useChild();
-  const { logout } = useAuth();
+  const { logout, token } = useAuth();
   const navigate = useNavigate();
+  const [dashboardStats, setDashboardStats] = useState<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    contentApi
+      .parentDashboard(token)
+      .then(({ dashboard }) => {
+        if (mounted) setDashboardStats(dashboard.stats || null);
+      })
+      .catch(() => {
+        if (mounted) setDashboardStats(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
 
   const handleLogout = () => {
     clearProfile();
@@ -35,49 +53,49 @@ const ParentsPage = () => {
     {
       icon: Star,
       label: "Total Stars",
-      value: profile?.stars || 0,
+      value: dashboardStats?.stars ?? profile?.stars ?? 0,
       color: "from-sunshine to-coral",
     },
     {
       icon: Zap,
       label: "Total XP",
-      value: profile?.xp || 0,
+      value: dashboardStats?.xp ?? profile?.xp ?? 0,
       color: "from-purple-400 to-pink-400",
     },
     {
       icon: Flame,
       label: "Day Streak",
-      value: profile?.streak || 0,
+      value: dashboardStats?.streak ?? profile?.streak ?? 0,
       color: "from-orange-400 to-red-400",
     },
     {
       icon: Trophy,
       label: "Level",
-      value: profile?.level || 1,
+      value: dashboardStats?.level ?? profile?.level ?? 1,
       color: "from-amber-400 to-yellow-500",
     },
     {
       icon: Gamepad2,
       label: "Games Played",
-      value: profile?.completedGames.length || 0,
+      value: dashboardStats?.gamesCompleted ?? profile?.completedGames.length ?? 0,
       color: "from-sky to-lavender",
     },
     {
       icon: BookOpen,
       label: "Stories Read",
-      value: profile?.completedStories.length || 0,
+      value: dashboardStats?.storiesCompleted ?? profile?.completedStories.length ?? 0,
       color: "from-mint to-sky",
     },
     {
       icon: GraduationCap,
       label: "Lessons Done",
-      value: profile?.completedLessons.length || 0,
+      value: dashboardStats?.lessonsCompleted ?? profile?.completedLessons.length ?? 0,
       color: "from-green-400 to-teal-400",
     },
     {
       icon: Crown,
       label: "Coins",
-      value: profile?.coins || 0,
+      value: dashboardStats?.coins ?? profile?.coins ?? 0,
       color: "from-bubblegum to-lavender",
     },
   ];
