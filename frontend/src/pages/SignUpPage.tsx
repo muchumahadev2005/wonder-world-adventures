@@ -38,6 +38,7 @@ const SignUpPage = () => {
     ageGroup: "3-5" | "6-8" | "9-11";
     favoriteColor: string;
     favoriteCharacter: string;
+    isPremium?: boolean;
   }) => {
     setProfile({
       name: profile.name,
@@ -53,7 +54,7 @@ const SignUpPage = () => {
       completedStories: [],
       completedLessons: [],
       unlockedLessons: ["fruits"],
-      isPremium: false,
+      isPremium: profile.isPremium || false,
     });
   };
 
@@ -63,8 +64,14 @@ const SignUpPage = () => {
       { method: "GET" },
       token,
     );
+    let isPremium = false;
+    try {
+      const subData = await apiFetch<{ status: string }>("/subscriptions/status", {}, token);
+      isPremium = subData.status === "ACTIVE";
+    } catch (e) {}
+
     if (data.profile) {
-      applyChildProfile(data.profile);
+      applyChildProfile({ ...data.profile, isPremium });
       navigate("/");
     } else {
       clearProfile();

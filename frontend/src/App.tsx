@@ -33,6 +33,8 @@ import AnalyticsAdmin from "./pages/admin/AnalyticsAdmin";
 import SettingsAdmin from "./pages/admin/SettingsAdmin";
 
 import { ADMIN_EMAIL } from "./lib/adminApi";
+import { apiFetch } from "./lib/api";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -53,11 +55,25 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated, user } = useAuth();
-  const { profile } = useChild();
+  const { isAuthenticated, user, token } = useAuth();
+  const { profile, setPremium } = useChild();
 
   // Hide BottomNav for admin users
   const isAdmin = user?.email === ADMIN_EMAIL;
+
+  useEffect(() => {
+    if (isAuthenticated && profile && !isAdmin && token) {
+      apiFetch<{ status: string }>("/subscriptions/status", {}, token)
+        .then((data) => {
+          const isPremium = data.status === "ACTIVE";
+          if (profile.isPremium !== isPremium) {
+            setPremium(isPremium);
+          }
+        })
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, token, isAdmin, setPremium]); // check once on auth load
 
   return (
     <>

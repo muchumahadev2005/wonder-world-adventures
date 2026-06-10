@@ -88,7 +88,7 @@ const NavBar = () => {
         style={glassStyle}
       >
         {/* MOBILE — compact top bar (nav lives in BottomNav) */}
-        <div className="md:hidden flex items-center justify-between gap-2">
+        <div className="lg:hidden flex items-center justify-between gap-2">
           <motion.div
             className="flex items-center gap-2 cursor-pointer select-none min-w-0"
             onClick={() => navigate("/")}
@@ -138,7 +138,7 @@ const NavBar = () => {
         </div>
 
         {/* DESKTOP */}
-        <div className="hidden h-[82px] items-center gap-2 md:grid md:grid-cols-[minmax(165px,auto),1fr,minmax(165px,auto)] md:gap-4">
+        <div className="hidden h-[82px] items-center gap-2 lg:grid lg:grid-cols-[minmax(165px,auto),1fr,minmax(165px,auto)] lg:gap-4">
           <motion.div
             className="flex items-center gap-2 cursor-pointer select-none pr-1"
             onClick={() => navigate("/")}

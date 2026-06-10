@@ -19,22 +19,22 @@ const BottomNav = () => {
 
   return (
     <motion.nav
-      className="fixed bottom-3 left-0 right-0 z-50 md:hidden flex justify-center px-3"
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden flex justify-center w-full"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 220, damping: 24, delay: 0.1 }}
     >
       <div
-        className="flex w-full max-w-[440px] items-center justify-between gap-1 px-2 py-2 rounded-[28px]"
+        className="flex w-full items-center justify-between gap-1 px-2 py-2 rounded-t-[28px]"
         style={{
-          paddingBottom: "max(8px, env(safe-area-inset-bottom))",
+          paddingBottom: "max(12px, env(safe-area-inset-bottom))",
           background:
-            "linear-gradient(135deg, rgba(255,245,225,0.75) 0%, rgba(255,225,210,0.55) 50%, rgba(220,200,255,0.65) 100%)",
+            "linear-gradient(135deg, rgba(255,245,225,0.85) 0%, rgba(255,225,210,0.65) 50%, rgba(220,200,255,0.75) 100%)",
           backdropFilter: "blur(22px)",
           WebkitBackdropFilter: "blur(22px)",
-          border: "1px solid rgba(255,255,255,0.55)",
+          borderTop: "1px solid rgba(255,255,255,0.55)",
           boxShadow:
-            "0 14px 40px rgba(120,70,30,0.25), 0 4px 14px rgba(160,100,200,0.22), inset 0 1px 0 rgba(255,255,255,0.6)",
+            "0 -10px 40px rgba(120,70,30,0.15), 0 -4px 14px rgba(160,100,200,0.12), inset 0 1px 0 rgba(255,255,255,0.6)",
         }}
       >
         {items.map((item) => {

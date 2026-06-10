@@ -86,6 +86,12 @@ const LoginPage = () => {
           favoriteCharacter: favoriteCharacter.trim(),
         },
       }, token);
+      let isPremium = false;
+      try {
+        const subData = await apiFetch<{ status: string }>("/subscriptions/status", {}, token);
+        isPremium = subData.status === "ACTIVE";
+      } catch (e) {}
+
       setProfile({
         name: data.profile.name,
         ageGroup: data.profile.ageGroup,
@@ -100,7 +106,7 @@ const LoginPage = () => {
         completedStories: [],
         completedLessons: [],
         unlockedLessons: ["fruits"],
-        isPremium: false,
+        isPremium,
       });
       navigate("/");
     } catch (err: any) {

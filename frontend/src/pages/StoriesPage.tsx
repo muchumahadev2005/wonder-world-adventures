@@ -338,7 +338,7 @@ const AudioPlayer = ({ duration, onFinish }: { duration: string; onFinish: () =>
 };
 
 const StoriesPage = () => {
-  const { profile, addStars, addXP, addCoins, incrementStreak, completeStory } = useChild();
+  const { profile, addStars, addXP, addCoins, incrementStreak, completeStory, setPremium } = useChild();
   const { token } = useAuth();
   const [screen, setScreen] = useState<Screen>("list");
   const [apiStories, setApiStories] = useState<StoryItem[]>(stories);
@@ -351,7 +351,6 @@ const StoriesPage = () => {
   const [showReward, setShowReward] = useState(false);
   const [rewardData, setRewardData] = useState({ stars: 0, xp: 0, coins: 0 });
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
-  const [isPremiumLocal, setIsPremiumLocal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -369,7 +368,7 @@ const StoriesPage = () => {
   }, []);
 
   const openStory = (story: StoryItem) => {
-    if (story.premium && !profile?.isPremium && !isPremiumLocal) {
+    if (story.premium && !profile?.isPremium) {
       setShowSubscribeModal(true);
       return;
     }
@@ -423,7 +422,7 @@ const StoriesPage = () => {
       <SubscribeModal
         open={showSubscribeModal}
         onClose={() => setShowSubscribeModal(false)}
-        onSuccess={() => setIsPremiumLocal(true)}
+        onSuccess={() => setPremium(true)}
       />
 
       <RewardPopup
@@ -449,7 +448,7 @@ const StoriesPage = () => {
 
             <div className="px-4 grid grid-cols-2 gap-4">
               {apiStories.map((story, i) => {
-                const locked = story.premium && !profile?.isPremium && !isPremiumLocal;
+                const locked = story.premium && !profile?.isPremium;
                 const completed = profile?.completedStories.includes(story.id);
                 return (
                   <motion.button

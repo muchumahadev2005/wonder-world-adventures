@@ -29,6 +29,7 @@ interface ChildContextType {
   completeLesson: (lessonId: string, nextLessonId?: string) => void;
   isLoggedIn: boolean;
   logout: () => void;
+  setPremium: (isPremium: boolean) => void;
 }
 
 const ChildContext = createContext<ChildContextType | null>(null);
@@ -63,6 +64,7 @@ export const ChildProvider = ({ children }: { children: ReactNode }) => {
   }, [profile]);
 
   const setProfile = (p: ChildProfile) => setProfileState(p);
+  const setPremium = (isPremium: boolean) => setProfileState(prev => prev ? { ...prev, isPremium } : prev);
 
   const addStars = (count: number) => {
     setProfileState(prev => prev ? { ...prev, stars: prev.stars + count } : prev);
@@ -128,6 +130,7 @@ export const ChildProvider = ({ children }: { children: ReactNode }) => {
       completeLesson,
       isLoggedIn: !!profile,
       logout,
+      setPremium,
     }}>
       {children}
     </ChildContext.Provider>

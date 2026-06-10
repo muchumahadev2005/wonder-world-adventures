@@ -232,14 +232,13 @@ const MathGame = ({
 };
 
 const GamesPage = () => {
-  const { profile, addStars, addXP, addCoins, completeGame } = useChild();
+  const { profile, addStars, addXP, addCoins, completeGame, setPremium } = useChild();
   const { token } = useAuth();
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [showStarBurst, setShowStarBurst] = useState(false);
   const [earnedStars, setEarnedStars] = useState(0);
   const [apiGames, setApiGames] = useState<GameItem[]>(games);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
-  const [isPremiumLocal, setIsPremiumLocal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -296,7 +295,7 @@ const GamesPage = () => {
       <SubscribeModal
         open={showSubscribeModal}
         onClose={() => setShowSubscribeModal(false)}
-        onSuccess={() => setIsPremiumLocal(true)}
+        onSuccess={() => setPremium(true)}
       />
 
       <div className="page-shell max-w-5xl">
@@ -353,7 +352,7 @@ const GamesPage = () => {
           >
             {apiGames.map((game) => {
               const completed = profile?.completedGames.includes(game.id);
-              const locked = game.premium && !profile?.isPremium && !isPremiumLocal;
+              const locked = game.premium && !profile?.isPremium;
               return (
                 <motion.button
                   key={game.id}

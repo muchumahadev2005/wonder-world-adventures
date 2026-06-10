@@ -1,8 +1,8 @@
 const { env } = require("../config/env");
 
 const errorMiddleware = (err, req, res, next) => {
-	const status = err.status || 500;
-	const message = err.message || "Server error";
+	const status = err.status || err.statusCode || 500;
+	const message = err.message || (err.error && err.error.description) || "Server error";
 
 	if (env !== "production") {
 		// eslint-disable-next-line no-console
