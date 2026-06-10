@@ -20,7 +20,6 @@ model User {
   emailVerifications EmailVerificationToken[]
   passwordResets     PasswordResetToken[]
   subscriptions      UserSubscription[]
-  payments           Payment[]
 
   @@map("users")
 }
@@ -101,7 +100,6 @@ model UserSubscription {
   features  SubscriptionFeature[]
   plan      SubscriptionPlan      @relation(fields: [planId], references: [id], onDelete: Cascade)
   user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payments  Payment[]
 
   @@map("user_subscriptions")
 }
@@ -477,20 +475,4 @@ enum RewardType {
   STARS
   COINS
   BADGE
-}
-
-model Payment {
-  id                 String            @id @default(cuid())
-  userId             String            @map("user_id")
-  subscriptionId     String?           @map("subscription_id")
-  amount             Int
-  status             String
-  razorpayOrderId    String            @map("razorpay_order_id") @unique
-  razorpayPaymentId  String?           @map("razorpay_payment_id")
-  createdAt          DateTime          @default(now()) @map("created_at")
-
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-
-  @@map("payments")
 }
