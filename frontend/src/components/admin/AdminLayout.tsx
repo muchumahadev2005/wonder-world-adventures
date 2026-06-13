@@ -22,6 +22,8 @@ import {
   X,
   Sparkles,
   Shield,
+  Image,
+  FileUp,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -41,10 +43,12 @@ const NAV_ITEMS = [
   { path: "/admin/stories", label: "Stories", icon: BookOpen },
   { path: "/admin/languages", label: "Languages", icon: Languages },
   { path: "/admin/lessons", label: "Lessons", icon: GraduationCap },
+  { path: "/admin/media", label: "Media Library", icon: Image },
   { path: "/admin/users", label: "Users", icon: Users },
   { path: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard, badge: "Hot" },
   { path: "/admin/payments", label: "Payments", icon: DollarSign },
   { path: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { path: "/admin/import-history", label: "Import History", icon: FileUp },
   { path: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

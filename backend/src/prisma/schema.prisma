@@ -220,6 +220,7 @@ model StoryProgress {
 
 model Lesson {
   id          String           @id @default(cuid())
+  lessonCode  String?          @unique @map("lesson_code")
   slug        String           @unique
   title       String
   description String?
@@ -227,9 +228,13 @@ model Lesson {
   emoji       String?
   color       String?
   category    String?
+  tags        String[]         @default([])
+  status      String           @default("draft")
   isPremium   Boolean          @default(false) @map("is_premium")
   isPublished Boolean          @default(true) @map("is_published")
   sortOrder   Int              @default(0) @map("sort_order")
+  archivedAt  DateTime?        @map("archived_at")
+  publishedAt DateTime?        @map("published_at")
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
   languageId  String           @map("language_id")
@@ -239,8 +244,11 @@ model Lesson {
   language    Language         @relation(fields: [languageId], references: [id], onDelete: Cascade)
   level       Level            @relation(fields: [levelId], references: [id], onDelete: Cascade)
   quizzes     Quiz[]
+  versions    LessonVersion[]
 
   @@index([languageId, levelId])
+  @@index([status])
+  @@index([lessonCode])
   @@map("lessons")
 }
 
@@ -303,19 +311,20 @@ model Quiz {
 }
 
 model QuizQuestion {
-  id        String   @id @default(cuid())
-  quizId    String   @map("quiz_id")
-  type      String   @default("mcq")
-  question  String
-  emoji     String?
-  options   Json?
-  answer    String
-  hint      String?
-  points    Int      @default(1)
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  quizId      String   @map("quiz_id")
+  type        String   @default("mcq")
+  question    String
+  emoji       String?
+  options     Json?
+  answer      String
+  hint        String?
+  explanation String?
+  points      Int      @default(1)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@index([quizId])
   @@map("quiz_questions")
@@ -493,4 +502,56 @@ model Payment {
   subscription UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   @@map("payments")
+}
+
+model LessonVersion {
+  id         String   @id @default(cuid())
+  lessonId   String   @map("lesson_id")
+  version    Int
+  snapshot   Json
+  changeNote String?  @map("change_note")
+  createdBy  String?  @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@unique([lessonId, version])
+  @@map("lesson_versions")
+}
+
+model ImportAuditLog {
+  id           String   @id @default(cuid())
+  importType   String   @map("import_type")
+  fileName     String?  @map("file_name")
+  importedBy   String   @map("imported_by")
+  totalRecords Int      @default(0) @map("total_records")
+  successCount Int      @default(0) @map("success_count")
+  failureCount Int      @default(0) @map("failure_count")
+  errors       Json?
+  status       String   @default("completed")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([importedBy])
+  @@index([createdAt])
+  @@map("import_audit_logs")
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  fileName     String   @map("file_name")
+  originalName String   @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int
+  url          String
+  provider     String   @default("local")
+  folder       String?
+  altText      String?  @map("alt_text")
+  uploadedBy   String?  @map("uploaded_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([folder])
+  @@index([mimeType])
+  @@map("media")
 }

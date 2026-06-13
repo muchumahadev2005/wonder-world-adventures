@@ -98,6 +98,7 @@ export interface AdminLanguage {
 
 export interface AdminLesson {
   id: string;
+  lessonCode?: string | null;
   slug: string;
   title: string;
   description?: string | null;
@@ -105,12 +106,103 @@ export interface AdminLesson {
   emoji?: string | null;
   color?: string | null;
   category?: string | null;
+  tags?: string[];
+  status?: string;
   isPremium: boolean;
   isPublished: boolean;
+  sortOrder?: number;
+  archivedAt?: string | null;
+  publishedAt?: string | null;
   createdAt: string;
-  language: { name: string; code: string };
-  level: { name: string; code: string };
-  _count?: { cards: number; quizzes: number };
+  updatedAt?: string;
+  language: { id?: string; name: string; code: string };
+  level: { id?: string; name: string; code: string };
+  _count?: { cards: number; quizQuestions?: number };
+}
+
+export interface AdminLessonFull extends AdminLesson {
+  languageId?: string;
+  levelId?: string;
+  cards: AdminLessonCard[];
+  quizzes: AdminQuizFull[];
+  versions?: LessonVersion[];
+}
+
+export interface AdminLessonCard {
+  id: string;
+  word: string;
+  translit?: string | null;
+  meaning?: string | null;
+  emoji?: string | null;
+  imageUrl?: string | null;
+  sortOrder: number;
+}
+
+export interface AdminQuizFull {
+  id: string;
+  title: string;
+  questions: AdminQuizQuestion[];
+}
+
+export interface AdminQuizQuestion {
+  id: string;
+  question: string;
+  options?: string[] | null;
+  answer: string;
+  explanation?: string | null;
+  emoji?: string | null;
+  hint?: string | null;
+  type: string;
+  points: number;
+  sortOrder: number;
+}
+
+export interface LessonVersion {
+  id: string;
+  version: number;
+  changeNote?: string | null;
+  createdBy?: string | null;
+  createdAt: string;
+  snapshot?: unknown;
+}
+
+export interface ImportAuditEntry {
+  id: string;
+  importType: string;
+  fileName?: string | null;
+  importedBy: string;
+  totalRecords: number;
+  successCount: number;
+  failureCount: number;
+  errors?: unknown[] | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface ContentAnalytics {
+  totalLessons: number;
+  totalCards: number;
+  totalQuizQuestions: number;
+  draftLessons: number;
+  publishedLessons: number;
+  archivedLessons: number;
+  premiumLessons: number;
+  freeLessons: number;
+  byLanguage: { code: string; name: string; count: number }[];
+  byLevel: { code: string; name: string; count: number }[];
+}
+
+export interface MediaItem {
+  id: string;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  provider: string;
+  folder?: string | null;
+  altText?: string | null;
+  createdAt: string;
 }
 
 export interface SubscriptionPlan {
@@ -291,10 +383,190 @@ export const adminApi = {
     return data.languages;
   },
 
+  getLevelsForLanguage: async (langId: string) => {
+    const data = await apiFetch<{ language: any; levels: any[] }>(`/languages/${langId}/levels`);
+    return data;
+  },
+
   // Lessons (real API)
   getLessons: async () => {
     const data = await apiFetch<{ lessons: AdminLesson[] }>("/lessons");
     return data.lessons;
+  },
+
+  // Lesson CMS
+  getAdminLessons: async (token: string | null, params: { page?: number; limit?: number; search?: string; language?: string; level?: string; status?: string; premium?: boolean } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    if (params.search) qs.set("search", params.search);
+    if (params.language) qs.set("language", params.language);
+    if (params.level) qs.set("level", params.level);
+    if (params.status) qs.set("status", params.status);
+    if (params.premium !== undefined) qs.set("premium", String(params.premium));
+    return adminFetch<{ lessons: AdminLesson[]; total: number; pages: number }>(`/admin/lessons?${qs}`, {}, token);
+  },
+
+  getAdminLesson: async (id: string, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${id}`, {}, token);
+  },
+
+  createLesson: async (body: Partial<AdminLessonFull>, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>("/admin/lessons", { method: "POST", body: JSON.stringify(body) }, token);
+  },
+
+  updateLesson: async (id: string, body: Partial<AdminLessonFull>, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${id}`, { method: "PUT", body: JSON.stringify(body) }, token);
+  },
+
+  deleteLesson: async (id: string, token: string | null) => {
+    return adminFetch<{ success: boolean; message: string }>(`/admin/lessons/${id}`, { method: "DELETE" }, token);
+  },
+
+  duplicateLesson: async (id: string, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${id}/duplicate`, { method: "POST" }, token);
+  },
+
+  archiveLesson: async (id: string, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${id}/archive`, { method: "POST" }, token);
+  },
+
+  restoreLesson: async (id: string, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${id}/restore`, { method: "POST" }, token);
+  },
+
+  publishLesson: async (id: string, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${id}/publish`, { method: "POST" }, token);
+  },
+
+  // Cards
+  addCard: async (lessonId: string, card: Omit<AdminLessonCard, "id">, token: string | null) => {
+    return adminFetch<{ card: AdminLessonCard }>(`/admin/lessons/${lessonId}/cards`, { method: "POST", body: JSON.stringify(card) }, token);
+  },
+
+  updateCard: async (lessonId: string, cardId: string, card: Partial<AdminLessonCard>, token: string | null) => {
+    return adminFetch<{ card: AdminLessonCard }>(`/admin/lessons/${lessonId}/cards/${cardId}`, { method: "PUT", body: JSON.stringify(card) }, token);
+  },
+
+  deleteCard: async (lessonId: string, cardId: string, token: string | null) => {
+    return adminFetch<{ success: boolean; message: string }>(`/admin/lessons/${lessonId}/cards/${cardId}`, { method: "DELETE" }, token);
+  },
+
+  reorderCards: async (lessonId: string, items: { id: string; sortOrder: number }[], token: string | null) => {
+    return adminFetch<{ success: boolean; message: string }>(`/admin/lessons/${lessonId}/cards-reorder`, { method: "PUT", body: JSON.stringify({ items }) }, token);
+  },
+
+  // Quiz
+  addQuizQuestion: async (lessonId: string, question: Omit<AdminQuizQuestion, "id" | "sortOrder"> & { sortOrder?: number }, token: string | null) => {
+    return adminFetch<{ question: AdminQuizQuestion }>(`/admin/lessons/${lessonId}/quiz`, { method: "POST", body: JSON.stringify(question) }, token);
+  },
+
+  updateQuizQuestion: async (lessonId: string, qId: string, question: Partial<AdminQuizQuestion>, token: string | null) => {
+    return adminFetch<{ question: AdminQuizQuestion }>(`/admin/lessons/${lessonId}/quiz/${qId}`, { method: "PUT", body: JSON.stringify(question) }, token);
+  },
+
+  deleteQuizQuestion: async (lessonId: string, qId: string, token: string | null) => {
+    return adminFetch<{ success: boolean; message: string }>(`/admin/lessons/${lessonId}/quiz/${qId}`, { method: "DELETE" }, token);
+  },
+
+  // Import / Export
+  importJson: async (data: unknown, token: string | null) => {
+    return adminFetch<{ success: boolean; totalRecords: number; successCount: number; failureCount: number; errors?: any[] }>("/admin/lessons/import/json", { method: "POST", body: JSON.stringify(data) }, token);
+  },
+
+  importExcel: async (file: File, token: string | null) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const url = `${API_BASE}/api/admin/lessons/import/excel`;
+    const headers = new Headers();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const response = await fetch(url, { method: "POST", body: formData, headers });
+    const data = await response.json();
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.message || "Excel import failed");
+    }
+    return data;
+  },
+
+  exportJson: async (params: { language?: string; level?: string; lessonId?: string } = {}, token: string | null) => {
+    const qs = new URLSearchParams();
+    if (params.language) qs.set("language", params.language);
+    if (params.level) qs.set("level", params.level);
+    if (params.lessonId) qs.set("lessonId", params.lessonId);
+    return adminFetch<{ success: boolean; data: any }>(`/admin/lessons/export/json?${qs}`, {}, token);
+  },
+
+  exportExcelUrl: (params: { language?: string; level?: string; lessonId?: string } = {}, token: string | null) => {
+    const qs = new URLSearchParams();
+    if (params.language) qs.set("language", params.language);
+    if (params.level) qs.set("level", params.level);
+    if (params.lessonId) qs.set("lessonId", params.lessonId);
+    if (token) qs.set("token", token);
+    return `${API_BASE}/api/admin/lessons/export/excel?${qs}`;
+  },
+
+  downloadExcelTemplateUrl: (token: string | null) => {
+    const qs = new URLSearchParams();
+    if (token) qs.set("token", token);
+    return `${API_BASE}/api/admin/lessons/template/excel?${qs}`;
+  },
+
+  // Versioning
+  getLessonVersions: async (lessonId: string, token: string | null) => {
+    return adminFetch<{ versions: LessonVersion[] }>(`/admin/lessons/${lessonId}/versions`, {}, token);
+  },
+
+  getLessonVersion: async (lessonId: string, version: number, token: string | null) => {
+    return adminFetch<{ version: LessonVersion }>(`/admin/lessons/${lessonId}/versions/${version}`, {}, token);
+  },
+
+  restoreLessonVersion: async (lessonId: string, version: number, token: string | null) => {
+    return adminFetch<{ lesson: AdminLessonFull }>(`/admin/lessons/${lessonId}/versions/${version}/restore`, { method: "POST" }, token);
+  },
+
+  // Analytics
+  getContentAnalytics: async (token: string | null) => {
+    return adminFetch<ContentAnalytics & { success: boolean }>("/admin/lessons/analytics", {}, token);
+  },
+
+  // Audit
+  getImportHistory: async (token: string | null, params: { page?: number; limit?: number } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    return adminFetch<{ imports: ImportAuditEntry[]; total: number; pages: number }>(`/admin/imports?${qs}`, {}, token);
+  },
+
+  // Media
+  listMedia: async (token: string | null, params: { page?: number; limit?: number; search?: string; folder?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    if (params.search) qs.set("search", params.search);
+    if (params.folder) qs.set("folder", params.folder);
+    return adminFetch<{ media: MediaItem[]; total: number; pages: number }>(`/admin/media?${qs}`, {}, token);
+  },
+
+  uploadMedia: async (file: File, token: string | null) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const url = `${API_BASE}/api/admin/media`;
+    const headers = new Headers();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const response = await fetch(url, { method: "POST", body: formData, headers });
+    const data = await response.json();
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.message || "Media upload failed");
+    }
+    return data as { success: boolean; media: MediaItem };
+  },
+
+  deleteMedia: async (id: string, token: string | null) => {
+    return adminFetch<{ success: boolean; message: string }>(`/admin/media/${id}`, { method: "DELETE" }, token);
+  },
+
+  updateMedia: async (id: string, data: { altText?: string; folder?: string }, token: string | null) => {
+    return adminFetch<{ success: boolean; media: MediaItem }>(`/admin/media/${id}`, { method: "PUT", body: JSON.stringify(data) }, token);
   },
 
   // Plans (real API)
@@ -318,3 +590,4 @@ export const adminApi = {
 
 export const ADMIN_EMAIL = "admin@storynest.com";
 export const isAdminUser = (email?: string | null) => email === ADMIN_EMAIL;
+

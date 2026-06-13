@@ -31,6 +31,9 @@ import SubscriptionsAdmin from "./pages/admin/SubscriptionsAdmin";
 import PaymentsAdmin from "./pages/admin/PaymentsAdmin";
 import AnalyticsAdmin from "./pages/admin/AnalyticsAdmin";
 import SettingsAdmin from "./pages/admin/SettingsAdmin";
+import LessonBuilderPage from "./pages/admin/LessonBuilderPage";
+import MediaLibrary from "./pages/admin/MediaLibrary";
+import ImportHistory from "./pages/admin/ImportHistory";
 
 import { ADMIN_EMAIL } from "./lib/adminApi";
 import { apiFetch } from "./lib/api";
@@ -102,6 +105,10 @@ const AppRoutes = () => {
         <Route path="/admin/stories" element={<AdminRoute><StoriesAdmin /></AdminRoute>} />
         <Route path="/admin/languages" element={<AdminRoute><LanguagesAdmin /></AdminRoute>} />
         <Route path="/admin/lessons" element={<AdminRoute><LessonsAdmin /></AdminRoute>} />
+        <Route path="/admin/lessons/create" element={<AdminRoute><LessonBuilderPage /></AdminRoute>} />
+        <Route path="/admin/lessons/:id/edit" element={<AdminRoute><LessonBuilderPage /></AdminRoute>} />
+        <Route path="/admin/media" element={<AdminRoute><MediaLibrary /></AdminRoute>} />
+        <Route path="/admin/import-history" element={<AdminRoute><ImportHistory /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><UsersAdmin /></AdminRoute>} />
         <Route path="/admin/subscriptions" element={<AdminRoute><SubscriptionsAdmin /></AdminRoute>} />
         <Route path="/admin/payments" element={<AdminRoute><PaymentsAdmin /></AdminRoute>} />

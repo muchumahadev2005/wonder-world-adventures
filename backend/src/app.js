@@ -61,7 +61,11 @@ app.use((req, res, next) => {
 	});
 	return next();
 });
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "10mb" }));
+
+// Serve uploaded media files
+const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
 
 app.use("/api", routes);
 
