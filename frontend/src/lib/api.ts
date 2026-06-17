@@ -153,8 +153,12 @@ export const contentApi = {
   },
   listStories: () => apiFetch<{ stories: ApiStory[] }>("/stories"),
   listGames: () => apiFetch<{ games: ApiGame[] }>("/games"),
-  chat: (message: string, token?: string | null) =>
-    apiFetch<{ reply: string }>("/chatbot/message", { method: "POST", body: { message } }, token),
+  chat: (message: string, token?: string | null, sessionId?: string) =>
+    apiFetch<{ reply: string; sources: Array<{ title: string; type: string; sourceId: string }>; cached: boolean }>(
+      "/chatbot/message",
+      { method: "POST", body: { message, sessionId } },
+      token,
+    ),
   claimReward: (
     body: { stars?: number; coins?: number; xp?: number; reason?: string; sourceType?: string; sourceId?: string },
     token?: string | null,

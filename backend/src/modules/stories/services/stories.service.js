@@ -1,4 +1,6 @@
 const repository = require("../repositories/stories.repository");
+const { indexContentAsync, deleteEmbeddings } = require("../../rag/embedding.service");
+
 
 const slugify = (value) =>
 	String(value || "")
@@ -115,8 +117,11 @@ const recommended = async () => {
 const createStory = async (body) => {
 	const data = await normalizeStoryData(body);
 	const story = await repository.create(data);
+	// Auto-index embedding (async, non-blocking)
+	indexContentAsync("story", story.id);
 	return normalizeStory(story);
 };
+
 
 const updateStory = async (idOrSlug, body) => {
 	const existing = await repository.findByIdOrSlug(idOrSlug);
@@ -128,8 +133,11 @@ const updateStory = async (idOrSlug, body) => {
 	const data = await normalizeStoryData(body, { partial: true });
 	if (!body.slug) delete data.slug;
 	const story = await repository.update(existing.id, data);
+	// Auto-index embedding (async, non-blocking)
+	indexContentAsync("story", story.id);
 	return normalizeStory(story);
 };
+
 
 const deleteStory = async (idOrSlug) => {
 	const existing = await repository.findByIdOrSlug(idOrSlug);
@@ -139,8 +147,11 @@ const deleteStory = async (idOrSlug) => {
 		throw error;
 	}
 	await repository.remove(existing.id);
+	// Remove associated embeddings
+	setImmediate(() => deleteEmbeddings("story", existing.id));
 	return { id: existing.id };
 };
+
 
 module.exports = {
 	listStories,

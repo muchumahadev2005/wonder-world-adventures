@@ -64,5 +64,9 @@ module.exports = {
 	authDebug: parseBool(getEnv("AUTH_DEBUG", "false")),
 	razorpayKeyId: getEnv("RAZORPAY_KEY_ID"),
 	razorpayKeySecret: getEnv("RAZORPAY_KEY_SECRET"),
+	// ── RAG / AI ──────────────────────────────────────────────────
+	openrouterApiKey: getEnv("OPENROUTER_API_KEY"),
+	redisUrl: getEnv("REDIS_URL"),
 };
+
 

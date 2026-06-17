@@ -1,5 +1,7 @@
 const prisma = require("../../prisma/prismaClient");
 const XLSX = require("xlsx");
+const { indexContentAsync, deleteEmbeddings } = require("../rag/embedding.service");
+
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -152,8 +154,11 @@ const createLesson = async (data, userId) => {
 		include: lessonInclude,
 	});
 
+	// Auto-index embedding (async, non-blocking)
+	indexContentAsync("lesson", lesson.id);
 	return lesson;
 };
+
 
 const updateLesson = async (id, data, userId) => {
 	const existing = await getLesson(id);
@@ -246,11 +251,21 @@ const updateLesson = async (id, data, userId) => {
 	return getLesson(existing.id);
 };
 
+// After update, re-index embedding
+const updateLessonWithIndex = async (id, data, userId) => {
+	const result = await updateLesson(id, data, userId);
+	indexContentAsync("lesson", result.id);
+	return result;
+};
+
+
 const deleteLesson = async (id) => {
 	const lesson = await getLesson(id);
+	setImmediate(() => deleteEmbeddings("lesson", lesson.id));
 	await prisma.lesson.delete({ where: { id: lesson.id } });
 	return { deleted: true };
 };
+
 
 const duplicateLesson = async (id) => {
 	const source = await getLesson(id);
@@ -863,6 +878,7 @@ module.exports = {
 	getLesson,
 	createLesson,
 	updateLesson,
+	updateLessonWithIndex,
 	deleteLesson,
 	duplicateLesson,
 	archiveLesson,

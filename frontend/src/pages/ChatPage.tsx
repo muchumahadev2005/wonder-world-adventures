@@ -5,106 +5,153 @@ import { useAuth } from "@/context/AuthContext";
 import { contentApi } from "@/lib/api";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
-import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import chatBg from "@/assets/chat-bg.jpg";
-import { MessageCircle, Send, User } from "lucide-react";
+import { MessageCircle, Send, User, BookOpen, Gamepad2, GraduationCap, ChevronDown, ChevronUp } from "lucide-react";
+
+// ── Types ─────────────────────────────────────────────────────────
+
+interface Source {
+  title: string;
+  type: string;
+  sourceId: string;
+}
 
 interface Message {
   role: "user" | "bot";
   text: string;
+  sources?: Source[];
+  cached?: boolean;
 }
 
+// ── Quick-action suggestions ──────────────────────────────────────
+
 const suggestions = [
-  { label: "📖 Tell me a story", send: "Tell me a story" },
-  { label: "📚 Help me learn", send: "Help me learn something new" },
-  { label: "🎮 Play a game", send: "Let's play a word game" },
-  { label: "😂 Tell a joke", send: "Tell me a funny joke" },
-  { label: "🤔 Fun fact", send: "Tell me a fun fact" },
-  { label: "➕ Math help", send: "Help me with math" },
+  { label: "📖 Story moral", send: "What is the moral of a story in StoryNest?" },
+  { label: "📚 Help me learn", send: "What can I learn in StoryNest lessons?" },
+  { label: "🎮 Games available", send: "What games are available in StoryNest?" },
+  { label: "🌟 Recommend a story", send: "Can you recommend a story for me?" },
+  { label: "🔤 Vocabulary", send: "Can you help me with vocabulary words?" },
+  { label: "🏆 Learning tips", send: "Give me a learning tip from StoryNest!" },
 ];
 
-const botResponses: Record<string, string[]> = {
-  "tell me a story": [
-    "🌟 Once upon a time, a little owl named Ollie lived in a cozy tree! Every night he would read books under the moonlight. One day he found a magical bookmark that could bring any story to life! Want to hear more? Go to the Stories section! 📚",
-    "🐉 In a land far away, there was a friendly dragon who could breathe rainbow fire! His name was Sparky and he loved making art with his colorful flames. Shall we go read the full story in Stories? 🌈",
-  ],
-  "help me learn": [
-    "🎓 Great idea! Here are some ways I can help:\n• Go to **Learn** to study words with lessons!\n• Go to **Stories** to read and take quizzes!\n• Go to **Games** to play learning games!\n\nWhich one sounds fun? 😊",
-  ],
-  "word game": [
-    "🎮 Let's play! I'm thinking of an animal that says MOO 🐄. What is it?\n\n(Type your answer and I'll tell you if you're right!) 🌟",
-    "🎮 Word game time! Complete this word: EL _ _ HANT 🐘 (Hint: It's a BIG animal!)",
-  ],
-  "joke": [
-    "😂 Why did the math book look sad? Because it had too many PROBLEMS! 🤣",
-    "😄 What do you call a sleeping dinosaur? A dino-SNORE! 🦕😴",
-    "🤣 Why don't scientists trust atoms? Because they make up everything! ⚗️",
-    "😂 What do you call a fish without eyes? A FSH! 🐟",
-  ],
-  "fact": [
-    "🌍 Cool fact! Honey never goes bad! Archaeologists found 3,000-year-old honey in Egyptian pyramids and it was still tasty! 🍯",
-    "🐙 Did you know octopuses have THREE hearts? And their blood is BLUE! How cool is that! 💙",
-    "🦒 A giraffe's tongue is dark purple and about 45cm long! They use it to grab leaves from tall trees! 🌿",
-  ],
-  "math": [
-    "➕ Math is fun! Try this: What is 6 × 7? Take your time! (It's 42! 🎉)\n\nHere's a trick: 6 × 7 is the same as 6 × 6 + 6 = 36 + 6 = 42! ✨",
-    "🧮 Did you know? If you multiply any number by 9 and add up the digits of the answer, you always get 9! Try it with 9 × 5 = 45 → 4+5 = 9! 🤯",
-  ],
-  cow: ["🐄 Yes! A cow says MOO! Great job! You win a virtual star! ⭐"],
-  elephant: ["🐘 Amazing! ELEPHANT is right! You're super smart! 🌟"],
-  default: [
-    "That's interesting! I'm Ollie the owl 🦉 and I love learning! Try saying 'tell me a story', 'joke', or 'fun fact'! 😊",
-    "Hmmm, let me think... 🤔 I know! Want to hear a joke or a fun fact? Just ask! 🌟",
-    "You're so curious! I love that! 🦉 Try clicking one of the suggestion buttons below for something fun! ✨",
-  ],
+// ── Source type icon ──────────────────────────────────────────────
+
+const SourceIcon = ({ type }: { type: string }) => {
+  if (type === "story") return <BookOpen className="w-3 h-3" />;
+  if (type === "game") return <Gamepad2 className="w-3 h-3" />;
+  return <GraduationCap className="w-3 h-3" />;
 };
 
-const getResponse = (input: string): string => {
-  const lower = input.toLowerCase();
-  for (const [key, responses] of Object.entries(botResponses)) {
-    if (lower.includes(key)) return responses[Math.floor(Math.random() * responses.length)];
-  }
-  return botResponses.default[Math.floor(Math.random() * botResponses.default.length)];
+const sourceTypeColor: Record<string, string> = {
+  story: "bg-purple-500/20 text-purple-200 border-purple-400/30",
+  lesson: "bg-blue-500/20 text-blue-200 border-blue-400/30",
+  game: "bg-green-500/20 text-green-200 border-green-400/30",
 };
+
+// ── Source chips component ────────────────────────────────────────
+
+const SourceChips = ({ sources }: { sources: Source[] }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!sources || sources.length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1 text-white/50 text-xs hover:text-white/80 transition-colors"
+      >
+        <span>📚 {sources.length} source{sources.length !== 1 ? "s" : ""}</span>
+        {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex flex-wrap gap-1.5 mt-1.5 overflow-hidden"
+          >
+            {sources.map((src, i) => (
+              <span
+                key={`${src.sourceId}-${i}`}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${
+                  sourceTypeColor[src.type] || "bg-white/10 text-white/70 border-white/20"
+                }`}
+              >
+                <SourceIcon type={src.type} />
+                {src.title}
+              </span>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ── Main Component ────────────────────────────────────────────────
 
 const ChatPage = () => {
   const { profile } = useChild();
   const { token } = useAuth();
+
+  // Stable session ID for this browser session
+  const sessionId = useRef<string>(
+    `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+  ).current;
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      text: `Hi ${profile?.name || "friend"}! 👋 I'm Ollie the Owl! 🦉 I'm here to help you learn, tell stories, and have fun! What would you like to do today?`,
+      text: `Hi ${profile?.name || "friend"}! 👋 I'm Ollie the Owl! 🦉 I know everything about StoryNest — our stories, lessons, and games. Ask me anything about what you've learned! What would you like to explore today?`,
     },
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   const sendMessage = async (text?: string) => {
     const msg = text || input.trim();
-    if (!msg) return;
+    if (!msg || isTyping) return;
+
     const userMsg: Message = { role: "user", text: msg };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
     setShowSuggestions(false);
+    setError(null);
 
-    setTimeout(async () => {
-      let reply = getResponse(msg);
-      try {
-        const data = await contentApi.chat(msg, token);
-        reply = data.reply || reply;
-      } catch (err) {
-        reply = getResponse(msg);
-      }
-      setMessages(prev => [...prev, { role: "bot", text: reply }]);
+    try {
+      const data = await contentApi.chat(msg, token, sessionId);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "bot",
+          text: data.reply,
+          sources: data.sources || [],
+          cached: data.cached,
+        },
+      ]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to connect";
+      setError(message);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "bot",
+          text: "Oops! I'm having a little trouble right now. Please try again in a moment! 🦉",
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 800 + Math.random() * 800);
+    }
   };
 
   return (
@@ -113,15 +160,34 @@ const ChatPage = () => {
       <NavBar />
 
       <div className="page-shell-compact flex-1 flex flex-col w-full">
+        {/* Header */}
         <motion.div
           className="page-header mb-4"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-white flex items-center justify-center gap-2 drop-shadow-md">
-            <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300" /> Chat with Ollie
+            <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300" />
+            Chat with Ollie
           </h1>
+          <p className="text-center text-white/60 text-xs mt-1">
+            Powered by StoryNest AI 🦉 — answers from our stories, lessons &amp; games
+          </p>
         </motion.div>
+
+        {/* Error banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mb-2 px-4 py-2 rounded-xl bg-red-500/20 border border-red-400/30 text-red-200 text-xs text-center"
+            >
+              ⚠️ {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Chat window */}
         <div
@@ -138,16 +204,17 @@ const ChatPage = () => {
               className={`flex items-end gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
             >
               {/* Avatar */}
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-base ${
                   msg.role === "bot"
                     ? "bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg"
-                    : "bg-gradient-to-br from-sky to-mint"
+                    : "bg-gradient-to-br from-sky-400 to-teal-400"
                 }`}
               >
-                {msg.role === "bot" ? "🦉" : <User className="w-4 h-4 text-primary-foreground" />}
+                {msg.role === "bot" ? "🦉" : <User className="w-4 h-4 text-white" />}
               </div>
 
               <div
@@ -157,6 +224,16 @@ const ChatPage = () => {
                 style={{ boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}
               >
                 <p className="text-sm font-body whitespace-pre-line leading-relaxed">{msg.text}</p>
+
+                {/* Source citations */}
+                {msg.role === "bot" && msg.sources && msg.sources.length > 0 && (
+                  <SourceChips sources={msg.sources} />
+                )}
+
+                {/* Cache indicator (optional — subtle) */}
+                {msg.cached && (
+                  <p className="text-white/30 text-[10px] mt-1">⚡ instant answer</p>
+                )}
               </div>
             </motion.div>
           ))}
@@ -203,6 +280,7 @@ const ChatPage = () => {
                   style={{ background: "rgba(255,255,255,0.12)" }}
                   whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.22)" }}
                   whileTap={{ scale: 0.95 }}
+                  disabled={isTyping}
                 >
                   {s.label}
                 </motion.button>
@@ -219,21 +297,25 @@ const ChatPage = () => {
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && sendMessage()}
-            placeholder="Say something to Ollie..."
-            className="flex-1 px-4 py-2 rounded-xl bg-transparent text-white placeholder:text-white/60 focus:outline-none font-body font-bold"
+            onKeyDown={e => e.key === "Enter" && !isTyping && sendMessage()}
+            placeholder="Ask Ollie about StoryNest stories, lessons or games..."
+            className="flex-1 px-4 py-2 rounded-xl bg-transparent text-white placeholder:text-white/50 focus:outline-none font-body font-medium text-sm"
+            disabled={isTyping}
+            maxLength={500}
           />
           <motion.button
             onClick={() => sendMessage()}
-            className="glossy-btn p-3 text-primary-foreground"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            className="glossy-btn p-3 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={!isTyping ? { scale: 1.1 } : {}}
+            whileTap={!isTyping ? { scale: 0.9 } : {}}
+            disabled={isTyping || !input.trim()}
+            aria-label="Send message"
           >
             <Send className="w-5 h-5" />
           </motion.button>
         </div>
 
-        {/* Re-show suggestions button */}
+        {/* Re-show suggestions */}
         {!showSuggestions && (
           <button
             onClick={() => setShowSuggestions(true)}

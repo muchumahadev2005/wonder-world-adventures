@@ -1,5 +1,7 @@
 const repository = require("../repositories/games.repository");
 const subscriptionsService = require("../../subscriptions/services/subscriptions.service");
+const { indexContentAsync, deleteEmbeddings } = require("../../rag/embedding.service");
+
 
 const normalizeGame = (game, canAccessPremium = false) => ({
 	id: game.slug || game.id,

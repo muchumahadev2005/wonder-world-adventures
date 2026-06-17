@@ -11,7 +11,8 @@ const gamesRoutes = require("../modules/games/routes/games.routes");
 const rewardsRoutes = require("../modules/rewards/rewards.routes");
 const progressRoutes = require("../modules/progress/progress.routes");
 const parentsRoutes = require("../modules/parents/routes/parents.routes");
-const chatbotRoutes = require("../modules/chatbot/chatbot.routes");
+const ragRoutes = require("../modules/rag/rag.routes");       // RAG chatbot
+const ragAdminRoutes = require("../modules/rag/rag.admin.routes"); // Admin indexing
 const voiceRoutes = require("../modules/voice/voice.routes");
 const paymentsRoutes = require("../modules/payments/payments.routes");
 const usersRoutes = require("../modules/users/users.routes");
@@ -37,7 +38,8 @@ router.use("/games", gamesRoutes);
 router.use("/rewards", rewardsRoutes);
 router.use("/progress", progressRoutes);
 router.use("/parents", parentsRoutes);
-router.use("/chatbot", chatbotRoutes);
+router.use("/chatbot", ragRoutes);       // RAG-powered AI Buddy
+router.use("/rag", ragAdminRoutes);      // Admin: re-indexing endpoints
 router.use("/voice", voiceRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);
