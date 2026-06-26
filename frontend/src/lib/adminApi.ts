@@ -215,83 +215,6 @@ export interface SubscriptionPlan {
   createdAt: string;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_STATS: AdminStats = {
-  totalUsers: 342,
-  premiumUsers: 87,
-  activeSubscriptions: 87,
-  totalSubscriptions: 134,
-  totalStories: 8,
-  totalLessons: 26,
-  totalRevenue: 43433,
-  monthlyRevenue: 12451,
-  paymentsToday: 3,
-  totalPayments: 156,
-  revenueTrend: [
-    { date: "Jun 1", revenue: 4990 },
-    { date: "Jun 2", revenue: 2495 },
-    { date: "Jun 3", revenue: 7485 },
-    { date: "Jun 4", revenue: 4990 },
-    { date: "Jun 5", revenue: 9980 },
-    { date: "Jun 6", revenue: 2495 },
-    { date: "Jun 7", revenue: 4990 },
-  ],
-  userGrowth: [
-    { date: "Jun 1", users: 12 },
-    { date: "Jun 2", users: 8 },
-    { date: "Jun 3", users: 19 },
-    { date: "Jun 4", users: 14 },
-    { date: "Jun 5", users: 22 },
-    { date: "Jun 6", users: 7 },
-    { date: "Jun 7", users: 16 },
-  ],
-  activity: [
-    { type: "new_user", name: "Priya Sharma", detail: "priya@gmail.com", at: new Date(Date.now() - 2 * 60000).toISOString() },
-    { type: "payment", name: "Ravi Kumar", detail: "₹499", at: new Date(Date.now() - 15 * 60000).toISOString() },
-    { type: "subscription", name: "Anita Patel", detail: "Premium", at: new Date(Date.now() - 30 * 60000).toISOString() },
-    { type: "new_user", name: "Deepak Reddy", detail: "deepak@yahoo.com", at: new Date(Date.now() - 45 * 60000).toISOString() },
-    { type: "payment", name: "Sunita Singh", detail: "₹999", at: new Date(Date.now() - 90 * 60000).toISOString() },
-    { type: "new_user", name: "Arjun Nair", detail: "arjun@hotmail.com", at: new Date(Date.now() - 120 * 60000).toISOString() },
-  ],
-};
-
-const MOCK_USERS: AdminUser[] = Array.from({ length: 20 }, (_, i) => ({
-  id: `user_${i + 1}`,
-  name: ["Priya Sharma", "Ravi Kumar", "Anita Patel", "Deepak Reddy", "Sunita Singh", "Arjun Nair", "Kavya Menon", "Rohit Verma"][i % 8],
-  email: `user${i + 1}@example.com`,
-  provider: i % 3 === 0 ? ["google"] : ["email"],
-  isVerified: i % 5 !== 0,
-  createdAt: new Date(Date.now() - i * 3 * 24 * 60 * 60 * 1000).toISOString(),
-  profileImage: null,
-  subscriptions: i % 4 === 0 ? [{ plan: { name: "Premium" }, status: "ACTIVE", endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() }] : [],
-}));
-
-const MOCK_SUBSCRIPTIONS: AdminSubscription[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `sub_${i + 1}`,
-  userId: `user_${i + 1}`,
-  planId: "plan_1",
-  status: (["ACTIVE", "ACTIVE", "ACTIVE", "EXPIRED", "CANCELLED"] as const)[i % 5],
-  startDate: new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000).toISOString(),
-  endDate: new Date(Date.now() + (30 - i * 2) * 24 * 60 * 60 * 1000).toISOString(),
-  createdAt: new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000).toISOString(),
-  user: { name: ["Priya Sharma", "Ravi Kumar", "Anita Patel", "Deepak Reddy", "Sunita Singh"][i % 5], email: `user${i + 1}@example.com` },
-  plan: { name: i % 3 === 0 ? "Premium Monthly" : "Premium", price: i % 3 === 0 ? 999 : 499 },
-  payments: [{ id: `pay_${i + 1}`, razorpayOrderId: `order_${i + 1}`, razorpayPaymentId: `pay_rzp_${i + 1}`, amount: 499, status: "SUCCESS" }],
-}));
-
-const MOCK_PAYMENTS: AdminPayment[] = Array.from({ length: 20 }, (_, i) => ({
-  id: `pay_${i + 1}`,
-  userId: `user_${i + 1}`,
-  amount: [499, 999, 1499][i % 3],
-  status: (["SUCCESS", "SUCCESS", "SUCCESS", "PENDING", "FAILED"] as const)[i % 5],
-  razorpayOrderId: `order_${Date.now()}_${i}`,
-  razorpayPaymentId: i % 5 !== 4 ? `pay_rzp_${i + 1}` : null,
-  createdAt: new Date(Date.now() - i * 2 * 24 * 60 * 60 * 1000).toISOString(),
-  user: { name: ["Priya Sharma", "Ravi Kumar", "Anita Patel", "Deepak Reddy", "Sunita Singh"][i % 5], email: `user${i + 1}@example.com` },
-  subscription: { plan: { name: "Premium" } },
-}));
-
 // ─── Admin API Helper ─────────────────────────────────────────────────────────
 
 const adminFetch = async <T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> => {
@@ -312,39 +235,26 @@ const adminFetch = async <T>(path: string, options: RequestInit = {}, token?: st
 export const adminApi = {
   // Stats
   getStats: async (token: string | null): Promise<AdminStats> => {
-    try {
-      const data = await adminFetch<AdminStats & { success: boolean }>("/admin/stats", {}, token);
-      return data;
-    } catch {
-      return MOCK_STATS;
-    }
+    const data = await adminFetch<AdminStats & { success: boolean }>("/admin/stats", {}, token);
+    return data;
   },
 
   // Users
   getUsers: async (token: string | null, params: { page?: number; search?: string } = {}) => {
-    try {
-      const qs = new URLSearchParams();
-      if (params.page) qs.set("page", String(params.page));
-      if (params.search) qs.set("search", params.search);
-      const data = await adminFetch<{ users: AdminUser[]; total: number }>(`/admin/users?${qs}`, {}, token);
-      return data;
-    } catch {
-      return { users: MOCK_USERS, total: MOCK_USERS.length };
-    }
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.search) qs.set("search", params.search);
+    const data = await adminFetch<{ users: AdminUser[]; total: number }>(`/admin/users?${qs}`, {}, token);
+    return data;
   },
 
   // Subscriptions
   getSubscriptions: async (token: string | null, params: { page?: number; status?: string } = {}) => {
-    try {
-      const qs = new URLSearchParams();
-      if (params.page) qs.set("page", String(params.page));
-      if (params.status) qs.set("status", params.status);
-      const data = await adminFetch<{ subscriptions: AdminSubscription[]; total: number }>(`/admin/subscriptions?${qs}`, {}, token);
-      return data;
-    } catch {
-      const filtered = params.status ? MOCK_SUBSCRIPTIONS.filter(s => s.status === params.status) : MOCK_SUBSCRIPTIONS;
-      return { subscriptions: filtered, total: filtered.length };
-    }
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.status) qs.set("status", params.status);
+    const data = await adminFetch<{ subscriptions: AdminSubscription[]; total: number }>(`/admin/subscriptions?${qs}`, {}, token);
+    return data;
   },
 
   updateSubscriptionStatus: async (id: string, status: string, token: string | null) => {
@@ -353,16 +263,11 @@ export const adminApi = {
 
   // Payments
   getPayments: async (token: string | null, params: { page?: number; status?: string } = {}) => {
-    try {
-      const qs = new URLSearchParams();
-      if (params.page) qs.set("page", String(params.page));
-      if (params.status) qs.set("status", params.status);
-      const data = await adminFetch<{ payments: AdminPayment[]; total: number }>(`/admin/payments?${qs}`, {}, token);
-      return data;
-    } catch {
-      const filtered = params.status ? MOCK_PAYMENTS.filter(p => p.status === params.status) : MOCK_PAYMENTS;
-      return { payments: filtered, total: filtered.length };
-    }
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.status) qs.set("status", params.status);
+    const data = await adminFetch<{ payments: AdminPayment[]; total: number }>(`/admin/payments?${qs}`, {}, token);
+    return data;
   },
 
   // Stories (real API)
