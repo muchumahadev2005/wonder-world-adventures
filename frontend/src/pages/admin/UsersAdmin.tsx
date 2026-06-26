@@ -98,23 +98,7 @@ const UserDrawer = ({ user, onClose }: { user: AdminUser; onClose: () => void })
           )}
         </div>
 
-        {/* Mock Progress */}
-        <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>Progress</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            {[
-              { icon: BookOpen, label: "Stories", value: Math.floor(Math.random() * 5) + 1 },
-              { icon: Gamepad2, label: "Games", value: Math.floor(Math.random() * 8) + 1 },
-              { icon: Star, label: "Stars", value: Math.floor(Math.random() * 50) + 10 },
-            ].map(item => (
-              <div key={item.label} style={{ textAlign: "center", padding: "10px 8px", background: "white", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                <item.icon size={16} color="#6366f1" style={{ margin: "0 auto 4px" }} />
-                <div style={{ fontWeight: 800, fontSize: 18, color: "#0f172a" }}>{item.value}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>{item.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+
 
         {/* Actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

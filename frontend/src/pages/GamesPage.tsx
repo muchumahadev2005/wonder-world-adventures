@@ -30,58 +30,7 @@ type GameItem = {
   premium: boolean;
 };
 
-const games: GameItem[] = [
-  {
-    id: "math-add",
-    title: "Addition Fun",
-    icon: Calculator,
-    color: "from-sky to-lavender",
-    stars: 3,
-    premium: false,
-  },
-  {
-    id: "math-sub",
-    title: "Subtraction",
-    icon: Calculator,
-    color: "from-mint to-sky",
-    stars: 3,
-    premium: false,
-  },
-  {
-    id: "shapes",
-    title: "Shape Match",
-    icon: Shapes,
-    color: "from-coral to-sunshine",
-    stars: 5,
-    premium: false,
-  },
-  {
-    id: "patterns",
-    title: "Patterns",
-    icon: Puzzle,
-    color: "from-bubblegum to-lavender",
-    stars: 5,
-    premium: true,
-  },
-  {
-    id: "memory",
-    title: "Memory Game",
-    icon: Brain,
-    color: "from-sunshine to-coral",
-    stars: 4,
-    premium: false,
-  },
-  {
-    id: "speed-math",
-    title: "Speed Math",
-    icon: Zap,
-    color: "from-lavender to-bubblegum",
-    stars: 8,
-    premium: true,
-  },
-];
-
-const gameIconMap = {
+const gameIconMap: Record<string, any> = {
   calculator: Calculator,
   shapes: Shapes,
   puzzle: Puzzle,
@@ -89,10 +38,10 @@ const gameIconMap = {
   zap: Zap,
 };
 
-const normalizeApiGame = (game: ApiGame) => ({
+const normalizeApiGame = (game: ApiGame): GameItem => ({
   id: game.id || game.slug || "",
   title: game.title,
-  icon: gameIconMap[(game.icon || "").toLowerCase() as keyof typeof gameIconMap] || Gamepad2,
+  icon: gameIconMap[(game.icon || "").toLowerCase()] || Gamepad2,
   color: game.color || "from-sky to-lavender",
   stars: game.starsReward ?? game.stars ?? 3,
   premium: Boolean(game.isPremium ?? game.premium),
@@ -237,7 +186,7 @@ const GamesPage = () => {
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [showStarBurst, setShowStarBurst] = useState(false);
   const [earnedStars, setEarnedStars] = useState(0);
-  const [apiGames, setApiGames] = useState<GameItem[]>(games);
+  const [apiGames, setApiGames] = useState<GameItem[]>([]);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
 
   useEffect(() => {
@@ -245,10 +194,10 @@ const GamesPage = () => {
     contentApi
       .listGames()
       .then(({ games }) => {
-        if (mounted && games.length) setApiGames(games.map(normalizeApiGame));
+        if (mounted && games) setApiGames(games.map(normalizeApiGame));
       })
       .catch(() => {
-        if (mounted) setApiGames(games);
+        if (mounted) setApiGames([]);
       });
     return () => {
       mounted = false;
