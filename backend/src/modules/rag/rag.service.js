@@ -247,42 +247,47 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 		}
 	}
 
-	// ── 4. Generate query embedding ─────────────────────────────────
-	let queryEmbedding;
-	try {
-		queryEmbedding = await generateEmbedding(trimmedMessage);
-	} catch (err) {
-		logger.warn("[rag] Embedding generation failed", { message: err.message });
-		return {
-			reply: "I'm having a little trouble thinking right now! Please try again in a moment. 🦉",
-			sources: [],
-			cached: false,
-		};
-	}
-
-	// ── 5. Vector similarity search ─────────────────────────────────
-	let chunks = [];
-	try {
-		chunks = await similaritySearch(queryEmbedding, { topK: 5, threshold: 0.15 });
-	} catch (err) {
-		logger.warn("[rag] Similarity search failed", { message: err.message });
-	}
-
 	const isMath = isMathQuestion(trimmedMessage);
-	const isStoryOrContent = isStoryOrContentQuestion(trimmedMessage);
+	let chunks = [];
+	let context = "";
+	let sources = [];
 
-	if (chunks.length === 0 && !isMath && !isStoryOrContent) {
-		logger.info("[rag] No relevant chunks found above threshold");
-		return {
-			reply: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟",
-			sources: [],
-			cached: false,
-		};
+	if (!isMath) {
+		// ── 4. Generate query embedding ─────────────────────────────────
+		let queryEmbedding;
+		try {
+			queryEmbedding = await generateEmbedding(trimmedMessage);
+		} catch (err) {
+			logger.warn("[rag] Embedding generation failed", { message: err.message });
+			return {
+				reply: "I'm having a little trouble thinking right now! Please try again in a moment. 🦉",
+				sources: [],
+				cached: false,
+			};
+		}
+
+		// ── 5. Vector similarity search ─────────────────────────────────
+		try {
+			chunks = await similaritySearch(queryEmbedding, { topK: 5, threshold: 0.15 });
+		} catch (err) {
+			logger.warn("[rag] Similarity search failed", { message: err.message });
+		}
+
+		const isStoryOrContent = isStoryOrContentQuestion(trimmedMessage);
+
+		if (chunks.length === 0 && !isStoryOrContent) {
+			logger.info("[rag] No relevant chunks found above threshold");
+			return {
+				reply: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟",
+				sources: [],
+				cached: false,
+			};
+		}
+
+		// ── 6. Build context & sources ──────────────────────────────────
+		context = chunks.length > 0 ? buildContext(chunks) : "";
+		sources = chunks.length > 0 ? extractSources(chunks) : [];
 	}
-
-	// ── 6. Build context & sources ──────────────────────────────────
-	const context = chunks.length > 0 ? buildContext(chunks) : "";
-	const sources = chunks.length > 0 ? extractSources(chunks) : [];
 
 	// ── 7. Call OpenRouter LLM ──────────────────────────────────────
 	let reply;
