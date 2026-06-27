@@ -258,10 +258,7 @@ const ChatPage = () => {
               >
                 <p className="text-sm font-body whitespace-pre-line leading-relaxed">{msg.text}</p>
 
-                {/* Source citations */}
-                {msg.role === "bot" && msg.sources && msg.sources.length > 0 && (
-                  <SourceChips sources={msg.sources} />
-                )}
+
 
                 {/* Cache indicator (optional — subtle) */}
                 {msg.cached && (
