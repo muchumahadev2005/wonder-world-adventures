@@ -64,6 +64,37 @@ const isStoryOrContentQuestion = (message) => {
 	return /\b(story|stories|moral|character|characters|lesson|lessons|game|games|book|books|read|plot|explain|tales?|author)\b/i.test(msg);
 };
 
+// ── Direct LLM topic helper — bypasses RAG for jokes, space, math, and general education ─
+
+const isDirectLlmTopic = (message) => {
+	const msg = message.toLowerCase();
+	
+	// Math detection
+	if (isMathQuestion(message)) return true;
+
+	// Joke / Riddle detection
+	const jokeKeywords = /\b(joke|jokes|riddle|riddles|laugh|funny story)\b/i;
+	if (jokeKeywords.test(msg)) return true;
+
+	// Space / Planets / Astronomy detection
+	const spaceKeywords = /\b(planet|planets|solar system|sun|moon|stars|space|galaxy|galaxies|earth|gravity|orbit|universe|astronaut|mars|jupiter|saturn|venus|mercury|uranus|neptune|pluto)\b/i;
+	if (spaceKeywords.test(msg)) return true;
+
+	// General educational/science question detection (why is the sky blue, how do plants grow, what is water)
+	const educationalKeywords = [
+		/\b(why|how|what|where|who|when)\b/i,
+		/\b(science|nature|plant|plants|animal|animals|water|sky|ocean|oceans|rain|cloud|clouds|weather|wind|dinosaur|dinosaurs|history|earthquake|volcano|volcanoes|human body|brain|heart|cells|oxygen|gas|leaves|birds|fish|trees)\b/i
+	];
+	const isEducationalPattern = educationalKeywords[0].test(msg) && educationalKeywords[1].test(msg);
+	if (isEducationalPattern) return true;
+
+	// Common child education questions
+	const commonQuestions = /\b(tell me a fact|fun fact|facts for kids|how does it work)\b/i;
+	if (commonQuestions.test(msg)) return true;
+
+	return false;
+};
+
 
 // ── OpenRouter LLM client ─────────────────────────────────────────
 
@@ -90,17 +121,18 @@ You are StoryNest AI Buddy — a friendly, encouraging educational assistant for
 
 STRICT RULES:
 1. Answer basic mathematics questions (such as addition, subtraction, multiplication, division, simple equations, counting, or basic math word problems) directly using your knowledge. Keep math explanations extremely simple, clear, and encouraging for young kids.
-2. For questions about StoryNest stories, lessons, or games, first review the provided StoryNest content below to see the context. You are explicitly allowed and encouraged to use your external knowledge (outside of the RAG context) to explain the story in detail, describe characters, elaborate on plots, teach related morals/concepts, or answer follow-up questions in a creative, kid-friendly way.
-3. For any other questions unrelated to math or StoryNest stories/lessons/games, say exactly: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟"
-4. Keep responses child-friendly, educational, positive, and age-appropriate.
-5. Use simple words. Use emojis where appropriate. Keep answers concise (2-4 sentences).
-6. NEVER discuss: politics, sports, news, medical advice, financial advice, coding, or any topic outside StoryNest content/basic math.
-7. You are NOT ChatGPT, Claude, Gemini, or any general AI. You are StoryNest AI Buddy ONLY.
+2. Directly answer requests for jokes, riddles, explanations of planets/space/solar system, and general educational/science/nature questions for children (e.g. why the sky is blue, how rain forms, etc.) using your built-in knowledge. Keep explanations child-friendly, simple, engaging, and positive.
+3. For questions about StoryNest stories, lessons, or games, first review the provided StoryNest content below to see the context. You are explicitly allowed and encouraged to use your external knowledge (outside of the RAG context) to explain the story in detail, describe characters, elaborate on plots, teach related morals/concepts, or answer follow-up questions in a creative, kid-friendly way.
+4. For any other questions unrelated to math, jokes, space/planets, general educational topics, or StoryNest content, say exactly: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟"
+5. Keep responses child-friendly, educational, positive, and age-appropriate.
+6. Use simple words. Use emojis where appropriate. Keep answers concise (2-4 sentences).
+7. NEVER discuss: politics, sports, news, medical advice, financial advice, coding, or any topic outside StoryNest content/basic math/general education.
+8. You are NOT ChatGPT, Claude, Gemini, or any general AI. You are StoryNest AI Buddy ONLY.
 
 STORYNEST CONTENT AVAILABLE:
 ${context || "No relevant content found for this question."}
 
-Remember: Stay in StoryNest world! If it's not a basic math question, related to StoryNest content, or in the context above, you don't know it. 🦉
+Remember: Stay in StoryNest world! If it's not a basic math question, joke, space/planet question, general educational query, related to StoryNest content, or in the context above, you don't know it. 🦉
 `.trim();
 
 // ── Chat history helpers ──────────────────────────────────────────
@@ -247,12 +279,12 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 		}
 	}
 
-	const isMath = isMathQuestion(trimmedMessage);
+	const isDirectLlm = isDirectLlmTopic(trimmedMessage);
 	let chunks = [];
 	let context = "";
 	let sources = [];
 
-	if (!isMath) {
+	if (!isDirectLlm) {
 		// ── 4. Generate query embedding ─────────────────────────────────
 		let queryEmbedding;
 		try {
