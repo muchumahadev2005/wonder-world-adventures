@@ -11,6 +11,9 @@ const { indexContent } = require("./embedding.service");
 const prisma = require("../../prisma/prismaClient");
 const crypto = require("crypto");
 
+const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../../config/env");
+
 /**
  * POST /api/chatbot/message
  * Main chat endpoint — full RAG pipeline.
@@ -25,19 +28,30 @@ const sendMessage = catchAsync(async (req, res) => {
 		});
 	}
 
+	// Optionally decode token if present
+	let resolvedUserId = null;
+	const authHeader = req.headers.authorization || "";
+	const [, token] = authHeader.split(" ");
+	if (token) {
+		try {
+			const decoded = jwt.verify(token, jwtSecret);
+			resolvedUserId = decoded.sub;
+		} catch (err) {
+			// Ignore optional auth decoding errors
+		}
+	}
+
 	// Generate a session ID if not provided (anonymous users)
 	const resolvedSessionId =
 		sessionId ||
-		(req.user?.id
-			? `user_${req.user.id}`
+		(resolvedUserId
+			? `user_${resolvedUserId}`
 			: `anon_${crypto.createHash("sha256").update(req.ip + req.headers["user-agent"]).digest("hex").slice(0, 16)}`);
-
-	const userId = req.user?.id || null;
 
 	const result = await processQuestion({
 		message: message.trim(),
 		sessionId: resolvedSessionId,
-		userId,
+		userId: resolvedUserId,
 	});
 
 	return res.json({

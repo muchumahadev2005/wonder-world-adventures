@@ -35,6 +35,36 @@ const BLOCKED_PATTERNS = [
 
 const isBlockedTopic = (message) => BLOCKED_PATTERNS.some((re) => re.test(message));
 
+// ── Math helper — basic mathematics detection ─────────────────────
+
+const isMathQuestion = (message) => {
+	const msg = message.toLowerCase();
+	const hasDigits = /\d+/.test(msg);
+	
+	// Check for standard arithmetic expressions (e.g., "2 + 2", "5 * 5", etc.)
+	const mathEquationPattern = /[\d]+[\s]*[+\-*\/=÷×][\s]*[\d]+/i;
+	
+	const mathKeywords = [
+		/\b(plus|minus|times|divided by|add|subtract|multiply|divide|sum|difference|product|quotient|equals?|solve|math|mathematics|arithmetic|count|counting)\b/i,
+		/\bhow (many|much)\b/i,
+		/\bwhat is\b/i,
+		/\bcalculate\b/i
+	];
+
+	const isMath = mathEquationPattern.test(msg) || (hasDigits && mathKeywords.some((re) => re.test(msg)));
+	const isPureMath = /^[0-9+\-*/().\s=x÷×?]+$/.test(msg.trim()) && /[0-9]/.test(msg);
+	
+	return isMath || isPureMath;
+};
+
+// ── Content helper — story or educational content detection ───────
+
+const isStoryOrContentQuestion = (message) => {
+	const msg = message.toLowerCase();
+	return /\b(story|stories|moral|character|characters|lesson|lessons|game|games|book|books|read|plot|explain|tales?|author)\b/i.test(msg);
+};
+
+
 // ── OpenRouter LLM client ─────────────────────────────────────────
 
 let _llmClient = null;
@@ -59,18 +89,18 @@ const buildSystemPrompt = (context) => `
 You are StoryNest AI Buddy — a friendly, encouraging educational assistant for children aged 3-12.
 
 STRICT RULES:
-1. Answer ONLY using the StoryNest content provided below.
-2. NEVER use external knowledge, real-world facts, or information not in the context.
-3. If the answer is not in the context, say exactly: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟"
+1. Answer basic mathematics questions (such as addition, subtraction, multiplication, division, simple equations, counting, or basic math word problems) directly using your knowledge. Keep math explanations extremely simple, clear, and encouraging for young kids.
+2. For questions about StoryNest stories, lessons, or games, first review the provided StoryNest content below to see the context. You are explicitly allowed and encouraged to use your external knowledge (outside of the RAG context) to explain the story in detail, describe characters, elaborate on plots, teach related morals/concepts, or answer follow-up questions in a creative, kid-friendly way.
+3. For any other questions unrelated to math or StoryNest stories/lessons/games, say exactly: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟"
 4. Keep responses child-friendly, educational, positive, and age-appropriate.
 5. Use simple words. Use emojis where appropriate. Keep answers concise (2-4 sentences).
-6. NEVER discuss: politics, sports, news, medical advice, financial advice, coding, or any topic outside StoryNest content.
+6. NEVER discuss: politics, sports, news, medical advice, financial advice, coding, or any topic outside StoryNest content/basic math.
 7. You are NOT ChatGPT, Claude, Gemini, or any general AI. You are StoryNest AI Buddy ONLY.
 
 STORYNEST CONTENT AVAILABLE:
 ${context || "No relevant content found for this question."}
 
-Remember: If it's not in the content above, you don't know it. Stay in StoryNest world! 🦉
+Remember: Stay in StoryNest world! If it's not a basic math question, related to StoryNest content, or in the context above, you don't know it. 🦉
 `.trim();
 
 // ── Chat history helpers ──────────────────────────────────────────
@@ -132,12 +162,79 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 		};
 	}
 
+	// ── 2.5 Premium and Daily limit checks ──────────────────────────
+	let isPremium = false;
+	if (userId) {
+		const activeSub = await prisma.userSubscription.findFirst({
+			where: {
+				userId,
+				status: "ACTIVE",
+				endDate: { gt: new Date() },
+			},
+		});
+		if (activeSub) {
+			isPremium = true;
+		}
+	}
+
+	if (!isPremium) {
+		const dateStr = new Date().toISOString().split("T")[0];
+		const limitKey = userId
+			? `chat:limit:user:${userId}:${dateStr}`
+			: `chat:limit:session:${sessionId}:${dateStr}`;
+
+		// Get current usage count
+		let count = 0;
+		if (redis.isAvailable()) {
+			const val = await redis.get(limitKey);
+			count = val ? parseInt(val, 10) : 0;
+		} else {
+			// Fallback to local memory store
+			if (!global.localLimitStore) {
+				global.localLimitStore = new Map();
+			}
+			count = global.localLimitStore.get(limitKey) || 0;
+		}
+
+		if (count >= 10) {
+			const limitError = new Error("You've used all 10 daily prompts. Please upgrade to StoryNest Premium to get unlimited questions! 🦉");
+			limitError.status = 403;
+			limitError.code = "PREMIUM_REQUIRED";
+			throw limitError;
+		}
+
+		// Increment usage
+		const nextCount = count + 1;
+		if (redis.isAvailable()) {
+			await redis.set(limitKey, String(nextCount), 86400); // 24 hours TTL
+		} else {
+			global.localLimitStore.set(limitKey, nextCount);
+			// Occasional cleanup of old keys to prevent memory leaks
+			if (global.localLimitStore.size > 1000) {
+				for (const k of global.localLimitStore.keys()) {
+					if (!k.includes(dateStr)) {
+						global.localLimitStore.delete(k);
+					}
+				}
+			}
+		}
+	}
+
 	// ── 3. Redis cache check ────────────────────────────────────────
 	const cacheKey = `${CACHE_PREFIX}${crypto.createHash("sha256").update(trimmedMessage.toLowerCase()).digest("hex")}`;
-	const cached = await redis.get(cacheKey);
+	let cached = null;
+	if (redis.isAvailable()) {
+		cached = await redis.get(cacheKey);
+	} else {
+		if (!global.localCacheStore) {
+			global.localCacheStore = new Map();
+		}
+		cached = global.localCacheStore.get(cacheKey) || null;
+	}
+
 	if (cached) {
 		try {
-			const parsed = JSON.parse(cached);
+			const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
 			logger.info("[rag] Cache hit", { key: cacheKey.slice(0, 20) });
 
 			// Still save chat history for cache hits
@@ -171,7 +268,10 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 		logger.warn("[rag] Similarity search failed", { message: err.message });
 	}
 
-	if (chunks.length === 0) {
+	const isMath = isMathQuestion(trimmedMessage);
+	const isStoryOrContent = isStoryOrContentQuestion(trimmedMessage);
+
+	if (chunks.length === 0 && !isMath && !isStoryOrContent) {
 		logger.info("[rag] No relevant chunks found above threshold");
 		return {
 			reply: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟",
@@ -181,8 +281,8 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	}
 
 	// ── 6. Build context & sources ──────────────────────────────────
-	const context = buildContext(chunks);
-	const sources = extractSources(chunks);
+	const context = chunks.length > 0 ? buildContext(chunks) : "";
+	const sources = chunks.length > 0 ? extractSources(chunks) : [];
 
 	// ── 7. Call OpenRouter LLM ──────────────────────────────────────
 	let reply;
@@ -224,7 +324,21 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	// ── 8. Cache the result ─────────────────────────────────────────
 	const responsePayload = { reply, sources };
 	try {
-		await redis.set(cacheKey, JSON.stringify(responsePayload), CACHE_TTL);
+		if (redis.isAvailable()) {
+			await redis.set(cacheKey, JSON.stringify(responsePayload), CACHE_TTL);
+		} else {
+			if (!global.localCacheStore) {
+				global.localCacheStore = new Map();
+			}
+			global.localCacheStore.set(cacheKey, responsePayload);
+			// Prune oldest keys if map grows too large
+			if (global.localCacheStore.size > 2000) {
+				const keys = Array.from(global.localCacheStore.keys());
+				for (let i = 0; i < 500; i++) {
+					global.localCacheStore.delete(keys[i]);
+				}
+			}
+		}
 	} catch {
 		// Cache failures are non-fatal
 	}

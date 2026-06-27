@@ -4,6 +4,7 @@ import { useChild } from "@/context/ChildContext";
 import { useAuth } from "@/context/AuthContext";
 import { contentApi } from "@/lib/api";
 import NavBar from "@/components/NavBar";
+import SubscribeModal from "@/components/SubscribeModal";
 import SceneBackground from "@/components/SceneBackground";
 import chatBg from "@/assets/chat-bg.jpg";
 import { MessageCircle, Send, User, BookOpen, Gamepad2, GraduationCap, ChevronDown, ChevronUp } from "lucide-react";
@@ -93,8 +94,9 @@ const SourceChips = ({ sources }: { sources: Source[] }) => {
 // ── Main Component ────────────────────────────────────────────────
 
 const ChatPage = () => {
-  const { profile } = useChild();
+  const { profile, setPremium } = useChild();
   const { token } = useAuth();
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
 
   // Stable session ID for this browser session
   const sessionId = useRef<string>(
@@ -140,15 +142,27 @@ const ChatPage = () => {
         },
       ]);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to connect";
-      setError(message);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "bot",
-          text: "Oops! I'm having a little trouble right now. Please try again in a moment! 🦉",
-        },
-      ]);
+      const isPremiumRequired = err && typeof err === "object" && (("code" in err && err.code === "PREMIUM_REQUIRED") || ("message" in err && String(err.message).includes("upgrade to StoryNest Premium")));
+      if (isPremiumRequired) {
+        setShowSubscribeModal(true);
+        setMessages(prev => [
+          ...prev,
+          {
+            role: "bot",
+            text: "You've reached your daily limit of 10 free prompts. Please upgrade to StoryNest Premium to get unlimited questions! 🦉🌟",
+          },
+        ]);
+      } else {
+        const message = err instanceof Error ? err.message : "Failed to connect";
+        setError(message);
+        setMessages(prev => [
+          ...prev,
+          {
+            role: "bot",
+            text: "Oops! I'm having a little trouble right now. Please try again in a moment! 🦉",
+          },
+        ]);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -325,6 +339,11 @@ const ChatPage = () => {
           </button>
         )}
       </div>
+      <SubscribeModal
+        open={showSubscribeModal}
+        onClose={() => setShowSubscribeModal(false)}
+        onSuccess={() => setPremium(true)}
+      />
     </div>
   );
 };
