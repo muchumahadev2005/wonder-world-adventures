@@ -60,9 +60,10 @@ const SourceChips = ({ sources }: { sources: Source[] }) => {
     <div className="mt-2">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1 text-white/50 text-xs hover:text-white/80 transition-colors"
+        className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-white/10 bg-white/5 text-white/50 text-[11px] font-medium hover:bg-white/10 hover:text-white/80 transition-all shadow-sm"
       >
-        <span>📚 {sources.length} source{sources.length !== 1 ? "s" : ""}</span>
+        <BookOpen className="w-3 h-3 text-amber-300" />
+        <span>{sources.length} source{sources.length !== 1 ? "s" : ""}</span>
         {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       <AnimatePresence>
@@ -99,21 +100,39 @@ const ChatPage = () => {
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
 
   // Stable session ID for this browser session
-  const sessionId = useRef<string>(
-    `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-  ).current;
+  const [sessionId] = useState<string>(() => {
+    const saved = sessionStorage.getItem("storynest_chat_session_id");
+    if (saved) return saved;
+    const newId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    sessionStorage.setItem("storynest_chat_session_id", newId);
+    return newId;
+  });
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "bot",
-      text: `Hi ${profile?.name || "friend"}! 👋 I'm Ollie the Owl! 🦉 I know everything about StoryNest — our stories, lessons, and games. Ask me anything about what you've learned! What would you like to explore today?`,
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = sessionStorage.getItem("storynest_chat_messages");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return [
+      {
+        role: "bot",
+        text: `Hi ${profile?.name || "friend"}! 👋 I'm Ollie the Owl! 🦉 I know everything about StoryNest — our stories, lessons, and games. Ask me anything about what you've learned! What would you like to explore today?`,
+      },
+    ];
+  });
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    sessionStorage.setItem("storynest_chat_messages", JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
