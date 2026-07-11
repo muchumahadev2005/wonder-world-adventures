@@ -73,6 +73,7 @@ export default function AnalyticsAdmin() {
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
+        </div>
 
 
       </div>

@@ -1,5 +1,7 @@
 const catchAsync = require("../../../utils/catchAsync");
-const service = require("../services/stories.service");
+const service    = require("../services/stories.service");
+
+// ── Story CRUD ────────────────────────────────────────────────────
 
 const listStories = catchAsync(async (req, res) => {
 	const stories = await service.listStories(req.query);
@@ -36,6 +38,47 @@ const deleteStory = catchAsync(async (req, res) => {
 	res.json({ success: true, ...result });
 });
 
+// ── Duplicate ─────────────────────────────────────────────────────
+
+const duplicateStory = catchAsync(async (req, res) => {
+	const story = await service.duplicateStory(req.params.id);
+	res.status(201).json({ success: true, story });
+});
+
+// ── Excel Import ──────────────────────────────────────────────────
+
+const importExcel = catchAsync(async (req, res) => {
+	if (!req.file) {
+		return res.status(400).json({ success: false, message: "No file uploaded" });
+	}
+	const results = await service.importFromExcel(req.file.buffer, req.user?.id);
+	res.json({ success: true, ...results });
+});
+
+// ── Excel Export ──────────────────────────────────────────────────
+
+const exportExcel = catchAsync(async (req, res) => {
+	const { category, language, isPremium, isPublished } = req.query;
+	const buffer = await service.exportToExcel({
+		category,
+		language,
+		isPremium:  isPremium === "true" ? true : isPremium === "false" ? false : undefined,
+		isPublished:isPublished === "true" ? true : isPublished === "false" ? false : undefined,
+	});
+	res.setHeader("Content-Type",        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+	res.setHeader("Content-Disposition", "attachment; filename=stories-export.xlsx");
+	res.send(Buffer.from(buffer));
+});
+
+// ── Template Download ─────────────────────────────────────────────
+
+const downloadTemplate = catchAsync(async (req, res) => {
+	const buffer = service.generateExcelTemplate();
+	res.setHeader("Content-Type",        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+	res.setHeader("Content-Disposition", "attachment; filename=stories-template.xlsx");
+	res.send(Buffer.from(buffer));
+});
+
 module.exports = {
 	listStories,
 	getStory,
@@ -44,4 +87,8 @@ module.exports = {
 	createStory,
 	updateStory,
 	deleteStory,
+	duplicateStory,
+	importExcel,
+	exportExcel,
+	downloadTemplate,
 };

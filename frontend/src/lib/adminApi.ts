@@ -65,22 +65,40 @@ export interface AdminPayment {
 
 export interface AdminStory {
   id: string;
+  storyId?: string;
   slug: string;
   title: string;
+  subtitle?: string | null;
   description?: string | null;
   content: string;
   author?: string | null;
   category?: string | null;
   ageGroup?: string | null;
+  difficulty?: string | null;
   thumbnail?: string | null;
+  coverImage?: string | null;
   coverEmoji?: string | null;
+  coverGradient?: string | null;
   audioUrl?: string | null;
   readingTime?: number | null;
+  listeningTime?: number | null;
   duration?: string | null;
   isPremium: boolean;
   isPublished: boolean;
+  isFeatured: boolean;
+  isTrending: boolean;
+  isRecommended: boolean;
+  readAloudEnabled: boolean;
+  narratorVoice?: string | null;
+  xpReward: number;
   starsReward: number;
+  likesCount: number;
+  readsCount: number;
+  favoritesCount: number;
   tags: string[];
+  sortOrder: number;
+  language?: { id: string; code: string; name: string; native?: string | null } | null;
+  languageId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -271,16 +289,73 @@ export const adminApi = {
   },
 
   // Stories (real API)
-  getStories: async () => {
-    const data = await apiFetch<{ stories: AdminStory[] }>("/stories");
+  getStories: async (params: {
+    search?: string; category?: string; language?: string;
+    ageGroup?: string; difficulty?: string; isPremium?: boolean;
+    isPublished?: boolean; isFeatured?: boolean; isTrending?: boolean;
+    page?: number; limit?: number; sortBy?: string; sortOrder?: string;
+  } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.search)                qs.set("search",     params.search);
+    if (params.category)              qs.set("category",   params.category);
+    if (params.language)              qs.set("language",   params.language);
+    if (params.ageGroup)              qs.set("ageGroup",   params.ageGroup);
+    if (params.difficulty)            qs.set("difficulty", params.difficulty);
+    if (params.isPremium  !== undefined) qs.set("isPremium",   String(params.isPremium));
+    if (params.isPublished!== undefined) qs.set("isPublished",  String(params.isPublished));
+    if (params.isFeatured !== undefined) qs.set("isFeatured",   String(params.isFeatured));
+    if (params.isTrending !== undefined) qs.set("isTrending",   String(params.isTrending));
+    if (params.page)                  qs.set("page",  String(params.page));
+    if (params.limit)                 qs.set("limit", String(params.limit));
+    if (params.sortBy)                qs.set("sortBy",    params.sortBy);
+    if (params.sortOrder)             qs.set("sortOrder", params.sortOrder);
+    const data = await apiFetch<{ stories: AdminStory[] }>(`/stories?${qs}`);
     return data.stories;
   },
+
   createStory: async (body: Partial<AdminStory>, token: string | null) =>
     adminFetch<{ story: AdminStory }>("/stories", { method: "POST", body: JSON.stringify(body) }, token),
+
   updateStory: async (id: string, body: Partial<AdminStory>, token: string | null) =>
     adminFetch<{ story: AdminStory }>(`/stories/${id}`, { method: "PUT", body: JSON.stringify(body) }, token),
+
   deleteStory: async (id: string, token: string | null) =>
     adminFetch<{ success: boolean }>(`/stories/${id}`, { method: "DELETE" }, token),
+
+  duplicateStory: async (id: string, token: string | null) =>
+    adminFetch<{ story: AdminStory }>(`/stories/${id}/duplicate`, { method: "POST" }, token),
+
+  importStoriesExcel: async (file: File, token: string | null) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const url     = `${API_BASE}/api/stories/import/excel`;
+    const headers = new Headers();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const response = await fetch(url, { method: "POST", body: formData, headers });
+    const data = await response.json();
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.message || "Excel import failed");
+    }
+    return data as {
+      success: boolean;
+      total: number;
+      success_list: Array<{ id: string; title: string; slug: string }>;
+      errors: Array<{ rowNum?: number; title?: string; errors?: string[]; error?: string }>;
+    };
+  },
+
+  downloadStoriesTemplateUrl: (token: string | null) => {
+    const qs = new URLSearchParams();
+    if (token) qs.set("token", token);
+    return `${API_BASE}/api/stories/template/excel?${qs}`;
+  },
+
+  exportStoriesExcelUrl: (token: string | null, filters: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(filters);
+    if (token) qs.set("token", token);
+    return `${API_BASE}/api/stories/export/excel?${qs}`;
+  },
+
 
   // Languages (real API)
   getLanguages: async () => {

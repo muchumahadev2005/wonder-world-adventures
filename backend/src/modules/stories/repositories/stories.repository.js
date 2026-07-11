@@ -1,5 +1,6 @@
 const prisma = require("../../../prisma/prismaClient");
 
+// ── Shared include ────────────────────────────────────────────────
 const includeStory = {
 	language: true,
 	quizzes: {
@@ -8,6 +9,7 @@ const includeStory = {
 	},
 };
 
+// ── Language filter builder ───────────────────────────────────────
 const buildLanguageFilter = (language) => {
 	if (!language) return undefined;
 	return {
@@ -19,64 +21,90 @@ const buildLanguageFilter = (language) => {
 	};
 };
 
-const list = ({ language, category, ageGroup, isPremium, limit } = {}) => {
-	const where = {
-		isPublished: true,
-		...(category ? { category: { equals: category, mode: "insensitive" } } : {}),
-		...(ageGroup ? { ageGroup } : {}),
-		...(typeof isPremium === "boolean" ? { isPremium } : {}),
-		...(buildLanguageFilter(language) || {}),
-	};
+// ── List (supports rich admin + public filtering) ─────────────────
+const list = ({
+	language, category, ageGroup, difficulty,
+	isPremium, isFeatured, isTrending, isRecommended,
+	isPublished, search,
+	limit = 100, page = 1,
+	sortBy = "createdAt", sortOrder: sortDir = "desc",
+} = {}) => {
+	const where = {};
+
+	// Only apply isPublished filter if explicitly provided
+	if (typeof isPublished === "boolean") where.isPublished = isPublished;
+	// For public listings (no explicit flag), default to published only
+	// (callers that want all set isPublished: undefined explicitly)
+
+	if (category)   where.category  = { equals: category,  mode: "insensitive" };
+	if (ageGroup)   where.ageGroup   = ageGroup;
+	if (difficulty) where.difficulty = { equals: difficulty, mode: "insensitive" };
+
+	if (typeof isPremium    === "boolean") where.isPremium    = isPremium;
+	if (typeof isFeatured   === "boolean") where.isFeatured   = isFeatured;
+	if (typeof isTrending   === "boolean") where.isTrending   = isTrending;
+	if (typeof isRecommended=== "boolean") where.isRecommended= isRecommended;
+
+	if (search) {
+		where.OR = [
+			{ title:       { contains: search, mode: "insensitive" } },
+			{ author:      { contains: search, mode: "insensitive" } },
+			{ description: { contains: search, mode: "insensitive" } },
+		];
+	}
+
+	const langFilter = buildLanguageFilter(language);
+	if (langFilter) Object.assign(where, langFilter);
+
+	const allowedSort = ["createdAt", "title", "readingTime", "starsReward", "xpReward", "readsCount", "likesCount", "sortOrder"];
+	const orderField  = allowedSort.includes(sortBy) ? sortBy : "createdAt";
 
 	return prisma.story.findMany({
 		where,
 		include: includeStory,
-		orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-		take: limit,
+		orderBy: [{ [orderField]: sortDir === "asc" ? "asc" : "desc" }],
+		take:    Math.min(Number(limit) || 100, 500),
+		skip:    (Math.max(Number(page) || 1, 1) - 1) * (Math.min(Number(limit) || 100, 500)),
 	});
 };
 
-const findByIdOrSlug = (id) => {
-	return prisma.story.findFirst({
+// ── Find by id or slug ────────────────────────────────────────────
+const findByIdOrSlug = (id) =>
+	prisma.story.findFirst({
 		where: { OR: [{ id }, { slug: id }] },
 		include: includeStory,
 	});
-};
 
-const listByCategory = (category) => list({ category });
+// ── Category listing ──────────────────────────────────────────────
+const listByCategory = (category) =>
+	list({ category, isPublished: true });
 
-const recommended = (limit = 6) => {
-	return prisma.story.findMany({
+// ── Recommended ───────────────────────────────────────────────────
+const recommended = (limit = 6) =>
+	prisma.story.findMany({
 		where: { isPublished: true },
 		include: includeStory,
 		orderBy: [{ isPremium: "asc" }, { starsReward: "desc" }, { sortOrder: "asc" }],
 		take: limit,
 	});
-};
 
+// ── Language lookup ───────────────────────────────────────────────
 const findLanguage = ({ languageId, languageCode }) => {
 	if (!languageId && !languageCode) return null;
 	return prisma.language.findFirst({
 		where: {
 			OR: [
-				...(languageId ? [{ id: languageId }] : []),
+				...(languageId   ? [{ id: languageId }] : []),
 				...(languageCode ? [{ code: { equals: languageCode, mode: "insensitive" } }] : []),
 			],
 		},
 	});
 };
 
-const create = (data) => {
-	return prisma.story.create({ data, include: includeStory });
-};
-
-const update = (id, data) => {
-	return prisma.story.update({ where: { id }, data, include: includeStory });
-};
-
-const remove = (id) => {
-	return prisma.story.delete({ where: { id } });
-};
+// ── CRUD ──────────────────────────────────────────────────────────
+const create = (data)       => prisma.story.create({ data, include: includeStory });
+const update = (id, data)   => prisma.story.update({ where: { id }, data, include: includeStory });
+const remove = (id)         => prisma.story.delete({ where: { id } });
 
 module.exports = {
 	list,

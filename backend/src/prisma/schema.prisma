@@ -172,35 +172,51 @@ model LanguageLevel {
 }
 
 model Story {
-  id            String          @id @default(cuid())
-  slug          String          @unique
-  title         String
-  description   String?
-  content       String
-  pages         Json?
-  author        String?
-  category      String?
-  ageGroup      String?         @map("age_group")
-  tags          String[]        @default([])
-  thumbnail     String?
-  coverEmoji    String?         @map("cover_emoji")
-  coverGradient String?         @map("cover_gradient")
-  readingTime   Int?            @map("reading_time")
-  duration      String?
-  isPremium     Boolean         @default(false) @map("is_premium")
-  audioUrl      String?         @map("audio_url")
-  starsReward   Int             @default(0) @map("stars_reward")
-  isPublished   Boolean         @default(true) @map("is_published")
-  sortOrder     Int             @default(0) @map("sort_order")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
-  languageId    String?         @map("language_id")
-  quizzes       Quiz[]
-  language      Language?       @relation(fields: [languageId], references: [id])
-  progress      StoryProgress[]
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  title            String
+  subtitle         String?
+  description      String?
+  content          String
+  pages            Json?
+  author           String?
+  category         String?
+  ageGroup         String?         @map("age_group")
+  difficulty       String?
+  tags             String[]        @default([])
+  coverImage       String?         @map("cover_image")
+  thumbnail        String?
+  coverEmoji       String?         @map("cover_emoji")
+  coverGradient    String?         @map("cover_gradient")
+  readingTime      Int?            @map("reading_time")
+  listeningTime    Int?            @map("listening_time")
+  duration         String?
+  isPremium        Boolean         @default(false) @map("is_premium")
+  isPublished      Boolean         @default(true) @map("is_published")
+  isFeatured       Boolean         @default(false) @map("is_featured")
+  isTrending       Boolean         @default(false) @map("is_trending")
+  isRecommended    Boolean         @default(false) @map("is_recommended")
+  readAloudEnabled Boolean         @default(false) @map("read_aloud_enabled")
+  narratorVoice    String?         @map("narrator_voice")
+  audioUrl         String?         @map("audio_url")
+  xpReward         Int             @default(0) @map("xp_reward")
+  starsReward      Int             @default(0) @map("stars_reward")
+  likesCount       Int             @default(0) @map("likes_count")
+  readsCount       Int             @default(0) @map("reads_count")
+  favoritesCount   Int             @default(0) @map("favorites_count")
+  sortOrder        Int             @default(0) @map("sort_order")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  languageId       String?         @map("language_id")
+  quizzes          Quiz[]
+  language         Language?       @relation(fields: [languageId], references: [id])
+  progress         StoryProgress[]
 
   @@index([category])
   @@index([languageId])
+  @@index([isFeatured])
+  @@index([isTrending])
+  @@index([difficulty])
   @@map("stories")
 }
 
