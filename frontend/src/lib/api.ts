@@ -118,6 +118,13 @@ export type ApiStory = {
   coverGradient?: string | null;
   duration?: string | null;
   description?: string | null;
+  content?: string | null;
+  language?: {
+    id: string;
+    code: string;
+    name: string;
+    native?: string | null;
+  } | null;
   premium?: boolean;
   isPremium?: boolean;
   stars?: number;
