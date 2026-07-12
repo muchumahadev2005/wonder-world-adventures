@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
-  Play, Pause, Square, RotateCcw, Volume2, 
-  VolumeX, HelpCircle, Sparkles, MessageSquareDot 
+  Play, Pause, Square, RotateCcw, 
+  HelpCircle, Sparkles, MessageSquareDot 
 } from "lucide-react";
 import {
   Select,
@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 
 interface StoryAudioPlayerProps {
@@ -21,14 +20,10 @@ interface StoryAudioPlayerProps {
   voices: SpeechSynthesisVoice[];
   currentVoice: SpeechSynthesisVoice | null;
   rate: number;
-  pitch: number;
-  volume: number;
   isPlaying: boolean;
   isPaused: boolean;
   isSpeaking: boolean;
   setRate: (rate: number) => void;
-  setPitch: (pitch: number) => void;
-  setVolume: (volume: number) => void;
   setVoice: (voice: SpeechSynthesisVoice | null) => void;
   play: (text: string) => void;
   pause: () => void;
@@ -44,14 +39,10 @@ export const StoryAudioPlayer = ({
   voices,
   currentVoice,
   rate,
-  pitch,
-  volume,
   isPlaying,
   isPaused,
   isSpeaking,
   setRate,
-  setPitch,
-  setVolume,
   setVoice,
   play,
   pause,
@@ -102,14 +93,14 @@ export const StoryAudioPlayer = ({
   if (!isSupported) {
     return (
       <div 
-        className="rounded-3xl p-6 text-center border"
+        className="rounded-3xl p-6 text-center border font-display"
         style={{ 
           background: "rgba(239, 68, 68, 0.08)", 
           borderColor: "rgba(239, 68, 68, 0.2)" 
         }}
       >
         <HelpCircle className="w-10 h-10 mx-auto mb-2 text-red-400" />
-        <h3 className="font-display font-bold text-lg text-white mb-1">Audio Unavailable</h3>
+        <h3 className="font-bold text-lg text-white mb-1">Audio Unavailable</h3>
         <p className="text-red-300 text-sm">
           Audio narration is not supported in this browser.
         </p>
@@ -129,9 +120,9 @@ export const StoryAudioPlayer = ({
 
   return (
     <div 
-      className="rounded-3xl p-6 relative overflow-hidden backdrop-blur-md shadow-xl text-white transition-all border"
+      className="rounded-3xl p-6 relative overflow-hidden backdrop-blur-md shadow-xl text-white transition-all border flex flex-col justify-between"
       style={{ 
-        background: "rgba(255, 255, 255, 0.05)", 
+        background: "rgba(255, 255, 255, 0.04)", 
         borderColor: "rgba(255, 255, 255, 0.08)" 
       }}
     >
@@ -141,7 +132,7 @@ export const StoryAudioPlayer = ({
       </div>
 
       {/* Header with Title and Current Voice */}
-      <div className="mb-6 text-center">
+      <div className="mb-5 text-center">
         <h3 className="font-display text-lg font-extrabold line-clamp-1 pr-4">
           {storyTitle}
         </h3>
@@ -152,12 +143,12 @@ export const StoryAudioPlayer = ({
       </div>
 
       {/* Speaking Status Badge */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-5">
         <AnimateStatus isPlaying={isPlaying} isPaused={isPaused} isSpeaking={isSpeaking} />
       </div>
 
       {/* Main Action Controls */}
-      <div className="flex items-center justify-center gap-6 mb-8">
+      <div className="flex items-center justify-center gap-6 mb-6">
         {/* Restart Button */}
         <motion.button
           onClick={() => !isContentEmpty && restart(storyContent)}
@@ -238,15 +229,15 @@ export const StoryAudioPlayer = ({
 
       {/* Empty Content Notification */}
       {isContentEmpty && (
-        <div className="mb-6 p-3 rounded-2xl text-center text-amber-300 text-xs font-semibold bg-amber-500/10 border border-amber-500/20">
+        <div className="mb-4 p-3 rounded-2xl text-center text-amber-300 text-xs font-semibold bg-amber-500/10 border border-amber-500/20">
           No narration available.
         </div>
       )}
 
       {/* Voice and Speed Selectors */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div>
-          <Label className="text-xs text-white/60 mb-1.5 block">Voice</Label>
+      <div className="grid grid-cols-2 gap-4 mt-2">
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs text-white/60 font-medium">Voice</Label>
           <Select 
             value={currentVoice?.name || ""} 
             onValueChange={(name) => {
@@ -254,15 +245,15 @@ export const StoryAudioPlayer = ({
               if (matched) setVoice(matched);
             }}
           >
-            <SelectTrigger className="bg-white/5 border-white/10 rounded-xl text-white focus:ring-violet-400">
+            <SelectTrigger className="bg-white/5 border-white/10 rounded-2xl text-white focus:ring-violet-400 hover:bg-white/10 transition-colors h-11">
               <SelectValue placeholder="System voice" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-white/10 text-white rounded-xl max-h-56">
+            <SelectContent className="bg-slate-900 border-white/10 text-white rounded-2xl max-h-56">
               {voices.map((voice) => (
                 <SelectItem 
                   key={voice.name} 
                   value={voice.name}
-                  className="focus:bg-violet-600 focus:text-white cursor-pointer"
+                  className="focus:bg-violet-600 focus:text-white cursor-pointer rounded-xl"
                 >
                   {voice.name} ({voice.lang})
                 </SelectItem>
@@ -271,21 +262,21 @@ export const StoryAudioPlayer = ({
           </Select>
         </div>
 
-        <div>
-          <Label className="text-xs text-white/60 mb-1.5 block">Speed</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs text-white/60 font-medium">Speed</Label>
           <Select 
             value={rate.toString()} 
             onValueChange={(val) => setRate(parseFloat(val))}
           >
-            <SelectTrigger className="bg-white/5 border-white/10 rounded-xl text-white focus:ring-violet-400">
+            <SelectTrigger className="bg-white/5 border-white/10 rounded-2xl text-white focus:ring-violet-400 hover:bg-white/10 transition-colors h-11">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-white/10 text-white rounded-xl">
+            <SelectContent className="bg-slate-900 border-white/10 text-white rounded-2xl">
               {speedRates.map((speed) => (
                 <SelectItem 
                   key={speed.value} 
                   value={speed.value.toString()}
-                  className="focus:bg-violet-600 focus:text-white cursor-pointer"
+                  className="focus:bg-violet-600 focus:text-white cursor-pointer rounded-xl"
                 >
                   {speed.label}
                 </SelectItem>
@@ -294,55 +285,11 @@ export const StoryAudioPlayer = ({
           </Select>
         </div>
       </div>
-
-      {/* Pitch and Volume Sliders */}
-      <div className="space-y-4">
-        {/* Volume Slider */}
-        <div className="space-y-1">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-white/60 flex items-center gap-1.5">
-              {volume === 0 ? (
-                <VolumeX className="w-3.5 h-3.5 text-white/40" />
-              ) : (
-                <Volume2 className="w-3.5 h-3.5 text-white/70" />
-              )}
-              Volume
-            </span>
-            <span className="text-white/40 font-mono">{Math.round(volume * 100)}%</span>
-          </div>
-          <Slider
-            defaultValue={[1]}
-            min={0}
-            max={1}
-            step={0.05}
-            value={[volume]}
-            onValueChange={([val]) => setVolume(val)}
-            className="[&_[role=slider]]:bg-violet-400 [&_[role=slider]]:border-violet-400 [&_span]:bg-violet-500/20"
-          />
-        </div>
-
-        {/* Pitch Slider */}
-        <div className="space-y-1">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-white/60">Pitch (Tone)</span>
-            <span className="text-white/40 font-mono">{pitch.toFixed(1)}</span>
-          </div>
-          <Slider
-            defaultValue={[1]}
-            min={0.5}
-            max={2.0}
-            step={0.1}
-            value={[pitch]}
-            onValueChange={([val]) => setPitch(val)}
-            className="[&_[role=slider]]:bg-violet-400 [&_[role=slider]]:border-violet-400 [&_span]:bg-violet-500/20"
-          />
-        </div>
-      </div>
     </div>
   );
 };
 
-// Sub-component for clean status badge with indicator light
+// Sub-component for clean status badge
 const AnimateStatus = ({ 
   isPlaying, 
   isPaused, 

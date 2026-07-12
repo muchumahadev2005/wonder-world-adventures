@@ -74,8 +74,11 @@ export const useSpeechSynthesis = (options: SpeechSynthesisHookOptions = {}) => 
     );
 
     if (matches.length === 0) {
-      // Fallback to default English voice
-      return findDefaultEnglishVoice(voiceList);
+      // If requested language is English, fallback to English. Otherwise return null for system default routing.
+      if (codeLower.startsWith("en")) {
+        return findDefaultEnglishVoice(voiceList);
+      }
+      return null;
     }
 
     // If it's English, try to get the best female english voice
