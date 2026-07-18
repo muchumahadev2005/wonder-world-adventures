@@ -26,26 +26,19 @@ import { toast } from "sonner";
 import ExcelImportStoriesDialog from "@/components/admin/stories/ExcelImportStoriesDialog";
 
 // ── Constants ─────────────────────────────────────────────────────
-// Must match backend validator: STORY_CATEGORIES in stories.validation.js
 const CATEGORIES = [
   "Animal", "Moral", "Adventure", "Fantasy", "Science",
   "Space", "Nature", "History", "Friendship", "Family",
   "Festival", "Bedtime", "Educational",
-  // Extra categories that may exist in DB from older imports
-  "Animals", "Sharing", "Magic", "Inspiration",
 ];
-const AGE_GROUPS  = ["3-5", "5-7", "6-8", "9-11", "9-12"];
+const AGE_GROUPS  = ["3-5", "6-8", "9-12"];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Animal: "#10b981",   Animals: "#10b981",
-  Moral: "#8b5cf6",    Adventure: "#f59e0b",
-  Fantasy: "#6366f1",  Science: "#0ea5e9",
-  Space: "#4f46e5",    Nature: "#22c55e",
-  History: "#f97316",  Friendship: "#ec4899",
-  Family: "#14b8a6",   Festival: "#f43f5e",
-  Bedtime: "#7c3aed",  Educational: "#0284c7",
-  Sharing: "#ec4899",  Magic: "#a21caf",
-  Inspiration: "#0891b2",
+  Animal: "#10b981", Moral: "#8b5cf6", Adventure: "#f59e0b",
+  Fantasy: "#6366f1", Science: "#0ea5e9", Space: "#4f46e5",
+  Nature: "#22c55e", History: "#f97316", Friendship: "#ec4899",
+  Family: "#14b8a6", Festival: "#f43f5e", Bedtime: "#7c3aed",
+  Educational: "#0284c7",
 };
 
 // ── Empty form factory ────────────────────────────────────────────
@@ -187,10 +180,6 @@ function StoryFormDialog({
                   >
                     <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                     <SelectContent>
-                      {/* Show current value even if not in standard list */}
-                      {form.category && !CATEGORIES.includes(form.category) && (
-                        <SelectItem value={form.category}>{form.category}</SelectItem>
-                      )}
                       {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -203,10 +192,6 @@ function StoryFormDialog({
                   >
                     <SelectTrigger><SelectValue placeholder="Select age group" /></SelectTrigger>
                     <SelectContent>
-                      {/* Show current value even if not in standard list */}
-                      {form.ageGroup && !AGE_GROUPS.includes(form.ageGroup) && (
-                        <SelectItem value={form.ageGroup}>{form.ageGroup} years</SelectItem>
-                      )}
                       {AGE_GROUPS.map((a) => <SelectItem key={a} value={a}>{a} years</SelectItem>)}
                     </SelectContent>
                   </Select>
