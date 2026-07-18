@@ -512,7 +512,7 @@ export default function StoriesAdmin() {
   // ── Data fetching ────────────────────────────────────────────
   const { data: stories = [], isLoading } = useQuery({
     queryKey: ["admin-stories"],
-    queryFn: () => adminApi.getStories({ limit: 200 }),
+    queryFn: () => adminApi.getStories({ limit: 100 }),
   });
 
   const { data: languages = [] } = useQuery({

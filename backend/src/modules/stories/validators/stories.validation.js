@@ -61,7 +61,7 @@ const listStoriesSchema = z.object({
 	isRecommended:optionalBoolean,
 	isPublished:  optionalBoolean,
 	search:       optionalString,
-	limit:        z.coerce.number().int().min(1).max(200).optional(),
+	limit:        z.coerce.number().int().min(1).max(500).optional(),
 	page:         z.coerce.number().int().min(1).optional(),
 	sortBy:       z.enum(["createdAt", "title", "readingTime", "starsReward", "xpReward", "readsCount", "likesCount", "sortOrder"]).optional(),
 	sortOrder:    z.enum(["asc", "desc"]).optional(),
