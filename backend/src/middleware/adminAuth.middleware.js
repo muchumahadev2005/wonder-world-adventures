@@ -6,7 +6,9 @@ const ADMIN_EMAILS = ["admin@storynest.com"];
 
 const requireAdmin = async (req, res, next) => {
 	const authHeader = req.headers.authorization || "";
-	const [, token] = authHeader.split(" ");
+	const [, headerToken] = authHeader.split(" ");
+	// Also accept token as query param for browser-tab downloads (template, export)
+	const token = headerToken || req.query.token;
 
 	if (!token) {
 		return res.status(401).json({ success: false, message: "Unauthorized" });
