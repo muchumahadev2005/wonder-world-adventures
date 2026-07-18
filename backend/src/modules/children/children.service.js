@@ -1,7 +1,10 @@
 const prisma = require("../../prisma/prismaClient");
 
 const getProfile = async (userId) => {
-	return prisma.childProfile.findUnique({ where: { userId } });
+	return prisma.childProfile.findUnique({
+		where: { userId },
+		include: { rewardWallet: true },
+	});
 };
 
 const upsertProfile = async (userId, data) => {
@@ -20,6 +23,7 @@ const upsertProfile = async (userId, data) => {
 			favoriteColor: data.favoriteColor,
 			favoriteCharacter: data.favoriteCharacter,
 		},
+		include: { rewardWallet: true },
 	});
 };
 

@@ -33,17 +33,25 @@ const SignInPage = () => {
     favoriteColor: string;
     favoriteCharacter: string;
     isPremium?: boolean;
+    rewardWallet?: {
+      stars: number;
+      coins: number;
+      xp: number;
+      level: number;
+      streak: number;
+    } | null;
   }) => {
+    const wallet = profile.rewardWallet;
     setProfile({
       name: profile.name,
       ageGroup: profile.ageGroup,
       favoriteColor: profile.favoriteColor,
       favoriteCharacter: profile.favoriteCharacter,
-      stars: 0,
-      coins: 10,
-      xp: 0,
-      level: 1,
-      streak: 1,
+      stars: wallet?.stars ?? 0,
+      coins: wallet?.coins ?? 10,
+      xp: wallet?.xp ?? 0,
+      level: wallet?.level ?? 1,
+      streak: wallet?.streak ?? 1,
       completedGames: [],
       completedStories: [],
       completedLessons: [],

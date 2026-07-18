@@ -92,16 +92,17 @@ const LoginPage = () => {
         isPremium = subData.status === "ACTIVE";
       } catch (e) {}
 
+      const wallet = data.profile.rewardWallet;
       setProfile({
         name: data.profile.name,
         ageGroup: data.profile.ageGroup,
         favoriteColor: data.profile.favoriteColor,
         favoriteCharacter: data.profile.favoriteCharacter,
-        stars: 0,
-        coins: 10,
-        xp: 0,
-        level: 1,
-        streak: 1,
+        stars: wallet?.stars ?? 0,
+        coins: wallet?.coins ?? 10,
+        xp: wallet?.xp ?? 0,
+        level: wallet?.level ?? 1,
+        streak: wallet?.streak ?? 1,
         completedGames: [],
         completedStories: [],
         completedLessons: [],
