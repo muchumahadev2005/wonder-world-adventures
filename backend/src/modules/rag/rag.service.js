@@ -383,10 +383,21 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	}
 
 	// ── 8. Cache the result ─────────────────────────────────────────
+	const FAQ_QUESTIONS = [
+		"what is the moral of a story in storynest?",
+		"what can i learn in storynest lessons?",
+		"what games are available in storynest?",
+		"can you recommend a story for me?",
+		"can you help me with vocabulary words?",
+		"give me a learning tip from storynest!"
+	];
+	const isFaq = FAQ_QUESTIONS.includes(trimmedMessage.toLowerCase());
+	const ttl = isFaq ? 2592000 : CACHE_TTL; // 30 days for FAQs, 24 hours for regular queries
+
 	const responsePayload = { reply, sources };
 	try {
 		if (redis.isAvailable()) {
-			await redis.set(cacheKey, JSON.stringify(responsePayload), CACHE_TTL);
+			await redis.set(cacheKey, JSON.stringify(responsePayload), ttl);
 		} else {
 			if (!global.localCacheStore) {
 				global.localCacheStore = new Map();

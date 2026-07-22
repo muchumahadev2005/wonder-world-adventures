@@ -16,7 +16,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { contentApi } from "@/lib/api";
-import { speakText, stopSpeaking } from "@/lib/tts.service";
+import { speakText, stopSpeaking, getAvailableVoices } from "@/lib/tts.service";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 
 import AITeacher from "./AITeacher";
@@ -45,6 +45,8 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Web Speech API hook
@@ -102,6 +104,30 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
     }
   }, [speechError]);
 
+  // ── Load available voices ────────────────────────────────────────
+  useEffect(() => {
+    const loadVoices = () => {
+      const allVoices = getAvailableVoices();
+      // Filter for English voices to present clean, readable choices
+      const english = allVoices.filter((v) => v.lang.startsWith("en"));
+      const list = english.length > 0 ? english : allVoices;
+      setVoices(list);
+
+      // Pre-select Google or natural sounding English voice if available, otherwise first item
+      if (list.length > 0) {
+        const preferred = list.find(
+          (v) => v.name.includes("Google") || v.name.includes("Natural") || v.lang === "en-US"
+        );
+        setSelectedVoice(preferred ? preferred.name : list[0].name);
+      }
+    };
+
+    loadVoices();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
   // ── Send to EXISTING contentApi.chat() — same OpenRouter backend ──
   const handleSendToAI = useCallback(
     async (text: string) => {
@@ -122,6 +148,7 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
         setVoiceState("speaking");
         speakText(stripEmojis(reply), "en", {
           rate: 0.9,
+          voice: selectedVoice || undefined,
           onEnd: () => setVoiceState("idle"),
           onError: () => setVoiceState("idle"),
         });
@@ -139,7 +166,7 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
         setVoiceState("idle");
       }
     },
-    [token, sessionId]
+    [token, sessionId, selectedVoice]
   );
 
   // ── Mic button handler ──────────────────────────────────────────
@@ -223,12 +250,40 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
         />
       </motion.div>
 
-      {/* Browser support warning */}
-      {!isSupported && (
-        <p className="text-amber-300/80 text-xs text-center mb-3 px-4">
-          ⚠️ Voice input isn't supported in this browser. Please use Chrome for
-          the best experience.
-        </p>
+      {/* Voice selection dropdown */}
+      {voices.length > 0 && (
+        <motion.div
+          className="mt-2 flex flex-col items-center gap-1.5 w-full max-w-[240px]"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <label className="text-[11px] font-display font-bold text-white/50 tracking-wider uppercase">
+            Choose Teacher Voice
+          </label>
+          <div className="relative w-full">
+            <select
+              value={selectedVoice}
+              onChange={(e) => setSelectedVoice(e.target.value)}
+              className="w-full px-4 py-2 rounded-xl border border-white/20 text-xs font-semibold text-white/90 bg-white/10 backdrop-blur-md outline-none cursor-pointer hover:bg-white/20 transition-all appearance-none shadow-sm"
+              style={{
+                background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)",
+              }}
+            >
+              {voices.map((v) => (
+                <option key={v.name} value={v.name} className="text-gray-900 bg-white">
+                  {v.name.replace("Microsoft", "MS").replace("Google", "")} ({v.lang})
+                </option>
+              ))}
+            </select>
+            {/* Custom arrow decorator */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-white/40">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+              </svg>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Live transcript removed from UI - kept internally */}
