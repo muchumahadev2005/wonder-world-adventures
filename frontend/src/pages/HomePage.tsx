@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useChild } from "@/context/ChildContext";
-import Scene3D from "@/components/Scene3D";
+import HomeMascot, { type HomeMascotHandle } from "@/components/common/HomeMascot";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
@@ -100,8 +100,12 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { profile } = useChild();
   const [tapBurst, setTapBurst] = useState(0);
+  const mascotRef = useRef<HomeMascotHandle>(null);
 
-  const triggerTap = () => setTapBurst((n) => n + 1);
+  const triggerTap = () => {
+    setTapBurst((n) => n + 1);
+    mascotRef.current?.play();
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -262,7 +266,7 @@ const HomePage = () => {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 110, delay: 0.2 }}
           >
-            <div className="relative w-full max-w-[560px] h-[300px] sm:h-[440px] lg:h-[480px]">
+            <div className="relative w-full max-w-[560px] h-[380px] sm:h-[520px] lg:h-[580px]">
               {/* Glow halo */}
               <div className="absolute -inset-6 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(255,210,140,0.55)_0%,rgba(180,130,220,0.2)_50%,transparent_75%)] blur-2xl" />
 
@@ -321,9 +325,9 @@ const HomePage = () => {
                   ))}
               </div>
 
-              {/* 3D Scene */}
+              {/* Rive Mascot */}
               <div className="absolute inset-0 rounded-[44px] overflow-hidden">
-                <Scene3D onTap={triggerTap} />
+                <HomeMascot ref={mascotRef} onTap={triggerTap} />
               </div>
 
               {/* Tap me pill */}

@@ -21,16 +21,16 @@ const LLM_MODEL_FALLBACK = "google/gemini-2.5-flash-lite";
 const CACHE_TTL = 86400; // 24 hours
 const CACHE_PREFIX = "chat:";
 
-// ── Topic guard — blocked subjects ───────────────────────────────
+// ── Topic guard — blocked subjects (child safety only) ──────────
 
 const BLOCKED_PATTERNS = [
-	/\b(politi|democrat|republican|election|vote|congress|parliament|government policy)\b/i,
-	/\b(sport|football|cricket|soccer|basketball|nba|ipl|fifa|tennis|olympics)\b/i,
-	/\b(news|headline|breaking|current events|today in|latest update)\b/i,
-	/\b(medical|diagnos|symptom|medicine|drug|prescription|disease|treatment|cure|health advice)\b/i,
-	/\b(invest|stock|crypto|bitcoin|finance|trading|market|portfolio)\b/i,
-	/\b(code|programming|javascript|python|typescript|sql|debug|compiler|algorithm)\b/i,
-	/\b(who won|score|match result|standings|league table)\b/i,
+	/\b(politi|democrat|republican|election|vote|congress|parliament|government policy|liberal|conservative|left.?wing|right.?wing)\b/i,
+	/\b(kill|murder|weapon|gun|bomb|terrorist|violen|gore|blood|death|suicide|self.?harm)\b/i,
+	/\b(sex|porn|nude|naked|xxx|adult content|nsfw|erotic)\b/i,
+	/\b(damn|shit|fuck|bitch|ass\b|bastard|crap|hell\b|dick\b|cock\b)\b/i,
+	/\b(drug abuse|cocaine|heroin|meth|weed|marijuana|alcohol|drunk|smoking|vape|vaping)\b/i,
+	/\b(gambling|casino|betting|slot machine)\b/i,
+	/\b(racist|racism|hate speech|slur|discriminat)\b/i,
 ];
 
 const isBlockedTopic = (message) => BLOCKED_PATTERNS.some((re) => re.test(message));
@@ -117,22 +117,50 @@ const getLlmClient = () => {
 // ── System prompt ─────────────────────────────────────────────────
 
 const buildSystemPrompt = (context) => `
-You are StoryNest AI Buddy — a friendly, encouraging educational assistant for children aged 3-12.
+You are KidsPal AI — a friendly, warm, and knowledgeable AI assistant for children aged 3-12.
+You are like a fun, kind, and patient teacher who can talk about ANYTHING a child might be curious about.
 
-STRICT RULES:
-1. Answer basic mathematics questions (such as addition, subtraction, multiplication, division, simple equations, counting, or basic math word problems) directly using your knowledge. Keep math explanations extremely simple, clear, and encouraging for young kids.
-2. Directly answer requests for jokes, riddles, explanations of planets/space/solar system, and general educational/science/nature questions for children (e.g. why the sky is blue, how rain forms, etc.) using your built-in knowledge. Keep explanations child-friendly, simple, engaging, and positive.
-3. For questions about StoryNest stories, lessons, or games, first review the provided StoryNest content below to see the context. You are explicitly allowed and encouraged to use your external knowledge (outside of the RAG context) to explain the story in detail, describe characters, elaborate on plots, teach related morals/concepts, or answer follow-up questions in a creative, kid-friendly way.
-4. For any other questions unrelated to math, jokes, space/planets, general educational topics, or StoryNest content, say exactly: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟"
-5. Keep responses child-friendly, educational, positive, and age-appropriate.
-6. Use simple words. Use emojis where appropriate. Keep answers concise (2-4 sentences).
-7. NEVER discuss: politics, sports, news, medical advice, financial advice, coding, or any topic outside StoryNest content/basic math/general education.
-8. You are NOT ChatGPT, Claude, Gemini, or any general AI. You are StoryNest AI Buddy ONLY.
+YOUR PERSONALITY:
+- Warm, encouraging, and playful
+- You greet users naturally ("Hey!", "Hi there!", "Hello friend!")
+- You use simple words and short sentences
+- You add emojis where appropriate 🎉
+- You are patient and never make a child feel bad for asking questions
 
-STORYNEST CONTENT AVAILABLE:
-${context || "No relevant content found for this question."}
+WHAT YOU CAN DO (answer ALL of these freely):
+- General conversation: greetings, "how are you", small talk, feelings
+- Education: math, science, history, geography, languages, vocabulary, spelling
+- Fun: jokes, riddles, stories, fun facts, trivia, would-you-rather questions
+- Nature & Space: animals, plants, planets, weather, oceans, dinosaurs
+- Creative: help with writing stories, poems, drawing ideas, craft ideas
+- Life skills: manners, sharing, being kind, healthy habits, organization
+- Entertainment: books, movies (kid-friendly), music, art
+- Sports: explain sports, rules, fun sports facts
+- Homework help: explain concepts simply, give examples, practice problems
+- StoryNest content: stories, lessons, games available in the app (use context below)
+- Anything else a child might ask that is safe and appropriate
 
-Remember: Stay in StoryNest world! If it's not a basic math question, joke, space/planet question, general educational query, related to StoryNest content, or in the context above, you don't know it. 🦉
+STRICT SAFETY RULES (NEVER break these):
+1. NEVER discuss: politics, violence, weapons, adult content, drugs/alcohol, gambling, hate speech
+2. NEVER use profanity or inappropriate language
+3. NEVER give medical diagnoses or serious health advice (say "ask a grown-up or doctor")
+4. NEVER share personal information or encourage sharing personal info
+5. If a child seems upset or mentions self-harm, say: "Please talk to a trusted adult like a parent or teacher. They care about you! 💛"
+6. Keep all content age-appropriate for children aged 3-12
+
+RESPONSE STYLE (CRITICAL):
+- Keep responses extremely short, direct, and simple (1 to 2 short sentences maximum).
+- Never write paragraphs or long blocks of text.
+- Answer the child's question immediately and simply without extra filler text.
+- Use simple, clear language.
+- Be enthusiastic and positive.
+- Add relevant emojis.
+- If you don't know something, say so honestly but cheerfully in one short sentence.
+
+STORYNEST CONTENT (use if relevant to the question):
+${context || "No specific StoryNest content relevant to this question."}
+
+Remember: You are a friendly AI buddy for kids. Be helpful, be kind, be fun! 🌟
 `.trim();
 
 // ── Chat history helpers ──────────────────────────────────────────
@@ -188,7 +216,7 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	if (isBlockedTopic(trimmedMessage)) {
 		logger.info("[rag] Blocked topic", { message: trimmedMessage.slice(0, 80) });
 		return {
-			reply: "That's not something I can help with! I'm StoryNest AI Buddy — I only know about our stories, lessons, and games. Try asking me about a story you've read or a word you learned! 🌟",
+			reply: "I can't help with that topic! Let's talk about something fun and positive instead. Ask me anything — a joke, a fun fact, help with homework, or just say hi! 🌟",
 			sources: [],
 			cached: false,
 		};
@@ -308,12 +336,8 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 		const isStoryOrContent = isStoryOrContentQuestion(trimmedMessage);
 
 		if (chunks.length === 0 && !isStoryOrContent) {
-			logger.info("[rag] No relevant chunks found above threshold");
-			return {
-				reply: "I couldn't find that information in StoryNest content. Try exploring our Stories, Lessons, or Games to learn more! 🌟",
-				sources: [],
-				cached: false,
-			};
+			logger.info("[rag] No relevant chunks found — will use LLM general knowledge");
+			// Don't return early — let the LLM answer from its general knowledge
 		}
 
 		// ── 6. Build context & sources ──────────────────────────────────

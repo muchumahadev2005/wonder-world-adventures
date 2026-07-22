@@ -44,6 +44,7 @@
     "@react-oauth/google": "^0.12.2",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18",
+    "@rive-app/react-canvas": "^4.29.5",
     "@tanstack/react-query": "^5.83.0",
     "@types/three": "^0.183.1",
     "class-variance-authority": "^0.7.1",
