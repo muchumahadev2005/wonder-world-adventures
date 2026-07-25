@@ -30,6 +30,7 @@ interface StoryAudioPlayerProps {
   resume: () => void;
   stop: () => void;
   restart: (text: string) => void;
+  themeColor?: string | null;
 }
 
 export const StoryAudioPlayer = ({
@@ -49,8 +50,13 @@ export const StoryAudioPlayer = ({
   resume,
   stop,
   restart,
+  themeColor,
 }: StoryAudioPlayerProps) => {
   const isContentEmpty = !storyContent || storyContent.trim().length === 0;
+
+  const buttonStyle = themeColor 
+    ? { background: themeColor, boxShadow: `0 8px 25px ${themeColor}66` }
+    : { background: "linear-gradient(135deg, #7c5cbf, #a78bfa)", boxShadow: "0 8px 25px rgba(124, 92, 191, 0.4)" };
 
   // Keyboard accessibility: Space to Play/Pause, Escape to Stop
   useEffect(() => {
@@ -172,10 +178,7 @@ export const StoryAudioPlayer = ({
             whileTap={{ scale: 0.92 }}
             whileHover={{ scale: 1.04 }}
             className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
-            style={{ 
-              background: "linear-gradient(135deg, #7c5cbf, #a78bfa)", 
-              boxShadow: "0 8px 25px rgba(124, 92, 191, 0.4)" 
-            }}
+            style={buttonStyle}
             title="Resume narration"
           >
             <Play className="w-7 h-7 text-white ml-0.5" />
@@ -186,10 +189,7 @@ export const StoryAudioPlayer = ({
             whileTap={{ scale: 0.92 }}
             whileHover={{ scale: 1.04 }}
             className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
-            style={{ 
-              background: "linear-gradient(135deg, #7c5cbf, #a78bfa)", 
-              boxShadow: "0 8px 25px rgba(124, 92, 191, 0.4)" 
-            }}
+            style={buttonStyle}
             title="Pause narration"
           >
             <Pause className="w-7 h-7 text-white" />
@@ -201,10 +201,7 @@ export const StoryAudioPlayer = ({
             whileTap={{ scale: 0.92 }}
             whileHover={{ scale: 1.04 }}
             className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 disabled:pointer-events-none"
-            style={{ 
-              background: "linear-gradient(135deg, #7c5cbf, #a78bfa)", 
-              boxShadow: "0 8px 25px rgba(124, 92, 191, 0.4)" 
-            }}
+            style={buttonStyle}
             title="Play narration"
           >
             <Play className="w-7 h-7 text-white ml-0.5" />

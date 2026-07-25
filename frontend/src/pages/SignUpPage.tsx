@@ -75,7 +75,7 @@ const SignUpPage = () => {
       navigate("/");
     } else {
       clearProfile();
-      navigate("/login");
+      navigate("/onboarding");
     }
   };
 
@@ -360,7 +360,7 @@ const SignUpPage = () => {
                   Continue with Google <Sparkles className="w-5 h-5" />
                 </motion.button>
                 <motion.button
-                  onClick={() => navigate("/signin")}
+                  onClick={() => navigate("/login")}
                   disabled={loading}
                   className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-amber-950 border border-white/50"
                   style={{
@@ -435,7 +435,7 @@ const SignUpPage = () => {
           <p className="text-center text-white/85 text-sm mt-6">
             Already have an account?{" "}
             <Link
-              to="/signin"
+              to="/login"
               className="text-amber-200 font-bold hover:underline"
             >
               Login

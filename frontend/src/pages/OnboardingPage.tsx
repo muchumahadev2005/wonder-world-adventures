@@ -113,7 +113,7 @@ const LoginPage = () => {
     } catch (err: any) {
       if (err.message === "Invalid token" || err.message === "Unauthorized") {
         logout();
-        navigate("/signin");
+        navigate("/login");
         return;
       }
       setError(err.message || "Failed to save profile");

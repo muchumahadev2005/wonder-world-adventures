@@ -35,6 +35,8 @@ type StoryItem = {
   stars: number;
   pages: string[];
   quiz: QuizQuestion[];
+  thumbnailUrl?: string | null;
+  backgroundUrl?: string | null;
 };
 
 const stories: StoryItem[] = [];
@@ -61,6 +63,8 @@ const normalizeApiStory = (story: ApiStory): StoryItem => {
     stars: story.starsReward ?? story.stars ?? 2,
     pages,
     quiz: quiz as QuizQuestion[],
+    thumbnailUrl: story.thumbnailUrl || null,
+    backgroundUrl: story.backgroundUrl || null,
   };
 };
 
@@ -186,12 +190,16 @@ const StoriesPage = () => {
                     whileHover={{ scale: 1.03, y: -4 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    {/* Cover emoji */}
-                    <div className="p-4 text-4xl">{story.coverEmoji}</div>
+                    {/* Cover image or emoji */}
+                    {story.thumbnailUrl ? (
+                      <img src={story.thumbnailUrl} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-110" />
+                    ) : (
+                      <div className="p-4 text-4xl relative z-10">{story.coverEmoji}</div>
+                    )}
 
                     {/* Bottom info */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3"
-                      style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%)" }}>
+                    <div className="absolute bottom-0 left-0 right-0 p-3 z-10"
+                      style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)" }}>
                       <h3 className="font-display text-sm font-bold text-white leading-tight">{story.title}</h3>
                       <div className="flex items-center gap-1 mt-1">
                         <Star className="w-3 h-3 text-amber-300 fill-amber-300" />
@@ -201,10 +209,10 @@ const StoriesPage = () => {
                     </div>
 
                     {/* Badges */}
-                    {story.premium && <div className="absolute top-2 right-2"><PremiumBadge /></div>}
-                    {completed && <div className="absolute top-2 left-2 text-sm">✅</div>}
+                    {story.premium && <div className="absolute top-2 right-2 z-10"><PremiumBadge /></div>}
+                    {completed && <div className="absolute top-2 left-2 text-sm z-10">✅</div>}
                     {locked && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-3xl">
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-3xl z-20">
                         <Lock className="w-8 h-8 text-white/60" />
                       </div>
                     )}

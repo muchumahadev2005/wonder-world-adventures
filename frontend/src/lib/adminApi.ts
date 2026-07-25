@@ -76,6 +76,8 @@ export interface AdminStory {
   ageGroup?: string | null;
   difficulty?: string | null;
   thumbnail?: string | null;
+  thumbnailUrl?: string | null;
+  backgroundUrl?: string | null;
   coverImage?: string | null;
   coverEmoji?: string | null;
   coverGradient?: string | null;

@@ -149,7 +149,7 @@ const ForgotPasswordPage = () => {
               </p>
               <div className="mt-3 grid gap-2">
                 <Link
-                  to="/signin"
+                  to="/login"
                   className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-white border border-white/50"
                   style={{
                     background:
@@ -161,7 +161,7 @@ const ForgotPasswordPage = () => {
                   Continue with Google
                 </Link>
                 <Link
-                  to="/signin"
+                  to="/login"
                   className="w-full px-6 py-3 rounded-2xl font-display text-base flex items-center justify-center gap-2 text-amber-950 border border-white/50"
                   style={{
                     background:
@@ -197,7 +197,7 @@ const ForgotPasswordPage = () => {
           <p className="text-center text-white/85 text-sm mt-6">
             Remembered your password?{" "}
             <Link
-              to="/signin"
+              to="/login"
               className="text-amber-200 font-bold hover:underline"
             >
               Back to login

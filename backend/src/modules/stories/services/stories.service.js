@@ -76,6 +76,8 @@ const normalizeRow = (row) => {
 		starsReward:      get(["starsReward", "stars_reward", "stars reward", "starReward", "star_reward", "star reward"], 0),
 		tags:             String(get(["tags"])).trim(),
 		coverImageUrl:    String(get(["coverImageUrl", "cover_image_url", "cover image url", "coverImage", "cover_image", "cover image"])).trim(),
+		thumbnailUrl:     String(get(["thumbnailUrl", "thumbnail_url", "thumbnail url", "thumbnail"])).trim(),
+		backgroundUrl:    String(get(["backgroundUrl", "background_url", "background url"])).trim(),
 	};
 };
 
@@ -96,6 +98,8 @@ const normalizeStory = (story) => ({
 	difficulty:      story.difficulty || null,
 	tags:            story.tags || [],
 	coverImage:      story.coverImage || null,
+	thumbnailUrl:    story.thumbnailUrl || null,
+	backgroundUrl:   story.backgroundUrl || null,
 	thumbnail:       story.thumbnail,
 	coverEmoji:      story.coverEmoji,
 	coverGradient:   story.coverGradient,
@@ -318,6 +322,8 @@ const generateExcelTemplate = () => {
 			star_reward:     2,                   // >= 0
 			tags:            "adventure,animals", // comma-separated
 			cover_image_url: "https://example.com/cover.jpg",
+			thumbnail_url:   "https://example.com/thumbnail.jpg",
+			background_url:  "https://example.com/background.jpg",
 		},
 	];
 	XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sample), "Stories");
@@ -356,6 +362,8 @@ const exportToExcel = async (filters = {}) => {
 		star_reward:     s.starsReward,
 		tags:            (s.tags || []).join(", "),
 		cover_image_url: s.coverImage || s.thumbnail || "",
+		thumbnail_url:   s.thumbnailUrl || "",
+		background_url:  s.backgroundUrl || "",
 	}));
 
 	const wb = XLSX.utils.book_new();
@@ -478,6 +486,8 @@ const importFromExcel = async (buffer, userId) => {
 			difficulty:      difficulty || null,
 			tags:            parseTags(row.tags),
 			coverImage:      row.coverImageUrl || null,
+			thumbnailUrl:    row.thumbnailUrl || null,
+			backgroundUrl:   row.backgroundUrl || null,
 			readingTime:     readingTime ?? null,
 			listeningTime:   listeningTime ?? null,
 			isPremium:       parseBool(row.premium),

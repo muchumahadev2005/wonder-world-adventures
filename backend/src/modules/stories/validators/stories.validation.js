@@ -109,6 +109,8 @@ const storySchema = z.object({
 	// Media
 	coverImage:    optionalUrl,
 	thumbnail:     optionalString,
+	thumbnailUrl:  z.string().trim().url("Must be a valid URL").or(z.literal("")).transform(e => e === "" ? null : e).optional().nullable(),
+	backgroundUrl: z.string().trim().url("Must be a valid URL").or(z.literal("")).transform(e => e === "" ? null : e).optional().nullable(),
 	coverEmoji:    optionalString,
 	coverGradient: optionalString,
 
@@ -172,6 +174,8 @@ const importRowSchema = z.object({
 	star_reward:     z.coerce.number().min(0).optional(),
 	tags:            z.string().optional(),
 	cover_image_url: z.string().optional(),
+	thumbnail_url:   z.string().optional(),
+	background_url:  z.string().optional(),
 });
 
 module.exports = {

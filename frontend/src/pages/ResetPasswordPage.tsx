@@ -51,7 +51,7 @@ const ResetPasswordPage = () => {
         },
       });
       setSuccess("Password updated! Please sign in.");
-      setTimeout(() => navigate("/signin"), 1200);
+      setTimeout(() => navigate("/login"), 1200);
     } catch (err: any) {
       setError(err.message || "Reset failed");
     } finally {
@@ -212,7 +212,7 @@ const ResetPasswordPage = () => {
           <p className="text-center text-white/85 text-sm mt-6">
             Back to{" "}
             <Link
-              to="/signin"
+              to="/login"
               className="text-amber-200 font-bold hover:underline"
             >
               Login

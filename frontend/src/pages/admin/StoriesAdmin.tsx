@@ -175,11 +175,12 @@ function StoryFormDialog({
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">Category</Label>
                   <Select
-                    value={form.category || undefined}
-                    onValueChange={(v) => set("category", v)}
+                    value={form.category || "none"}
+                    onValueChange={(v) => set("category", v === "none" ? null : v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none" className="text-slate-400 italic">None (No Category)</SelectItem>
                       {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -187,11 +188,12 @@ function StoryFormDialog({
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">Age Group</Label>
                   <Select
-                    value={form.ageGroup || undefined}
-                    onValueChange={(v) => set("ageGroup", v)}
+                    value={form.ageGroup || "none"}
+                    onValueChange={(v) => set("ageGroup", v === "none" ? null : v)}
                   >
                     <SelectTrigger><SelectValue placeholder="Select age group" /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none" className="text-slate-400 italic">None (No Age Group)</SelectItem>
                       {AGE_GROUPS.map((a) => <SelectItem key={a} value={a}>{a} years</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -244,9 +246,64 @@ function StoryFormDialog({
 
           {/* ── Section 3: Media ──────────────────────────────── */}
           {activeSection === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">Cover Image URL</Label>
+                <h4 className="text-sm font-bold text-slate-800 mb-4">Story Images</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">Thumbnail Image URL</Label>
+                    <Input
+                      value={form.thumbnailUrl ?? ""}
+                      onChange={(e) => set("thumbnailUrl", e.target.value)}
+                      placeholder="https://example.com/thumbnail.jpg"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  {form.thumbnailUrl && (
+                    <div className="mt-2">
+                      <Label className="text-xs font-semibold text-slate-600 mb-2 block">Thumbnail Preview</Label>
+                      <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                        <img
+                          src={form.thumbnailUrl}
+                          alt="Thumbnail preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Crect fill='%23f1f5f9' width='128' height='128'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='10'%3EImage not found%3C/text%3E%3C/svg%3E";
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">Background Image URL</Label>
+                    <Input
+                      value={form.backgroundUrl ?? ""}
+                      onChange={(e) => set("backgroundUrl", e.target.value)}
+                      placeholder="https://example.com/background.jpg"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  {form.backgroundUrl && (
+                    <div className="mt-2">
+                      <Label className="text-xs font-semibold text-slate-600 mb-2 block">Background Preview</Label>
+                      <div className="relative w-full max-w-md h-32 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                        <img
+                          src={form.backgroundUrl}
+                          alt="Background preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect fill='%23f1f5f9' width='400' height='200'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='14'%3EImage not found%3C/text%3E%3C/svg%3E";
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">Legacy Cover Image URL</Label>
                 <Input
                   value={form.coverImage ?? ""}
                   onChange={(e) => set("coverImage", e.target.value)}
@@ -254,28 +311,27 @@ function StoryFormDialog({
                   className="font-mono text-xs"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Paste a direct image URL. Image upload will be supported later.</p>
-              </div>
-              {/* Preview */}
-              {form.coverImage && (
-                <div className="mt-4">
-                  <Label className="text-xs font-semibold text-slate-600 mb-2 block">Preview</Label>
-                  <div className="relative w-full max-w-xs rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                    <img
-                      src={form.coverImage}
-                      alt="Cover preview"
-                      className="w-full h-48 object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect fill='%23f1f5f9' width='400' height='200'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='14'%3EImage not found%3C/text%3E%3C/svg%3E";
-                      }}
-                    />
-                    {form.title && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                        <p className="text-white font-bold text-sm leading-tight">{form.title}</p>
-                      </div>
-                    )}
+                {form.coverImage && (
+                  <div className="mt-4">
+                    <Label className="text-xs font-semibold text-slate-600 mb-2 block">Preview</Label>
+                    <div className="relative w-full max-w-xs rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                      <img
+                        src={form.coverImage}
+                        alt="Cover preview"
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect fill='%23f1f5f9' width='400' height='200'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%2394a3b8' font-size='14'%3EImage not found%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                      {form.title && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                          <p className="text-white font-bold text-sm leading-tight">{form.title}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 

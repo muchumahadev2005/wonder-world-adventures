@@ -46,7 +46,7 @@ const ParentsPage = () => {
   const handleLogout = () => {
     clearProfile();
     logout();
-    navigate("/signin");
+    navigate("/login");
   };
 
   const stats = [

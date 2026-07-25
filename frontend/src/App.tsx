@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ChildProvider, useChild } from "@/context/ChildContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import LoginPage from "./pages/LoginPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -44,8 +44,8 @@ const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   const { profile } = useChild();
-  if (!isAuthenticated) return <Navigate to="/signin" replace />;
-  if (!profile) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!profile) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 };
 
@@ -82,9 +82,9 @@ const AppRoutes = () => {
     <>
       <Routes>
         {/* ── Auth ─────────────────────────────── */}
-        <Route path="/signin" element={isAuthenticated && !isAdmin ? <Navigate to="/" replace /> : <SignInPage />} />
+        <Route path="/login" element={isAuthenticated && !isAdmin ? <Navigate to="/" replace /> : <SignInPage />} />
         <Route path="/signup" element={isAuthenticated && !isAdmin ? <Navigate to="/" replace /> : <SignUpPage />} />
-        <Route path="/login" element={!isAuthenticated ? <Navigate to="/signin" replace /> : profile ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/onboarding" element={!isAuthenticated ? <Navigate to="/login" replace /> : profile ? <Navigate to="/" replace /> : <OnboardingPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />

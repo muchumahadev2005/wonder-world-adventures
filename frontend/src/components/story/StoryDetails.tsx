@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Heart, Headphones, BookOpen, ChevronRight, Star } from "lucide-react";
+import { FastAverageColor } from "fast-average-color";
 import { QuizQuestion } from "@/components/QuizScreen";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { StoryAudioPlayer } from "./StoryAudioPlayer";
@@ -25,6 +26,8 @@ export type StoryDetailsItem = {
   stars: number;
   pages: string[];
   quiz: QuizQuestion[];
+  thumbnailUrl?: string | null;
+  backgroundUrl?: string | null;
 };
 
 interface StoryDetailsProps {
@@ -63,6 +66,28 @@ export const StoryDetails = ({ activeStory, onBack, goToQuiz }: StoryDetailsProp
     storyId: activeStory.id,
   });
 
+  const [themeColor, setThemeColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeStory?.backgroundUrl) {
+      const fac = new FastAverageColor();
+      fac.getColorAsync(activeStory.backgroundUrl, { crossOrigin: 'anonymous' })
+        .then(color => setThemeColor(color.hex))
+        .catch(e => console.error("Could not extract color", e))
+        .finally(() => fac.destroy());
+    } else {
+      setThemeColor(null);
+    }
+  }, [activeStory?.backgroundUrl]);
+
+  const mainGradient = themeColor 
+    ? `linear-gradient(180deg, color-mix(in srgb, ${themeColor} 25%, #0d0720) 0%, #0d0720 50%, #0d0720 100%)`
+    : "linear-gradient(180deg, #0d0720 0%, #1a0f3a 50%, #0d0720 100%)";
+  
+  const buttonStyle = themeColor 
+    ? { background: themeColor, boxShadow: `0 8px 25px ${themeColor}66` }
+    : { background: "linear-gradient(135deg,#7c5cbf,#a78bfa)", boxShadow: "0 8px 25px rgba(124,92,191,0.4)" };
+
   return (
     <motion.div
       key="detail"
@@ -71,29 +96,39 @@ export const StoryDetails = ({ activeStory, onBack, goToQuiz }: StoryDetailsProp
       exit={{ x: "100%" }}
       transition={{ type: "spring", stiffness: 280, damping: 28 }}
       className="absolute inset-0 z-50 pb-28 overflow-y-auto"
-      style={{ background: "linear-gradient(180deg, #0d0720 0%, #1a0f3a 50%, #0d0720 100%)" }}
+      style={{ background: mainGradient }}
     >
       {/* Cover hero */}
-      <div className="relative h-72 overflow-hidden" style={{ background: activeStory.coverGradient }}>
+      <div className="relative h-72 overflow-hidden" style={{ background: activeStory.backgroundUrl ? "transparent" : activeStory.coverGradient }}>
+        {activeStory.backgroundUrl && (
+          <img src={activeStory.backgroundUrl} alt={activeStory.title} className="absolute inset-0 w-full h-full object-cover" />
+        )}
+        
         {/* Firefly particles */}
-        {Array.from({ length: 18 }).map((_, i) => (
+        {!activeStory.backgroundUrl && Array.from({ length: 18 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1.5 h-1.5 rounded-full bg-amber-200"
+            className="absolute w-1.5 h-1.5 rounded-full bg-amber-200 z-10"
             style={{ left: `${((i * 37) % 90) + 5}%`, top: `${((i * 23) % 85) + 5}%` }}
             animate={{ opacity: [0, 1, 0], scale: [0.5, 1.3, 0.5] }}
             transition={{ duration: 2 + (i % 3), repeat: Infinity, delay: i * 0.2 }}
           />
         ))}
 
-        {/* Cover art */}
-        <div className="absolute inset-0 flex items-center justify-center text-8xl">
-          {activeStory.coverEmoji}
-        </div>
+        {/* Cover art (Only show if no background URL is provided) */}
+        {!activeStory.backgroundUrl && (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            {activeStory.thumbnailUrl ? (
+              <img src={activeStory.thumbnailUrl} alt={activeStory.title} className="w-40 h-40 object-cover rounded-3xl shadow-2xl border-4 border-white/20" />
+            ) : (
+              <span className="text-8xl">{activeStory.coverEmoji}</span>
+            )}
+          </div>
+        )}
 
         {/* Gradient overlay */}
         <div 
-          className="absolute inset-0" 
+          className="absolute inset-0 z-0" 
           style={{ background: "linear-gradient(0deg, rgba(13,7,32,0.95) 0%, transparent 60%)" }} 
         />
 
@@ -151,7 +186,9 @@ export const StoryDetails = ({ activeStory, onBack, goToQuiz }: StoryDetailsProp
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors"
               style={
                 tab === t
-                  ? { background: "linear-gradient(135deg,#7c5cbf,#a78bfa)", color: "#fff" }
+                  ? (themeColor 
+                      ? { background: themeColor, color: "#fff" } 
+                      : { background: "linear-gradient(135deg,#7c5cbf,#a78bfa)", color: "#fff" })
                   : { color: "rgba(255,255,255,0.4)" }
               }
               whileTap={{ scale: 0.97 }}
@@ -182,15 +219,13 @@ export const StoryDetails = ({ activeStory, onBack, goToQuiz }: StoryDetailsProp
               resume={resume}
               stop={stop}
               restart={restart}
+              themeColor={themeColor}
             />
             
             <motion.button
               onClick={goToQuiz}
               className="w-full py-3.5 rounded-2xl font-display font-bold text-white flex items-center justify-center gap-2"
-              style={{ 
-                background: "linear-gradient(135deg,#7c5cbf,#a78bfa)", 
-                boxShadow: "0 8px 25px rgba(124,92,191,0.4)" 
-              }}
+              style={buttonStyle}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -215,7 +250,7 @@ export const StoryDetails = ({ activeStory, onBack, goToQuiz }: StoryDetailsProp
               <div className="flex-1 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.1)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: "linear-gradient(90deg,#7c5cbf,#a78bfa)" }}
+                  style={themeColor ? { background: themeColor } : { background: "linear-gradient(90deg,#7c5cbf,#a78bfa)" }}
                   animate={{ width: `${((readPage + 1) / activeStory.pages.length) * 100}%` }}
                 />
               </div>
@@ -249,7 +284,7 @@ export const StoryDetails = ({ activeStory, onBack, goToQuiz }: StoryDetailsProp
                   onClick={() => setReadPage(p => p + 1)}
                   whileTap={{ scale: 0.96 }}
                   className="flex-1 py-2.5 rounded-xl font-bold text-white flex items-center justify-center gap-1"
-                  style={{ background: "linear-gradient(135deg,#7c5cbf,#a78bfa)" }}
+                  style={themeColor ? { background: themeColor } : { background: "linear-gradient(135deg,#7c5cbf,#a78bfa)" }}
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </motion.button>

@@ -77,7 +77,7 @@ const SignInPage = () => {
       navigate("/");
     } else {
       clearProfile();
-      navigate("/login");
+      navigate("/onboarding");
     }
   };
 

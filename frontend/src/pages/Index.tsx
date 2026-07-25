@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
-  useEffect(() => { navigate("/signin"); }, [navigate]);
+  useEffect(() => { navigate("/login"); }, [navigate]);
   return null;
 };
 

@@ -87,7 +87,7 @@ const VerifyEmailPage = () => {
 
           {status !== "loading" && (
             <p className="text-white/85 text-sm mt-6">
-              <Link to="/signin" className="text-amber-200 font-bold hover:underline">
+              <Link to="/login" className="text-amber-200 font-bold hover:underline">
                 Go to login
               </Link>
             </p>

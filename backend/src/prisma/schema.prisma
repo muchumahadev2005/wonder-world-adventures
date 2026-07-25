@@ -186,6 +186,8 @@ model Story {
   tags             String[]        @default([])
   coverImage       String?         @map("cover_image")
   thumbnail        String?
+  thumbnailUrl     String?         @map("thumbnail_url")
+  backgroundUrl    String?         @map("background_url")
   coverEmoji       String?         @map("cover_emoji")
   coverGradient    String?         @map("cover_gradient")
   readingTime      Int?            @map("reading_time")

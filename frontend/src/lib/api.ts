@@ -119,6 +119,8 @@ export type ApiStory = {
   duration?: string | null;
   description?: string | null;
   content?: string | null;
+  thumbnailUrl?: string | null;
+  backgroundUrl?: string | null;
   language?: {
     id: string;
     code: string;
