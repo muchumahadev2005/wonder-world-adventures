@@ -37,4 +37,11 @@ const updateSubscription = catchAsync(async (req, res) => {
 	res.json({ success: true, subscription });
 });
 
-module.exports = { getStats, getUsers, getSubscriptions, getPayments, updateSubscription };
+const grantPremium = catchAsync(async (req, res) => {
+	const { id } = req.params;
+	const { durationDays } = req.body;
+	const subscription = await service.grantPremium(id, durationDays);
+	res.json({ success: true, subscription });
+});
+
+module.exports = { getStats, getUsers, getSubscriptions, getPayments, updateSubscription, grantPremium };

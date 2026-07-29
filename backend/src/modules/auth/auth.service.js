@@ -29,7 +29,7 @@ const createJwt = (user) => {
 	return jwt.sign(
 		{ sub: user.id, email: user.email },
 		jwtSecret,
-		{ expiresIn: "7d" }
+		{ expiresIn: "4d" }
 	);
 };
 

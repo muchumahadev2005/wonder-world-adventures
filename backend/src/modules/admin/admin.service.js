@@ -199,4 +199,41 @@ const updateSubscriptionStatus = async (id, status) => {
 	return prisma.userSubscription.update({ where: { id }, data: { status } });
 };
 
-module.exports = { getStats, getAllUsers, getAllSubscriptions, getAllPayments, updateSubscriptionStatus };
+const grantPremium = async (userId, durationDays = 30) => {
+	// Find the first active subscription plan
+	const plan = await prisma.subscriptionPlan.findFirst({
+		where: { isActive: true },
+		orderBy: { price: "asc" },
+	});
+
+	if (!plan) {
+		const err = new Error("No active subscription plan found");
+		err.status = 404;
+		throw err;
+	}
+
+	// Cancel any existing active subscriptions for this user
+	await prisma.userSubscription.updateMany({
+		where: { userId, status: "ACTIVE" },
+		data: { status: "CANCELLED" },
+	});
+
+	const startDate = new Date();
+	const endDate = new Date(startDate);
+	endDate.setDate(endDate.getDate() + durationDays);
+
+	const subscription = await prisma.userSubscription.create({
+		data: {
+			userId,
+			planId: plan.id,
+			status: "ACTIVE",
+			startDate,
+			endDate,
+		},
+		include: { plan: { select: { name: true } } },
+	});
+
+	return subscription;
+};
+
+module.exports = { getStats, getAllUsers, getAllSubscriptions, getAllPayments, updateSubscriptionStatus, grantPremium };

@@ -33,6 +33,7 @@ router.use(requireAdmin);
 // ── Existing admin endpoints ─────────────────────────────────────
 router.get("/stats", controller.getStats);
 router.get("/users", controller.getUsers);
+router.post("/users/:id/grant-premium", controller.grantPremium);
 router.get("/subscriptions", controller.getSubscriptions);
 router.get("/payments", controller.getPayments);
 router.patch("/subscriptions/:id", controller.updateSubscription);

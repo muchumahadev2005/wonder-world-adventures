@@ -281,6 +281,10 @@ export const adminApi = {
     return adminFetch(`/admin/subscriptions/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }, token);
   },
 
+  grantPremium: async (userId: string, token: string | null, durationDays = 30) => {
+    return adminFetch(`/admin/users/${userId}/grant-premium`, { method: "POST", body: JSON.stringify({ durationDays }) }, token);
+  },
+
   // Payments
   getPayments: async (token: string | null, params: { page?: number; status?: string } = {}) => {
     const qs = new URLSearchParams();
