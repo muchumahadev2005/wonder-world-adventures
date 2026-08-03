@@ -34,6 +34,7 @@ import SettingsAdmin from "./pages/admin/SettingsAdmin";
 import LessonBuilderPage from "./pages/admin/LessonBuilderPage";
 import MediaLibrary from "./pages/admin/MediaLibrary";
 import ImportHistory from "./pages/admin/ImportHistory";
+import AiModelsAdmin from "./pages/admin/AiModelsAdmin";
 
 import { ADMIN_EMAIL } from "./lib/adminApi";
 import { apiFetch } from "./lib/api";
@@ -102,6 +103,7 @@ const AppRoutes = () => {
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/login" element={isAuthenticated && user?.email === ADMIN_EMAIL ? <Navigate to="/admin/dashboard" replace /> : <AdminLoginPage />} />
         <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/ai-models" element={<AdminRoute><AiModelsAdmin /></AdminRoute>} />
         <Route path="/admin/stories" element={<AdminRoute><StoriesAdmin /></AdminRoute>} />
         <Route path="/admin/languages" element={<AdminRoute><LanguagesAdmin /></AdminRoute>} />
         <Route path="/admin/lessons" element={<AdminRoute><LessonsAdmin /></AdminRoute>} />

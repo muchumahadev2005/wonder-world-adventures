@@ -1,10 +1,11 @@
 /**
  * ChatMode — Persistent chat UI.
  *
- * Receives all state & callbacks from ChatPage via props.
- * Chat window grows to fill available vertical space (flex-1 / min-h-0).
- * Input bar is always visible at the bottom — never pushed off screen.
- * Fully responsive: works on 320px wide up to 4K.
+ * Restored original white glassmorphism theme:
+ *   - linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)
+ *   - border border-white/40
+ *   - crisp backdrop-blur-md (no heavy blur mud)
+ *   - bg-primary/20 user bubbles, bg-white/10 bot bubbles
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -17,7 +18,6 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronUp,
-  RefreshCw,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -139,16 +139,15 @@ const ChatMode = ({
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, isTyping, isLoadingSession]);
 
-  // ── Loading skeleton (all hooks already called above) ─────────
+  // ── Loading skeleton (all hooks called unconditionally above) ──
   if (isLoadingSession) {
     return (
       <div className="flex flex-col flex-1 min-h-0 gap-2">
-        {/* Skeleton chat window */}
         <div
-          className="flex-1 min-h-0 p-4 overflow-hidden rounded-[28px] border border-white/40 shadow-2xl backdrop-blur-2xl space-y-4"
+          className="flex-1 min-h-0 p-4 overflow-hidden rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-md space-y-4"
           style={{
-            background: "linear-gradient(135deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.05) 100%)",
-            boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.4)",
+            background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+            boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)",
           }}
         >
           {[80, 55, 70, 45, 65].map((w, i) => (
@@ -158,10 +157,9 @@ const ChatMode = ({
             </div>
           ))}
         </div>
-        {/* Skeleton input bar */}
         <div
-          className="flex-shrink-0 p-2 flex gap-2 rounded-2xl border border-white/30 opacity-50"
-          style={{ background: "rgba(255,255,255,0.08)" }}
+          className="flex-shrink-0 p-2 flex gap-2 rounded-2xl border border-white/40 shadow-xl backdrop-blur-md opacity-50"
+          style={{ background: "rgba(255,255,255,0.1)" }}
         >
           <div className="flex-1 h-10 rounded-xl bg-white/10 animate-pulse" />
           <div className="w-12 h-10 rounded-xl bg-white/10 animate-pulse" />
@@ -189,17 +187,16 @@ const ChatMode = ({
       </AnimatePresence>
 
       {/*
-        * Chat window — flex-1 + min-h-0 lets it fill ALL remaining space
-        * between the error banner and the input bar.
-        * overflow-y-auto provides internal scrolling.
+        * Chat window — original light glassmorphism container
+        * linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)
+        * backdrop-blur-md keeps the blur subtle, clear & non-muddy.
         */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 p-3 sm:p-4 overflow-y-auto space-y-3 rounded-[28px] border border-white/40 shadow-2xl backdrop-blur-2xl"
+        className="flex-1 min-h-0 p-3 sm:p-4 overflow-y-auto space-y-3 rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-md"
         style={{
-          background: "linear-gradient(135deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.05) 100%)",
-          boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.4)",
-          /* Hide scrollbar visually while keeping it functional */
+          background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+          boxShadow: "0 20px 50px -10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)",
           scrollbarWidth: "none",
         }}
       >
@@ -213,9 +210,9 @@ const ChatMode = ({
           >
             {/* Avatar */}
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-base ${
+              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-base shadow-lg ${
                 msg.role === "bot"
-                  ? "bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg"
+                  ? "bg-gradient-to-br from-amber-400 to-orange-500"
                   : "bg-gradient-to-br from-sky-400 to-teal-400"
               }`}
             >
@@ -225,7 +222,9 @@ const ChatMode = ({
             {/* Bubble */}
             <div
               className={`px-3 py-2 sm:px-4 sm:py-2.5 max-w-[82%] sm:max-w-[76%] rounded-2xl border border-white/40 backdrop-blur-md ${
-                msg.role === "user" ? "bg-primary/20 text-white" : "bg-white/10 text-white"
+                msg.role === "user"
+                  ? "bg-primary/20 text-white"
+                  : "bg-white/10 text-white"
               }`}
               style={{ boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}
             >
@@ -263,7 +262,7 @@ const ChatMode = ({
         )}
       </div>
 
-      {/* Suggestion chips — shown until user sends first message */}
+      {/* Suggestion chips */}
       <AnimatePresence>
         {showSuggestions && (
           <motion.div
@@ -278,7 +277,7 @@ const ChatMode = ({
                 onClick={() => { sendMessage(s.send); setShowSuggestions(false); }}
                 className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-white border border-white/40 backdrop-blur-md transition-all"
                 style={{ background: "rgba(255,255,255,0.12)" }}
-                whileHover={{ scale: 1.04, background: "rgba(255,255,255,0.22)" }}
+                whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.22)" }}
                 whileTap={{ scale: 0.95 }}
                 disabled={isTyping}
               >
@@ -289,9 +288,9 @@ const ChatMode = ({
         )}
       </AnimatePresence>
 
-      {/* Input bar — flex-shrink-0 keeps it always visible */}
+      {/* Input bar — original light glass bar */}
       <div
-        className="flex-shrink-0 p-1.5 sm:p-2 flex gap-2 rounded-2xl border border-white/40 shadow-xl backdrop-blur-2xl"
+        className="flex-shrink-0 p-1.5 sm:p-2 flex gap-2 rounded-2xl border border-white/40 shadow-xl backdrop-blur-md"
         style={{ background: "rgba(255,255,255,0.1)" }}
       >
         <input
@@ -303,7 +302,6 @@ const ChatMode = ({
           className="flex-1 px-3 py-2 sm:px-4 rounded-xl bg-transparent text-white placeholder:text-white/50 focus:outline-none font-body font-medium text-sm"
           disabled={isTyping}
           maxLength={500}
-          /* Prevents iOS auto-zoom on focus (font-size >= 16px) */
           style={{ fontSize: "16px" }}
         />
         <motion.button
@@ -322,7 +320,7 @@ const ChatMode = ({
       {!showSuggestions && (
         <button
           onClick={() => setShowSuggestions(true)}
-          className="flex-shrink-0 text-center text-white/40 text-[11px] hover:text-white/70 transition-colors py-0.5"
+          className="flex-shrink-0 text-center text-white/50 text-[11px] hover:text-white transition-colors py-0.5"
         >
           💡 Show suggestions
         </button>

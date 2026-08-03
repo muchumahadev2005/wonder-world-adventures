@@ -88,4 +88,8 @@ router.post("/media", upload.single("file"), mediaController.uploadMedia);
 router.delete("/media/:id", mediaController.deleteMedia);
 router.put("/media/:id", mediaController.updateMedia);
 
+// ── AI Model Management ──────────────────────────────────────────
+const aiModelRoutes = require("../ai-model/ai-model.routes");
+router.use("/ai-models", aiModelRoutes);
+
 module.exports = router;

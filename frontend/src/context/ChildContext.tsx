@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { subscriptionApi } from '@/lib/api';
 
 export interface ChildProfile {
   name: string;
@@ -62,6 +63,21 @@ export const ChildProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("child_profile");
     }
   }, [profile]);
+
+  // Sync real-time subscription status with backend on mount to auto-disable expired subscriptions
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) return;
+
+    subscriptionApi.getStatus(token)
+      .then((data) => {
+        const isActive = data?.status === "ACTIVE";
+        setProfileState((prev) => (prev && prev.isPremium !== isActive ? { ...prev, isPremium: isActive } : prev));
+      })
+      .catch(() => {
+        /* silent fallback */
+      });
+  }, []);
 
   const setProfile = (p: ChildProfile) => setProfileState(p);
   const setPremium = (isPremium: boolean) => setProfileState(prev => prev ? { ...prev, isPremium } : prev);

@@ -59,6 +59,13 @@ const ChatPage = () => {
     text: `Hi ${profile?.name || "friend"}! 👋 I'm Ollie the Owl! 🦉 I know everything about StoryNest — our stories, lessons, and games. Ask me anything! What would you like to explore today?`,
   }), [profile?.name]);
 
+  // Initialize greeting when profile loads
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([makeGreeting()]);
+    }
+  }, [profile?.name]); // eslint-disable-line
+
   // ── Create new session ─────────────────────────────────────────
   const handleNewChat = useCallback(async () => {
     if (!token) return;
@@ -69,19 +76,20 @@ const ChatPage = () => {
       setChatError(null);
       setInput("");
       sidebarRefreshRef.current?.();
-    } catch { /* silent */ }
+    } catch {
+      setMessages([makeGreeting()]);
+    }
   }, [token, makeGreeting]);
 
   // ── Load existing session ──────────────────────────────────────
   const handleSelectSession = useCallback(async (sessionId: string) => {
-    if (!token || sessionId === currentSessionId) return;
+    if (!token) return;
     setCurrentSessionId(sessionId);
     setMsgsLoading(true);
     setChatError(null);
-    setMessages([]);
     try {
       const data = await chatApi.getSession(sessionId, token);
-      if (data.messages.length === 0) {
+      if (!data || !data.messages || data.messages.length === 0) {
         setMessages([makeGreeting()]);
       } else {
         setMessages(data.messages.map((m) => ({
@@ -92,31 +100,34 @@ const ChatPage = () => {
         })));
       }
     } catch {
-      setChatError("Couldn't load this conversation. Please try again.");
+      setChatError("Couldn't load conversation history. Showing new chat.");
       setMessages([makeGreeting()]);
     } finally {
       setMsgsLoading(false);
     }
-  }, [token, currentSessionId, makeGreeting]);
+  }, [token, makeGreeting]);
 
   // ── On mount: resume last session or create new ────────────────
   useEffect(() => {
     if (!token || currentSessionId) return;
+    let isActive = true;
     (async () => {
       setSessionLoading(true);
       try {
         const list = await chatApi.listSessions(token, 1, 1);
-        if (list.sessions.length > 0) {
+        if (!isActive) return;
+        if (list && list.sessions && list.sessions.length > 0) {
           await handleSelectSession(list.sessions[0].id);
         } else {
           await handleNewChat();
         }
       } catch {
-        await handleNewChat().catch(() => {});
+        if (isActive) await handleNewChat().catch(() => {});
       } finally {
-        setSessionLoading(false);
+        if (isActive) setSessionLoading(false);
       }
     })();
+    return () => { isActive = false; };
   }, [token]); // eslint-disable-line
 
   // ── Send message ───────────────────────────────────────────────
@@ -192,16 +203,18 @@ const ChatPage = () => {
         className="relative z-10 flex flex-1 min-h-0 pt-16 pb-20 md:pt-20 md:pb-0"
         style={{ overflow: "hidden" }}
       >
-        {/* ── Sidebar ── */}
-        <ChatSidebar
-          token={token}
-          currentSessionId={currentSessionId}
-          onSelectSession={handleSelectSession}
-          onNewChat={handleNewChat}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onRegisterRefresh={registerSidebarRefresh}
-        />
+        {/* ── Sidebar (only shown in Chat mode, hidden in Interactive voice mode) ── */}
+        {activeTab === "chat" && (
+          <ChatSidebar
+            token={token}
+            currentSessionId={currentSessionId}
+            onSelectSession={handleSelectSession}
+            onNewChat={handleNewChat}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onRegisterRefresh={registerSidebarRefresh}
+          />
+        )}
 
         {/* ── Main content column ── */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
@@ -212,24 +225,28 @@ const ChatPage = () => {
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
           >
-            {/* Mobile sidebar toggle */}
-            <button
-              onClick={() => setSidebarOpen((v) => !v)}
-              className="md:hidden flex-shrink-0 text-white/60 hover:text-white transition-colors p-2 rounded-xl hover:bg-white/10 active:scale-95"
-              aria-label="Toggle chat history"
-            >
-              {sidebarOpen
-                ? <PanelLeftClose className="w-5 h-5" />
-                : <PanelLeftOpen  className="w-5 h-5" />
-              }
-            </button>
+            {/* Mobile sidebar toggle (only in chat mode) */}
+            {activeTab === "chat" ? (
+              <button
+                onClick={() => setSidebarOpen((v) => !v)}
+                className="md:hidden flex-shrink-0 text-white/60 hover:text-white transition-colors p-2 rounded-xl hover:bg-white/10 active:scale-95"
+                aria-label="Toggle chat history"
+              >
+                {sidebarOpen
+                  ? <PanelLeftClose className="w-5 h-5" />
+                  : <PanelLeftOpen  className="w-5 h-5" />
+                }
+              </button>
+            ) : (
+              <div className="md:hidden w-9 flex-shrink-0" />
+            )}
 
             <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-white flex items-center justify-center gap-2 drop-shadow-md flex-1 text-center">
               <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-amber-300 flex-shrink-0" />
               <span className="truncate">Chat with Ollie</span>
             </h1>
 
-            {/* Right spacer — balances the hamburger icon on mobile */}
+            {/* Right spacer — balances the layout */}
             <div className="md:hidden w-9 flex-shrink-0" />
           </motion.div>
 

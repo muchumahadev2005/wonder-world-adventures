@@ -661,3 +661,16 @@ enum MessageRole {
   assistant
   system
 }
+
+model AiModel {
+  id          String   @id @default(uuid())
+  displayName String   @map("display_name")
+  modelName   String   @map("model_name")
+  apiKey      String?  @map("api_key")
+  isActive    Boolean  @default(false) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_models")
+}
+

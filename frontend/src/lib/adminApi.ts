@@ -235,6 +235,17 @@ export interface SubscriptionPlan {
   createdAt: string;
 }
 
+export interface AiModel {
+  id: string;
+  displayName: string;
+  modelName: string;
+  apiKeyMasked?: string | null;
+  hasCustomApiKey?: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Admin API Helper ─────────────────────────────────────────────────────────
 
 const adminFetch = async <T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> => {
@@ -571,6 +582,32 @@ export const adminApi = {
       throw new Error("Not an admin account");
     }
     return data;
+  },
+
+  // AI Models
+  getAiModels: async (token: string | null) => {
+    const data = await adminFetch<{ success: boolean; models: AiModel[] }>("/admin/ai-models", {}, token);
+    return data.models;
+  },
+
+  createAiModel: async (data: { displayName: string; modelName: string; apiKey?: string; isActive?: boolean }, token: string | null) => {
+    return adminFetch<{ success: boolean; model: AiModel; message: string }>("/admin/ai-models", { method: "POST", body: JSON.stringify(data) }, token);
+  },
+
+  updateAiModel: async (id: string, data: { displayName?: string; modelName?: string; apiKey?: string; isActive?: boolean }, token: string | null) => {
+    return adminFetch<{ success: boolean; model: AiModel; message: string }>(`/admin/ai-models/${id}`, { method: "PUT", body: JSON.stringify(data) }, token);
+  },
+
+  deleteAiModel: async (id: string, token: string | null) => {
+    return adminFetch<{ success: boolean; message: string }>(`/admin/ai-models/${id}`, { method: "DELETE" }, token);
+  },
+
+  activateAiModel: async (id: string, token: string | null) => {
+    return adminFetch<{ success: boolean; model: AiModel; message: string }>(`/admin/ai-models/${id}/activate`, { method: "PATCH" }, token);
+  },
+
+  testAiModel: async (id: string, token: string | null) => {
+    return adminFetch<{ success: boolean; status: string; error?: string; message?: string }>(`/admin/ai-models/${id}/test`, { method: "POST" }, token);
   },
 };
 

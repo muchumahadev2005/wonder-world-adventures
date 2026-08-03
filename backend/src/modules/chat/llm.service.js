@@ -1,45 +1,46 @@
 /**
- * llm.service.js — Shared LLM utilities
+ * llm.service.js — Dynamic OpenRouter LLM utilities
  *
- * Extracted from rag.service.js so that:
- *   - rag.service.js can import getLlmClient + buildSystemPrompt (no behaviour change)
- *   - router.service.js can call callDirectLlm() for non-StoryNest questions
- *   - chat.service.js can use the same client for the intent classifier
- *
- * Nothing in this file touches the database.
+ * Reads active model & custom API key dynamically from PostgreSQL database.
+ * No hardcoded models.
  */
 
 const OpenAI = require("openai");
 const logger = require("../../utils/logger");
+const aiModelService = require("../ai-model/ai-model.service");
 
-const LLM_MODEL_PRIMARY  = "google/gemini-2.5-flash";
-const LLM_MODEL_FALLBACK = "google/gemini-2.5-flash-lite";
+/**
+ * Dynamically gets the active LLM client and active model name from the database.
+ *
+ * @returns {Promise<{client: OpenAI, modelName: string}>}
+ */
+const getActiveLlm = async () => {
+  const activeModel = await aiModelService.getActiveModel();
+  const apiKey = (activeModel && activeModel.apiKey) || process.env.OPENROUTER_API_KEY;
 
-// ── Singleton OpenRouter client ───────────────────────────────────
+  if (!apiKey) {
+    throw new Error("No OpenRouter API key configured.");
+  }
 
-let _llmClient = null;
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://storynest.app",
+      "X-Title": "StoryNest AI Buddy",
+    },
+  });
 
-const getLlmClient = () => {
-	if (_llmClient) return _llmClient;
-	const apiKey = process.env.OPENROUTER_API_KEY;
-	if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set");
-	_llmClient = new OpenAI({
-		apiKey,
-		baseURL: "https://openrouter.ai/api/v1",
-		defaultHeaders: {
-			"HTTP-Referer": "https://wonder-world-adventures.vercel.app",
-			"X-Title": "StoryNest AI Buddy",
-		},
-	});
-	return _llmClient;
+  return {
+    client,
+    modelName: activeModel.modelName,
+  };
 };
-
-// ── System prompt builder ─────────────────────────────────────────
 
 /**
  * Build the child-safe system prompt.
  *
- * @param {string} [context] - Optional RAG context snippet (pass "" for direct LLM calls)
+ * @param {string} [context] - Optional RAG context snippet
  * @returns {string}
  */
 const buildSystemPrompt = (context = "") => `
@@ -85,64 +86,43 @@ RESPONSE STYLE (CRITICAL):
 
 STORYNEST CONTENT (use if relevant to the question):
 ${context || "No specific StoryNest content relevant to this question."}
-
-Remember: You are a friendly AI buddy for kids. Be helpful, be kind, be fun! 🌟
 `.trim();
 
-// ── Direct LLM call (no RAG context) ─────────────────────────────
-
 /**
- * Send a message directly to the LLM, bypassing the RAG pipeline.
- * Used for general, safe educational questions that are not StoryNest-specific.
+ * Send a message directly to the dynamically active LLM.
  *
  * @param {object} params
  * @param {string} params.message - User's message
  * @returns {Promise<{reply: string, sources: Array, cached: boolean}>}
  */
 const callDirectLlm = async ({ message }) => {
-	const client = getLlmClient();
-	const systemPrompt = buildSystemPrompt(""); // No RAG context
+  let reply;
+  try {
+    const { client, modelName } = await getActiveLlm();
+    const systemPrompt = buildSystemPrompt("");
 
-	let reply;
-	try {
-		let completion;
-		try {
-			completion = await client.chat.completions.create({
-				model: LLM_MODEL_PRIMARY,
-				messages: [
-					{ role: "system", content: systemPrompt },
-					{ role: "user",   content: message },
-				],
-				max_tokens: 512,
-				temperature: 0.4,
-			});
-		} catch (primaryErr) {
-			logger.warn("[llm] Primary model failed, trying fallback", { error: primaryErr.message });
-			completion = await client.chat.completions.create({
-				model: LLM_MODEL_FALLBACK,
-				messages: [
-					{ role: "system", content: systemPrompt },
-					{ role: "user",   content: message },
-				],
-				max_tokens: 512,
-				temperature: 0.4,
-			});
-		}
+    const completion = await client.chat.completions.create({
+      model: modelName,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message },
+      ],
+      max_tokens: 512,
+      temperature: 0.4,
+    });
 
-		reply = completion.choices?.[0]?.message?.content?.trim();
-		if (!reply) throw new Error("Empty LLM response");
-	} catch (err) {
-		logger.warn("[llm] Direct LLM call failed", { message: err.message });
-		reply = "I'm having trouble connecting right now. Please try again in a moment! 🌟";
-	}
+    reply = completion.choices?.[0]?.message?.content?.trim();
+    if (!reply) throw new Error("Empty LLM response");
+  } catch (err) {
+    logger.warn("[llm] Direct LLM call failed", { error: err.message });
+    reply = "I'm having trouble connecting right now. Please try again in a moment! 🌟";
+  }
 
-	return { reply, sources: [], cached: false };
+  return { reply, sources: [], cached: false };
 };
 
 module.exports = {
-	getLlmClient,
-	buildSystemPrompt,
-	callDirectLlm,
-	LLM_MODEL_PRIMARY,
-	LLM_MODEL_FALLBACK,
+  getActiveLlm,
+  buildSystemPrompt,
+  callDirectLlm,
 };

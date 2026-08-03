@@ -5,7 +5,7 @@ import {
   Plus, Search, Edit2, Trash2, Copy, Eye, Star, Crown,
   BookOpen, X, Download, Upload, Flame, Sparkles, CheckCircle2,
   Headphones, ChevronDown, Filter, RefreshCw, Zap, Heart,
-  BookMarked, Languages, Clock, BarChart2,
+  BookMarked, Languages, Clock, BarChart2, Ban,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { adminApi, AdminStory } from "@/lib/adminApi";
@@ -623,7 +623,14 @@ export default function StoriesAdmin() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, key, value }: { id: string; key: string; value: boolean }) =>
       adminApi.updateStory(id, { [key]: value } as Partial<AdminStory>, token),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-stories"] }),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin-stories"] });
+      if (vars.key === "isPublished") {
+        toast.success(vars.value ? "Story activated & published" : "Story terminated (unpublished)");
+      } else {
+        toast.success("Story updated");
+      }
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -654,10 +661,11 @@ export default function StoriesAdmin() {
 
   // ── Summary stats ─────────────────────────────────────────────
   const stats = useMemo(() => ({
-    total:     stories.length,
-    published: stories.filter((s) => s.isPublished).length,
-    premium:   stories.filter((s) => s.isPremium).length,
-    featured:  stories.filter((s) => s.isFeatured).length,
+    total:      stories.length,
+    published:  stories.filter((s) => s.isPublished).length,
+    terminated: stories.filter((s) => !s.isPublished).length,
+    premium:    stories.filter((s) => s.isPremium).length,
+    featured:   stories.filter((s) => s.isFeatured).length,
   }), [stories]);
 
   return (
@@ -676,7 +684,7 @@ export default function StoriesAdmin() {
               Stories Management
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              {stats.total} stories · {stats.published} published · {stats.premium} premium · {stats.featured} featured
+              {stats.total} total · <span className="text-emerald-600 font-semibold">{stats.published} active</span> · <span className="text-rose-500 font-semibold">{stats.terminated} terminated</span> · {stats.premium} premium
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -767,15 +775,15 @@ export default function StoriesAdmin() {
               </SelectContent>
             </Select>
 
-            {/* Published */}
+            {/* Published / Status */}
             <Select value={pubFilter} onValueChange={setPubFilter}>
-              <SelectTrigger className="w-36 rounded-xl bg-slate-50 border-slate-200 text-sm">
+              <SelectTrigger className="w-44 rounded-xl bg-slate-50 border-slate-200 text-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="published">🟢 Active Only</SelectItem>
+                <SelectItem value="draft">🔴 Terminated / Draft</SelectItem>
               </SelectContent>
             </Select>
 
@@ -816,7 +824,7 @@ export default function StoriesAdmin() {
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {["Cover", "Title & Author", "Category", "Language", "Time", "Flags", "Actions"].map((h) => (
+                  {["Cover", "Title & Author", "Category", "Language", "Status", "Time", "Flags", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -885,6 +893,21 @@ export default function StoriesAdmin() {
                           {story.language?.code ?? story.languageId ? (story.language?.code ?? "—") : "—"}
                         </td>
 
+                        {/* Status Column */}
+                        <td className="px-4 py-3">
+                          {story.isPublished ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                              <span className="w-2 h-2 rounded-full bg-rose-500" />
+                              Terminated
+                            </span>
+                          )}
+                        </td>
+
 
 
                         {/* Time */}
@@ -948,6 +971,18 @@ export default function StoriesAdmin() {
                         {/* Actions */}
                         <td className="px-4 py-3">
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Terminate / Reactivate Action */}
+                            <button
+                              title={story.isPublished ? "Terminate Story (Hide from platform)" : "Reactivate Story (Publish)"}
+                              onClick={() => toggleMutation.mutate({ id: story.storyId ?? story.id, key: "isPublished", value: !story.isPublished })}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                                story.isPublished
+                                  ? "hover:bg-rose-100 text-rose-600 hover:text-rose-700"
+                                  : "hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 bg-slate-100"
+                              }`}
+                            >
+                              {story.isPublished ? <Ban className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                            </button>
                             <button
                               title="Edit"
                               onClick={() => setEditStory({ ...story, storyId: story.storyId ?? story.id } as AdminStory)}
@@ -970,9 +1005,9 @@ export default function StoriesAdmin() {
                               <Copy className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              title="Delete"
+                              title="Delete permanently"
                               onClick={() => setDeleteId(story.storyId ?? story.id)}
-                              className="w-8 h-8 rounded-lg hover:bg-rose-50 flex items-center justify-center text-slate-500 hover:text-rose-600 transition-colors"
+                              className="w-8 h-8 rounded-lg hover:bg-rose-50 flex items-center justify-center text-slate-400 hover:text-rose-600 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>

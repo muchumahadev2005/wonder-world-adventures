@@ -17,7 +17,7 @@ const { generateEmbedding } = require("./embedding.provider");
 const { similaritySearch, buildContext, extractSources } = require("./retrieval.service");
 const redis = require("../../utils/redis");
 const logger = require("../../utils/logger");
-const { getLlmClient, buildSystemPrompt, LLM_MODEL_PRIMARY, LLM_MODEL_FALLBACK } = require("../chat/llm.service");
+const { getActiveLlm, buildSystemPrompt } = require("../chat/llm.service");
 const CACHE_TTL = 86400; // 24 hours
 const CACHE_PREFIX = "chat:";
 
@@ -283,32 +283,18 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	// ── 7. Call OpenRouter LLM ──────────────────────────────────────
 	let reply;
 	try {
-		const client = getLlmClient();
+		const { client, modelName } = await getActiveLlm();
 		const systemPrompt = buildSystemPrompt(context);
 
-		let completion;
-		try {
-			completion = await client.chat.completions.create({
-				model: LLM_MODEL_PRIMARY,
-				messages: [
-					{ role: "system", content: systemPrompt },
-					{ role: "user", content: trimmedMessage },
-				],
-				max_tokens: 512,
-				temperature: 0.4,
-			});
-		} catch (primaryErr) {
-			logger.warn("[rag] Primary model failed, trying fallback", { error: primaryErr.message });
-			completion = await client.chat.completions.create({
-				model: LLM_MODEL_FALLBACK,
-				messages: [
-					{ role: "system", content: systemPrompt },
-					{ role: "user", content: trimmedMessage },
-				],
-				max_tokens: 512,
-				temperature: 0.4,
-			});
-		}
+		const completion = await client.chat.completions.create({
+			model: modelName,
+			messages: [
+				{ role: "system", content: systemPrompt },
+				{ role: "user", content: trimmedMessage },
+			],
+			max_tokens: 512,
+			temperature: 0.4,
+		});
 
 		reply = completion.choices?.[0]?.message?.content?.trim();
 		if (!reply) throw new Error("Empty LLM response");

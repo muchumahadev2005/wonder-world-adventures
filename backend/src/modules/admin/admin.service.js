@@ -1,6 +1,8 @@
 const prisma = require("../../prisma/prismaClient");
+const { autoExpireSubscriptions } = require("../subscriptions/repositories/subscriptions.repository");
 
 const getStats = async () => {
+	await autoExpireSubscriptions();
 	const [
 		totalUsers,
 		totalStories,
@@ -153,6 +155,7 @@ const getAllUsers = async ({ page = 1, limit = 20, search = "" }) => {
 };
 
 const getAllSubscriptions = async ({ page = 1, limit = 20, status = "" }) => {
+	await autoExpireSubscriptions();
 	const skip = (page - 1) * limit;
 	const where = status ? { status } : {};
 
