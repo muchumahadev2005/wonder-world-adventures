@@ -93,8 +93,17 @@ class BrowserTTSProvider implements TTSProvider {
   }
 
   stop() {
-    this.synth.cancel();
-    this.currentUtterance = null;
+    if (this.synth) {
+      try {
+        if (this.synth.paused) {
+          this.synth.resume();
+        }
+        this.synth.cancel();
+      } catch (e) {
+        console.error("Failed to cancel speech synthesis:", e);
+      }
+      this.currentUtterance = null;
+    }
   }
 
   pause() {

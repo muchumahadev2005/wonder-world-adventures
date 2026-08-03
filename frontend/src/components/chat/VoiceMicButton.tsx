@@ -152,8 +152,15 @@ const VoiceMicButton = ({
           state === "listening"
             ? "Stop listening"
             : state === "speaking"
-            ? "AI is speaking"
+            ? "Stop speaking"
             : "Start voice input"
+        }
+        title={
+          state === "listening"
+            ? "Click to stop listening"
+            : state === "speaking"
+            ? "Click to stop voice"
+            : "Click to talk"
         }
       >
         <Icon />

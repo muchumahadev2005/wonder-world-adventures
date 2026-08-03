@@ -19,6 +19,7 @@ import { contentApi } from "@/lib/api";
 import { speakText, stopSpeaking, getAvailableVoices } from "@/lib/tts.service";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 
+import { Square } from "lucide-react";
 import AITeacher from "./AITeacher";
 import VoiceMicButton from "./VoiceMicButton";
 import VoiceStatus from "./VoiceStatus";
@@ -104,6 +105,14 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
     }
   }, [speechError]);
 
+  // Clean up audio & listening when unmounting or switching tabs
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+      stopListening();
+    };
+  }, [stopListening]);
+
   // ── Load available voices ────────────────────────────────────────
   useEffect(() => {
     const loadVoices = () => {
@@ -169,16 +178,17 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
     [token, sessionId, selectedVoice]
   );
 
+  // ── Stop Voice / Stop Listening handler ──────────────────────
+  const handleStopVoice = useCallback(() => {
+    stopSpeaking();
+    stopListening();
+    setVoiceState("idle");
+  }, [stopListening]);
+
   // ── Mic button handler ──────────────────────────────────────────
   const handleMicClick = useCallback(() => {
-    if (voiceState === "listening") {
-      stopListening();
-      return;
-    }
-    if (voiceState === "speaking") {
-      // Stop TTS and return to idle
-      stopSpeaking();
-      setVoiceState("idle");
+    if (voiceState === "listening" || voiceState === "speaking") {
+      handleStopVoice();
       return;
     }
     if (voiceState === "idle") {
@@ -187,7 +197,7 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
       return;
     }
     // thinking — do nothing
-  }, [voiceState, startListening, stopListening]);
+  }, [voiceState, startListening, handleStopVoice]);
 
   // ── Render ─────────────────────────────────────────────────────
   return (
@@ -206,9 +216,11 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
         )}
       </AnimatePresence>
 
-      {/* Teacher illustration */}
+      {/* Teacher illustration — tap to stop voice if playing */}
       <motion.div
-        className="mb-2"
+        className={`mb-2 ${voiceState === "speaking" || voiceState === "listening" ? "cursor-pointer hover:opacity-90" : ""}`}
+        onClick={voiceState === "speaking" || voiceState === "listening" ? handleStopVoice : undefined}
+        title={voiceState === "speaking" || voiceState === "listening" ? "Click to stop voice" : undefined}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
@@ -231,13 +243,13 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
       </motion.p>
 
       {/* Voice status */}
-      <div className="mb-5">
+      <div className="mb-4">
         <VoiceStatus state={voiceState} />
       </div>
 
       {/* Microphone button */}
       <motion.div
-        className="mb-6"
+        className="mb-3"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 180, delay: 0.3 }}
@@ -249,6 +261,22 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
           isSupported={isSupported}
         />
       </motion.div>
+
+      {/* Dedicated explicit Stop Voice / Stop Listening button */}
+      <AnimatePresence>
+        {(voiceState === "speaking" || voiceState === "listening") && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 6 }}
+            onClick={handleStopVoice}
+            className="mb-4 px-5 py-2 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-display font-bold text-xs shadow-lg shadow-red-500/40 border border-red-400/40 flex items-center gap-2 transition-all active:scale-95 cursor-pointer z-20"
+          >
+            <Square className="w-3.5 h-3.5 fill-current" />
+            {voiceState === "speaking" ? "Stop Voice ⏹️" : "Stop Listening ⏹️"}
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Voice selection dropdown */}
       {voices.length > 0 && (

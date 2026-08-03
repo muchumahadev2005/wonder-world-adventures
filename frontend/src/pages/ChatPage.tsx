@@ -27,6 +27,7 @@ import SegmentedTabs, { type TabValue } from "@/components/chat/SegmentedTabs";
 import ChatMode, { type ChatMessage } from "@/components/chat/ChatMode";
 import InteractiveMode from "@/components/chat/InteractiveMode";
 import ChatSidebar from "@/components/chat/ChatSidebar";
+import { stopSpeaking } from "@/lib/tts.service";
 
 import { chatApi } from "@/lib/chatApi";
 
@@ -262,7 +263,13 @@ const ChatPage = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
           >
-            <SegmentedTabs activeTab={activeTab} onChange={setActiveTab} />
+            <SegmentedTabs
+              activeTab={activeTab}
+              onChange={(tab) => {
+                stopSpeaking();
+                setActiveTab(tab);
+              }}
+            />
           </motion.div>
 
           {/* Tab content — flex-1 fills all remaining height */}
