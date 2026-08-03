@@ -13,6 +13,7 @@ const progressRoutes = require("../modules/progress/progress.routes");
 const parentsRoutes = require("../modules/parents/routes/parents.routes");
 const ragRoutes = require("../modules/rag/rag.routes");       // RAG chatbot
 const ragAdminRoutes = require("../modules/rag/rag.admin.routes"); // Admin indexing
+const chatRoutes = require("../modules/chat/chat.routes");     // Persistent chat history
 const voiceRoutes = require("../modules/voice/voice.routes");
 const paymentsRoutes = require("../modules/payments/payments.routes");
 const usersRoutes = require("../modules/users/users.routes");
@@ -40,6 +41,7 @@ router.use("/progress", progressRoutes);
 router.use("/parents", parentsRoutes);
 router.use("/chatbot", ragRoutes);       // RAG-powered AI Buddy
 router.use("/rag", ragAdminRoutes);      // Admin: re-indexing endpoints
+router.use("/chat", chatRoutes);         // Persistent chat history (auth required)
 router.use("/voice", voiceRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);

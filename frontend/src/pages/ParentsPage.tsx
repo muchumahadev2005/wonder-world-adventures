@@ -6,6 +6,7 @@ import { contentApi } from "@/lib/api";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import SubscribeModal from "@/components/SubscribeModal";
 import { useNavigate } from "react-router-dom";
 import parentsBg from "@/assets/parents-bg.jpg";
 import {
@@ -20,13 +21,15 @@ import {
   Flame,
   Trophy,
   LogOut,
+  Sparkles,
 } from "lucide-react";
 
 const ParentsPage = () => {
-  const { profile, logout: clearProfile } = useChild();
+  const { profile, logout: clearProfile, setPremium } = useChild();
   const { logout, token } = useAuth();
   const navigate = useNavigate();
   const [dashboardStats, setDashboardStats] = useState<Record<string, number> | null>(null);
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -154,18 +157,89 @@ const ParentsPage = () => {
               </div>
             </div>
             <div className="sm:ml-auto">
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-bold ${
-                  profile?.isPremium
-                    ? "bg-gradient-to-r from-premium to-sunshine text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {profile?.isPremium ? "👑 Premium" : "Free Plan"}
-              </span>
+              {profile?.isPremium ? (
+                <span className="px-3 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-premium to-sunshine text-primary-foreground">
+                  👑 Premium
+                </span>
+              ) : (
+                <motion.button
+                  onClick={() => setShowSubscribeModal(true)}
+                  className="px-3 py-1 rounded-full text-sm font-bold bg-muted text-muted-foreground hover:bg-amber-400/20 hover:text-amber-300 border border-white/20 transition-all"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  Free Plan · Upgrade ↗
+                </motion.button>
+              )}
             </div>
           </div>
         </motion.div>
+
+        {/* ── Premium Upgrade Banner (free users only) ── */}
+        {!profile?.isPremium && (
+          <motion.div
+            className="relative overflow-hidden mb-6 p-5 rounded-[28px] border border-amber-400/40 shadow-2xl cursor-pointer"
+            style={{
+              background: "linear-gradient(135deg, rgba(120,60,10,0.55) 0%, rgba(80,30,5,0.7) 100%)",
+              boxShadow: "0 0 40px -10px rgba(245,158,11,0.4)",
+            }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            onClick={() => setShowSubscribeModal(true)}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {/* Animated shimmer */}
+            <motion.div
+              className="absolute inset-0 opacity-20"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(251,191,36,0.6) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+              }}
+              animate={{ backgroundPositionX: ["200%", "-200%"] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+            />
+
+            <div className="relative flex items-center gap-4">
+              {/* Icon */}
+              <motion.div
+                className="w-14 h-14 flex-shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg"
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Crown className="w-7 h-7 text-amber-900" fill="currentColor" />
+              </motion.div>
+
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-base sm:text-lg font-extrabold text-amber-200 drop-shadow">
+                  Unlock StoryNest Premium 👑
+                </p>
+                <p className="text-amber-300/70 text-xs sm:text-sm font-medium mt-0.5">
+                  All stories, lessons &amp; games — unlimited access for your child
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {["All Stories", "All Lessons", "All Games", "Priority Support"].map((f) => (
+                    <span key={f} className="flex items-center gap-1 text-[11px] text-amber-200/80 bg-amber-400/15 border border-amber-400/20 px-2 py-0.5 rounded-full">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <motion.div
+                className="flex-shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-amber-900 font-display font-extrabold text-sm shadow-lg"
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Upgrade
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Stats Grid */}
         <motion.div
@@ -246,6 +320,13 @@ const ParentsPage = () => {
           </motion.button>
         </div>
       </div>
+
+      {/* Subscribe Modal */}
+      <SubscribeModal
+        open={showSubscribeModal}
+        onClose={() => setShowSubscribeModal(false)}
+        onSuccess={() => setPremium(true)}
+      />
     </div>
   );
 };

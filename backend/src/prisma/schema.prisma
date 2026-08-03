@@ -23,7 +23,9 @@ model User {
   emailVerifications EmailVerificationToken[]
   passwordResets     PasswordResetToken[]
   subscriptions      UserSubscription[]
-  payments           Payment[]
+  payments             Payment[]
+  chatSessions         ChatSession[]
+  chatSessionMessages  ChatSessionMessage[]
 
   @@map("users")
 }
@@ -618,4 +620,44 @@ model ChatMessage {
 
   @@index([conversationId])
   @@map("chat_messages")
+}
+
+// ── Persistent Chat History (UX layer) ──────────────────────────────
+
+model ChatSession {
+  id            String               @id @default(cuid())
+  userId        String               @map("user_id")
+  title         String               @default("New Chat")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  lastMessageAt DateTime             @default(now()) @map("last_message_at")
+  isDeleted     Boolean              @default(false) @map("is_deleted")
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      ChatSessionMessage[]
+
+  @@index([userId, isDeleted])
+  @@index([lastMessageAt])
+  @@map("chat_sessions")
+}
+
+model ChatSessionMessage {
+  id        String      @id @default(cuid())
+  sessionId String      @map("session_id")
+  userId    String      @map("user_id")
+  role      MessageRole
+  content   String
+  createdAt DateTime    @default(now()) @map("created_at")
+  metadata  Json?       // future: images, voice, PDF refs, AI memory, streaming info, route taken
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
+  @@map("chat_session_messages")
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
 }
