@@ -137,6 +137,8 @@ const getGamezopGames = async () => {
 		const rawName = g.name?.en || (typeof g.name === "string" ? g.name : "");
 		const rawDesc = g.description?.en || (typeof g.description === "string" ? g.description : "");
 
+		const isPremium = Boolean(g.isPremium || (g.rating && g.rating >= 4.35) || (g.code && g.code.charCodeAt(0) % 3 === 0));
+
 		return {
 			code: g.code || "",
 			name: String(rawName),
@@ -147,6 +149,7 @@ const getGamezopGames = async () => {
 			rating: typeof g.rating === "number" ? g.rating : null,
 			playCount: typeof g.gamePlays === "number" ? g.gamePlays : null,
 			url: g.url || "",
+			isPremium,
 		};
 	});
 };

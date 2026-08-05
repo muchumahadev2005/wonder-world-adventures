@@ -159,6 +159,7 @@ export type GamezopGame = {
   rating: number | null;
   playCount: number | null;
   url: string;
+  isPremium?: boolean;
 };
 
 export const contentApi = {

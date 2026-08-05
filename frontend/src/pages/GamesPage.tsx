@@ -551,7 +551,10 @@ const GamesPage = () => {
               exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.25 }}
             >
-              <InstantGamesSection onBack={goHome} />
+              <InstantGamesSection
+                onBack={goHome}
+                onRequireSubscribe={() => setShowSubscribeModal(true)}
+              />
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { contentApi, GamezopGame } from "@/lib/api";
+import { useChild } from "@/context/ChildContext";
+import PremiumBadge from "@/components/PremiumBadge";
 import {
   Gamepad2,
   Search,
@@ -11,6 +13,7 @@ import {
   RefreshCw,
   AlertCircle,
   ChevronLeft,
+  Lock,
 } from "lucide-react";
 
 // ─── Category config ──────────────────────────────────────────────────────────
@@ -82,22 +85,34 @@ const SkeletonCard = () => (
 const GameCard = ({
   game,
   onPlay,
+  onRequireSubscribe,
   index,
 }: {
   game: GamezopGame;
   onPlay: (game: GamezopGame) => void;
+  onRequireSubscribe?: () => void;
   index: number;
 }) => {
+  const { profile } = useChild();
   const catGrad = CATEGORY_SOLID[game.category] ?? CATEGORY_SOLID.All;
   const catGlow = CATEGORY_GLOW[game.category] ?? CATEGORY_GLOW.All;
+  const locked = Boolean(game.isPremium && !profile?.isPremium);
+
+  const handleAction = () => {
+    if (locked) {
+      onRequireSubscribe?.();
+    } else {
+      onPlay(game);
+    }
+  };
 
   return (
     <motion.div
       variants={{ hidden: { y: 28, opacity: 0 }, show: { y: 0, opacity: 1 } }}
       custom={index}
-      className="group flex flex-col rounded-2xl overflow-hidden"
+      className={`group relative flex flex-col rounded-2xl overflow-hidden ${locked ? "opacity-85" : ""}`}
       style={glass}
-      whileHover={{ y: -6, ...glassHover }}
+      whileHover={locked ? { scale: 1.02 } : { y: -6, ...glassHover }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
     >
       {/* Thumbnail */}
@@ -106,7 +121,7 @@ const GameCard = ({
           <img
             src={game.thumbnail}
             alt={game.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-500 ${locked ? "filter blur-[1px]" : "group-hover:scale-105"}`}
             loading="lazy"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
@@ -115,14 +130,31 @@ const GameCard = ({
             <Gamepad2 className="w-10 h-10 text-white/40" />
           </div>
         )}
+
         {/* Category pill */}
         {game.category && (
           <span
-            className="absolute top-2 left-2 text-xs font-extrabold px-2.5 py-0.5 rounded-full text-white shadow-lg"
+            className="absolute top-2 left-2 text-xs font-extrabold px-2.5 py-0.5 rounded-full text-white shadow-lg z-10"
             style={{ background: catGrad, boxShadow: `0 2px 10px ${catGlow}` }}
           >
             {game.category}
           </span>
+        )}
+
+        {/* Premium Badge */}
+        {game.isPremium && (
+          <div className="absolute top-2 right-2 z-10">
+            <PremiumBadge />
+          </div>
+        )}
+
+        {/* Lock Overlay */}
+        {locked && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-10">
+            <div className="p-2.5 rounded-full bg-black/60 border border-white/20 text-amber-300 shadow-xl">
+              <Lock className="w-6 h-6" />
+            </div>
+          </div>
         )}
       </div>
 
@@ -156,18 +188,34 @@ const GameCard = ({
 
         <motion.button
           id={`instant-game-play-${game.code}`}
-          onClick={() => onPlay(game)}
+          onClick={handleAction}
           className="mt-auto w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-extrabold text-sm text-white"
-          style={{
-            background: catGrad,
-            boxShadow: `0 4px 16px ${catGlow}`,
-            textShadow: "0 1px 3px rgba(0,0,0,0.3)",
-          }}
+          style={
+            locked
+              ? {
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                  boxShadow: "0 4px 16px rgba(245,158,11,0.4)",
+                }
+              : {
+                  background: catGrad,
+                  boxShadow: `0 4px 16px ${catGlow}`,
+                  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                }
+          }
           whileHover={{ opacity: 0.9, scale: 1.02 }}
           whileTap={{ scale: 0.96 }}
         >
-          <Play className="w-3.5 h-3.5 fill-white" />
-          Play Now
+          {locked ? (
+            <>
+              <Lock className="w-3.5 h-3.5" />
+              Unlock Game
+            </>
+          ) : (
+            <>
+              <Play className="w-3.5 h-3.5 fill-white" />
+              Play Now
+            </>
+          )}
         </motion.button>
       </div>
     </motion.div>
@@ -253,7 +301,13 @@ const GameOverlay = ({
 };
 
 // ─── Main Section ─────────────────────────────────────────────────────────────
-const InstantGamesSection = ({ onBack }: { onBack?: () => void }) => {
+const InstantGamesSection = ({
+  onBack,
+  onRequireSubscribe,
+}: {
+  onBack?: () => void;
+  onRequireSubscribe?: () => void;
+}) => {
   const [games, setGames] = useState<GamezopGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -467,7 +521,13 @@ const InstantGamesSection = ({ onBack }: { onBack?: () => void }) => {
               variants={{ show: { transition: { staggerChildren: 0.05 } } }}
             >
               {filtered.map((game, idx) => (
-                <GameCard key={game.code} game={game} index={idx} onPlay={setActiveGame} />
+                <GameCard
+                  key={game.code}
+                  game={game}
+                  index={idx}
+                  onPlay={setActiveGame}
+                  onRequireSubscribe={onRequireSubscribe}
+                />
               ))}
             </motion.div>
           )}
