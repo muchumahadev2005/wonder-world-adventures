@@ -9,6 +9,7 @@ import PremiumBadge from "@/components/PremiumBadge";
 import StarBurst from "@/components/StarBurst";
 import { contentApi, ApiGame } from "@/lib/api";
 import SubscribeModal from "@/components/SubscribeModal";
+import InstantGamesSection from "@/components/InstantGamesSection";
 import gamesBg from "@/assets/games-bg.jpg";
 import {
   Gamepad2,
@@ -19,8 +20,13 @@ import {
   Puzzle,
   Brain,
   Zap,
+  ChevronLeft,
+  Sparkles,
+  Trophy,
+  Zap as ZapIcon,
 } from "lucide-react";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 type GameItem = {
   id: string;
   title: string;
@@ -30,6 +36,9 @@ type GameItem = {
   premium: boolean;
 };
 
+type ActiveModule = null | "classic" | "instant";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const gameIconMap: Record<string, any> = {
   calculator: Calculator,
   shapes: Shapes,
@@ -47,6 +56,7 @@ const normalizeApiGame = (game: ApiGame): GameItem => ({
   premium: Boolean(game.isPremium ?? game.premium),
 });
 
+// ─── MathGame (unchanged) ─────────────────────────────────────────────────────
 const MathGame = ({
   onComplete,
   type,
@@ -64,7 +74,7 @@ const MathGame = ({
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const totalQuestions = 5;
 
-  const correct = type === "add" ? a + b : a + b; // ensure a+b for sub means (a+b) - b = a
+  const correct = type === "add" ? a + b : a + b;
   const displayA = type === "sub" ? a + b : a;
   const displayOp = type === "sub" ? "−" : "+";
   const displayB = b;
@@ -180,9 +190,136 @@ const MathGame = ({
   );
 };
 
+// ─── Module Selector Cards ────────────────────────────────────────────────────
+const ModuleSelector = ({
+  onSelect,
+  gameCount,
+}: {
+  onSelect: (module: "classic" | "instant") => void;
+  gameCount: number;
+}) => (
+  <motion.div
+    className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-2xl mx-auto"
+    initial="hidden"
+    animate="show"
+    variants={{ show: { transition: { staggerChildren: 0.15 } } }}
+  >
+    {/* Classic Games Module */}
+    <motion.button
+      id="module-classic-games"
+      variants={{ hidden: { y: 40, opacity: 0 }, show: { y: 0, opacity: 1 } }}
+      onClick={() => onSelect("classic")}
+      className="relative group flex flex-col items-center justify-center gap-5 p-8 sm:p-10 rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-2xl overflow-hidden text-center"
+      style={{
+        background: "linear-gradient(135deg, rgba(139,92,246,0.25) 0%, rgba(255,255,255,0.08) 100%)",
+        boxShadow: "0 20px 60px -12px rgba(139,92,246,0.35), inset 0 1px 0 rgba(255,255,255,0.35)",
+      }}
+      whileHover={{
+        scale: 1.04,
+        y: -8,
+        boxShadow: "0 30px 70px -12px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.5)",
+      }}
+      whileTap={{ scale: 0.97 }}
+    >
+      {/* Glow orb */}
+      <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-30 blur-2xl"
+        style={{ background: "radial-gradient(circle, hsl(260,85%,65%), transparent)" }} />
+
+      {/* Icon cluster */}
+      <div className="relative flex items-center justify-center">
+        <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl"
+          style={{ background: "linear-gradient(135deg, hsl(260,85%,60%), hsl(270,80%,70%))" }}>
+          <Gamepad2 className="w-10 h-10 text-white" />
+        </div>
+        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-xl bg-amber-400 flex items-center justify-center shadow-lg">
+          <Trophy className="w-4 h-4 text-white" />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display text-xl sm:text-2xl font-extrabold text-white drop-shadow-md">
+          Play with Words
+        </h2>
+        <p className="text-white/60 text-sm mt-1.5 font-semibold">
+          {gameCount > 0 ? `${gameCount} learning games` : "Learning games"} · Earn stars ⭐
+        </p>
+      </div>
+
+      {/* Arrow */}
+      <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm text-white shadow-lg transition-all group-hover:gap-3"
+        style={{ background: "linear-gradient(135deg, hsl(260,85%,60%), hsl(270,80%,70%))" }}>
+        Play Now →
+      </div>
+    </motion.button>
+
+    {/* Instant Games Module */}
+    <motion.button
+      id="module-instant-games"
+      variants={{ hidden: { y: 40, opacity: 0 }, show: { y: 0, opacity: 1 } }}
+      onClick={() => onSelect("instant")}
+      className="relative group flex flex-col items-center justify-center gap-5 p-8 sm:p-10 rounded-[32px] border border-white/40 shadow-2xl backdrop-blur-2xl overflow-hidden text-center"
+      style={{
+        background: "linear-gradient(135deg, rgba(236,72,153,0.22) 0%, rgba(251,146,60,0.15) 60%, rgba(255,255,255,0.06) 100%)",
+        boxShadow: "0 20px 60px -12px rgba(236,72,153,0.3), inset 0 1px 0 rgba(255,255,255,0.35)",
+      }}
+      whileHover={{
+        scale: 1.04,
+        y: -8,
+        boxShadow: "0 30px 70px -12px rgba(236,72,153,0.45), inset 0 1px 0 rgba(255,255,255,0.5)",
+      }}
+      whileTap={{ scale: 0.97 }}
+    >
+      {/* Glow orb */}
+      <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full opacity-25 blur-2xl"
+        style={{ background: "radial-gradient(circle, hsl(330,85%,60%), transparent)" }} />
+
+      {/* Icon cluster */}
+      <div className="relative flex items-center justify-center">
+        <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl"
+          style={{ background: "linear-gradient(135deg, hsl(330,85%,55%), hsl(15,90%,60%))" }}>
+          <span className="text-4xl leading-none select-none">🎮</span>
+        </div>
+        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-xl flex items-center justify-center shadow-lg"
+          style={{ background: "linear-gradient(135deg, hsl(45,100%,55%), hsl(15,90%,60%))" }}>
+          <Sparkles className="w-4 h-4 text-white" />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display text-xl sm:text-2xl font-extrabold text-white drop-shadow-md">
+          Instant Games
+        </h2>
+        <p className="text-white/60 text-sm mt-1.5 font-semibold">
+          Hundreds of games · No download needed
+        </p>
+      </div>
+
+      {/* Arrow */}
+      <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm text-white shadow-lg transition-all group-hover:gap-3"
+        style={{ background: "linear-gradient(135deg, hsl(330,85%,55%), hsl(15,90%,60%))" }}>
+        Explore →
+      </div>
+    </motion.button>
+  </motion.div>
+);
+
+// ─── Back Button ─────────────────────────────────────────────────────────────
+const BackButton = ({ label, onClick }: { label: string; onClick: () => void }) => (
+  <motion.button
+    onClick={onClick}
+    className="mb-6 flex items-center gap-2 text-white/80 hover:text-white font-bold text-sm transition-colors"
+    whileHover={{ x: -3 }}
+  >
+    <ChevronLeft className="w-4 h-4" />
+    {label}
+  </motion.button>
+);
+
+// ─── GamesPage ────────────────────────────────────────────────────────────────
 const GamesPage = () => {
   const { profile, addStars, addXP, addCoins, completeGame, setPremium } = useChild();
   const { token } = useAuth();
+  const [activeModule, setActiveModule] = useState<ActiveModule>(null);
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [showStarBurst, setShowStarBurst] = useState(false);
   const [earnedStars, setEarnedStars] = useState(0);
@@ -235,9 +372,18 @@ const GamesPage = () => {
     }, 2500);
   };
 
+  // Go back to module selector (also clear active game)
+  const goHome = () => {
+    setActiveModule(null);
+    setActiveGame(null);
+  };
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <SceneBackground image={gamesBg} alt="Magical treehouse playground village" variant="playground" />
+    <div className="min-h-screen relative">
+      {/* Fixed background covers the full scrollable page */}
+      <div className="fixed inset-0 -z-0 overflow-hidden">
+        <SceneBackground image={gamesBg} alt="Magical treehouse playground village" variant="playground" />
+      </div>
       <NavBar />
       <StarBurst show={showStarBurst} count={earnedStars} />
 
@@ -248,120 +394,167 @@ const GamesPage = () => {
       />
 
       <div className="page-shell max-w-5xl">
-        <motion.div
-          className="page-header"
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-        >
-          <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
-            <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Play with Words
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Play games and earn stars! ⭐
-          </p>
-        </motion.div>
-
-        {activeGame ? (
-          <div>
-            <motion.button
-              onClick={() => setActiveGame(null)}
-              className="mb-4 text-primary font-bold text-sm hover:underline"
-              whileHover={{ x: -3 }}
-            >
-              ← Back to Games
-            </motion.button>
-            {(activeGame === "math-add" || activeGame === "math-sub") && (
-              <MathGame
-                type={activeGame === "math-add" ? "add" : "sub"}
-                onComplete={(score) => handleGameComplete(activeGame, score)}
-              />
-            )}
-            {!["math-add", "math-sub"].includes(activeGame) && (
-              <div 
-                className="p-8 sm:p-12 text-center max-w-sm mx-auto rounded-[32px] border border-white/40 backdrop-blur-2xl shadow-2xl"
-                style={{
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
-                }}
-              >
-                <p className="font-display text-xl font-extrabold text-white drop-shadow-md">
-                  🚧 Coming Soon!
-                </p>
-                <p className="text-white/80 text-sm mt-2 font-bold drop-shadow-sm">
-                  This game is being built!
-                </p>
-              </div>
-            )}
-          </div>
-        ) : (
+        {/* Page header (only show when on module selector) */}
+        {activeModule === null && (
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-            initial="hidden"
-            animate="show"
-            variants={{ show: { transition: { staggerChildren: 0.1 } } }}
+            className="page-header"
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
           >
-            {apiGames.map((game) => {
-              const completed = profile?.completedGames.includes(game.id);
-              const locked = game.premium && !profile?.isPremium;
-              return (
-                <motion.button
-                  key={game.id}
-                  variants={{
-                    hidden: { y: 30, opacity: 0 },
-                    show: { y: 0, opacity: 1 },
-                  }}
-                  onClick={() => {
-                    if (locked) {
-                      setShowSubscribeModal(true);
-                    } else {
-                      setActiveGame(game.id);
-                    }
-                  }}
-                  className={`relative p-5 sm:p-6 text-center rounded-3xl border border-white/50 shadow-xl backdrop-blur-2xl transition-all overflow-hidden ${locked ? "opacity-70" : ""}`}
-                  style={{
-                    background: `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%)`,
-                    boxShadow: `0 12px 35px -10px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)`,
-                  }}
-                  whileHover={locked ? { scale: 1.02 } : {
-                    scale: 1.05,
-                    y: -5,
-                    background: `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)`,
-                  }}
-                  whileTap={locked ? {} : { scale: 0.95 }}
-                >
-                  {game.premium && (
-                    <div className="absolute top-3 right-3">
-                      <PremiumBadge />
-                    </div>
-                  )}
-                  {locked && (
-                    <div className="absolute inset-0 rounded-3xl bg-card/50 backdrop-blur-sm flex items-center justify-center z-10">
-                      <Lock className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  {completed && (
-                    <div className="absolute top-3 left-3">
-                      <span className="text-sm">✅</span>
-                    </div>
-                  )}
-                  <div
-                    className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mx-auto mb-3 shadow-lg`}
-                  >
-                    <game.icon className="w-7 h-7 text-primary-foreground" />
-                  </div>
-                  <h3 className="font-display text-base font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                    {game.title}
-                  </h3>
-                  <div className="flex items-center justify-center gap-1 mt-1.5">
-                    <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
-                    <span className="text-xs text-white/90 font-bold drop-shadow-sm">
-                      {game.stars} stars
-                    </span>
-                  </div>
-                </motion.button>
-              );
-            })}
+            <h1 className="page-heading flex items-center justify-center gap-2 sm:gap-3">
+              <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" /> Game Zone
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Choose a game mode to get started! 🚀
+            </p>
           </motion.div>
         )}
+
+        <AnimatePresence mode="wait">
+          {/* ── Module Selector (home) ── */}
+          {activeModule === null && (
+            <motion.div
+              key="selector"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.25 }}
+            >
+              <ModuleSelector
+                onSelect={setActiveModule}
+                gameCount={apiGames.length}
+              />
+            </motion.div>
+          )}
+
+          {/* ── Classic Games Module ── */}
+          {activeModule === "classic" && (
+            <motion.div
+              key="classic"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.25 }}
+            >
+              <BackButton label="Back to Game Zone" onClick={goHome} />
+
+              {activeGame ? (
+                <div>
+                  <motion.button
+                    onClick={() => setActiveGame(null)}
+                    className="mb-4 text-primary font-bold text-sm hover:underline flex items-center gap-1"
+                    whileHover={{ x: -3 }}
+                  >
+                    ← Back to Games
+                  </motion.button>
+                  {(activeGame === "math-add" || activeGame === "math-sub") && (
+                    <MathGame
+                      type={activeGame === "math-add" ? "add" : "sub"}
+                      onComplete={(score) => handleGameComplete(activeGame, score)}
+                    />
+                  )}
+                  {!["math-add", "math-sub"].includes(activeGame) && (
+                    <div
+                      className="p-8 sm:p-12 text-center max-w-sm mx-auto rounded-[32px] border border-white/40 backdrop-blur-2xl shadow-2xl"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
+                      }}
+                    >
+                      <p className="font-display text-xl font-extrabold text-white drop-shadow-md">
+                        🚧 Coming Soon!
+                      </p>
+                      <p className="text-white/80 text-sm mt-2 font-bold drop-shadow-sm">
+                        This game is being built!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <motion.div
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+                  initial="hidden"
+                  animate="show"
+                  variants={{ show: { transition: { staggerChildren: 0.1 } } }}
+                >
+                  {apiGames.map((game) => {
+                    const completed = profile?.completedGames.includes(game.id);
+                    const locked = game.premium && !profile?.isPremium;
+                    return (
+                      <motion.button
+                        key={game.id}
+                        variants={{
+                          hidden: { y: 30, opacity: 0 },
+                          show: { y: 0, opacity: 1 },
+                        }}
+                        onClick={() => {
+                          if (locked) {
+                            setShowSubscribeModal(true);
+                          } else {
+                            setActiveGame(game.id);
+                          }
+                        }}
+                        className={`relative p-5 sm:p-6 text-center rounded-3xl border border-white/50 shadow-xl backdrop-blur-2xl transition-all overflow-hidden ${locked ? "opacity-70" : ""}`}
+                        style={{
+                          background: `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%)`,
+                          boxShadow: `0 12px 35px -10px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)`,
+                        }}
+                        whileHover={locked ? { scale: 1.02 } : {
+                          scale: 1.05,
+                          y: -5,
+                          background: `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)`,
+                        }}
+                        whileTap={locked ? {} : { scale: 0.95 }}
+                      >
+                        {game.premium && (
+                          <div className="absolute top-3 right-3">
+                            <PremiumBadge />
+                          </div>
+                        )}
+                        {locked && (
+                          <div className="absolute inset-0 rounded-3xl bg-card/50 backdrop-blur-sm flex items-center justify-center z-10">
+                            <Lock className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        {completed && (
+                          <div className="absolute top-3 left-3">
+                            <span className="text-sm">✅</span>
+                          </div>
+                        )}
+                        <div
+                          className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mx-auto mb-3 shadow-lg`}
+                        >
+                          <game.icon className="w-7 h-7 text-primary-foreground" />
+                        </div>
+                        <h3 className="font-display text-base font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+                          {game.title}
+                        </h3>
+                        <div className="flex items-center justify-center gap-1 mt-1.5">
+                          <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
+                          <span className="text-xs text-white/90 font-bold drop-shadow-sm">
+                            {game.stars} stars
+                          </span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── Instant Games Module ── */}
+          {activeModule === "instant" && (
+            <motion.div
+              key="instant"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.25 }}
+            >
+              <InstantGamesSection onBack={goHome} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

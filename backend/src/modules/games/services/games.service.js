@@ -99,9 +99,63 @@ const listProgress = async (userId) => {
 	return progress.map(normalizeProgress);
 };
 
+// ─── Gamezop Integration ──────────────────────────────────────────────────────
+const GAMEZOP_API_URL = "https://pub.gamezop.com/v3/games?id=3443";
+
+const fetchGamezopGames = () =>
+	new Promise((resolve, reject) => {
+		const https = require("https");
+		https
+			.get(GAMEZOP_API_URL, (res) => {
+				let raw = "";
+				res.on("data", (chunk) => {
+					raw += chunk;
+				});
+				res.on("end", () => {
+					try {
+						resolve(JSON.parse(raw));
+					} catch (e) {
+						reject(new Error("Failed to parse Gamezop response"));
+					}
+				});
+			})
+			.on("error", reject);
+	});
+
+const getGamezopGames = async () => {
+	const data = await fetchGamezopGames();
+	// Gamezop v3 returns { games: [...] }
+	// categories: { "en": ["Puzzle & Logic"] }  ← object with locale keys, NOT array of objects
+	// tags:       { "en": ["Puzzle", "IQ", ...] } ← same shape
+	const games = Array.isArray(data?.games) ? data.games : [];
+	return games.map((g) => {
+		const categoryNames = Array.isArray(g.categories?.en) ? g.categories.en : [];
+		const tagNames = Array.isArray(g.tags?.en) ? g.tags.en : [];
+		const allTags = [...new Set([...categoryNames, ...tagNames])].filter(Boolean);
+		const primaryCategory = categoryNames[0] || "";
+
+		const rawName = g.name?.en || (typeof g.name === "string" ? g.name : "");
+		const rawDesc = g.description?.en || (typeof g.description === "string" ? g.description : "");
+
+		return {
+			code: g.code || "",
+			name: String(rawName),
+			description: String(rawDesc),
+			thumbnail: g.assets?.cover || g.assets?.thumb || g.thumbnailUrl || "",
+			category: String(primaryCategory),
+			categories: allTags.map((t) => String(t)),
+			rating: typeof g.rating === "number" ? g.rating : null,
+			playCount: typeof g.gamePlays === "number" ? g.gamePlays : null,
+			url: g.url || "",
+		};
+	});
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports = {
 	listGames,
 	getGame,
 	updateProgress,
 	listProgress,
+	getGamezopGames,
 };

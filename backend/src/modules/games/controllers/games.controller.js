@@ -21,9 +21,18 @@ const listProgress = catchAsync(async (req, res) => {
 	res.json({ success: true, progress });
 });
 
+// ─── Gamezop ─────────────────────────────────────────────────────────────────
+const listGamezopGames = catchAsync(async (req, res) => {
+	const games = await service.getGamezopGames();
+	res.json({ success: true, games });
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports = {
 	listGames,
 	getGame,
 	updateProgress,
 	listProgress,
+	listGamezopGames,
 };
+

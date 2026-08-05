@@ -18,6 +18,10 @@ const validateBody = (schema) => (req, res, next) => {
 router.get("/", controller.listGames);
 router.get("/progress", requireAuth, controller.listProgress);
 router.post("/progress", requireAuth, validateBody(gameProgressSchema), controller.updateProgress);
+// ─── Gamezop ─────────────────────────────────────────────────────────────────
+router.get("/gamezop", controller.listGamezopGames);
+// ─────────────────────────────────────────────────────────────────────────────
 router.get("/:id", controller.getGame);
 
 module.exports = router;
+

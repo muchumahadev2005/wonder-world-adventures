@@ -149,6 +149,18 @@ export type ApiGame = {
   isPremium?: boolean;
 };
 
+export type GamezopGame = {
+  code: string;
+  name: string;
+  description: string;
+  thumbnail: string;
+  category: string;
+  categories: string[];
+  rating: number | null;
+  playCount: number | null;
+  url: string;
+};
+
 export const contentApi = {
   listLanguages: () => apiFetch<{ languages: ApiLanguage[] }>("/languages"),
   listLevelsForLanguage: (language: string) =>
@@ -162,6 +174,7 @@ export const contentApi = {
   },
   listStories: () => apiFetch<{ stories: ApiStory[] }>("/stories"),
   listGames: () => apiFetch<{ games: ApiGame[] }>("/games"),
+  listGamezopGames: () => apiFetch<{ games: GamezopGame[] }>("/games/gamezop"),
   chat: (message: string, token?: string | null, sessionId?: string) =>
     apiFetch<{ reply: string; sources: Array<{ title: string; type: string; sourceId: string }>; cached: boolean }>(
       "/chatbot/message",
