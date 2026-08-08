@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { contentApi, GamezopGame } from "@/lib/api";
 import { useChild } from "@/context/ChildContext";
@@ -230,15 +231,29 @@ const GameOverlay = ({
   game: GamezopGame;
   onClose: () => void;
 }) => {
+  const { profile } = useChild();
+  const isPremium = profile?.isPremium;
+
+  const [loading, setLoading] = useState(Boolean(isPremium));
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  useEffect(() => {
+    if (isPremium) {
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 7500); // 7.5 seconds covers the standard Gamezop pre-roll ads
+      return () => clearTimeout(timer);
+    }
+  }, [isPremium]);
+
   const catGrad = CATEGORY_SOLID[game.category] ?? CATEGORY_SOLID.All;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         className="fixed inset-0 flex flex-col"
@@ -291,12 +306,56 @@ const GameOverlay = ({
             height="100%"
             className="absolute inset-0 w-full h-full border-0"
             style={{ display: "block" }}
+            sandbox={isPremium ? "allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-modals" : undefined}
             allow="fullscreen; autoplay; camera; microphone"
             allowFullScreen
           />
+
+          {/* Premium Ad-Blocking Loading Layer */}
+          <AnimatePresence>
+            {loading && (
+              <motion.div
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-6 text-center select-none"
+              >
+                {/* Floating Mascot Icon */}
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-200 to-amber-400 flex items-center justify-center shadow-[0_0_40px_rgba(251,191,36,0.3)] mb-6"
+                >
+                  <span className="text-4xl">🦉</span>
+                </motion.div>
+
+                {/* Status Messages */}
+                <h3 className="font-display text-xl sm:text-2xl font-black text-white drop-shadow-md">
+                  Ollie is preparing your game...
+                </h3>
+                <p className="text-amber-300 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-1.5 justify-center">
+                  <span>🌟</span> StoryNest Premium: Ad-Free Active
+                </p>
+
+                {/* Progress Bar Container */}
+                <div className="w-full max-w-[280px] h-2 bg-white/10 rounded-full overflow-hidden mt-8 border border-white/5">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 7.2, ease: "linear" }}
+                    className="h-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+                  />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 mt-2.5">
+                  Starting in a few seconds...
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
