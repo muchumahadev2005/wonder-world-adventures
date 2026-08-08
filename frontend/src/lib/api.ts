@@ -3,6 +3,19 @@ const API_BASE_URL = `${import.meta.env.VITE_SERVER_URL || DEFAULT_SERVER_URL}/a
 const apiDebug = import.meta.env.VITE_API_DEBUG === "true";
 let hasLoggedBase = false;
 
+// ── Global session-expired handler ───────────────────────────────
+// AuthContext registers its logout + redirect fn here on mount.
+// apiFetch calls it whenever the server returns 401.
+let _onSessionExpired: (() => void) | null = null;
+
+export const setGlobalSessionExpiredHandler = (fn: () => void) => {
+  _onSessionExpired = fn;
+};
+
+export const clearGlobalSessionExpiredHandler = () => {
+  _onSessionExpired = null;
+};
+
 const logApiBase = () => {
   if (hasLoggedBase) return;
   hasLoggedBase = true;
@@ -53,9 +66,17 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
   }
   if (!response.ok || data?.success === false) {
     const message = data?.message || "Request failed";
-    const error = new Error(message) as Error & { code?: string };
+    const error = new Error(message) as Error & { code?: string; isAuthError?: boolean };
     if (data?.code) {
       error.code = data.code;
+    }
+    // ── Auto-logout on 401 (expired / invalid token) ──────────────
+    if (response.status === 401) {
+      error.isAuthError = true;
+      // Only fire if a token was supplied — skip public endpoints
+      if (token && _onSessionExpired) {
+        _onSessionExpired();
+      }
     }
     throw error;
   }

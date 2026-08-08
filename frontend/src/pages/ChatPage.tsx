@@ -201,7 +201,7 @@ const ChatPage = () => {
         * md:pb-0 removes that clearance on desktop.
         */}
       <div
-        className="relative z-10 flex flex-1 min-h-0 pt-16 pb-20 md:pt-20 md:pb-0"
+        className="relative z-10 flex flex-1 min-h-0 pt-20 sm:pt-24 lg:pt-32 pb-20 md:pb-0"
         style={{ overflow: "hidden" }}
       >
         {/* ── Sidebar (only shown in Chat mode, hidden in Interactive voice mode) ── */}

@@ -200,7 +200,7 @@ const ChatSidebar = ({
       setSessions(prev => reset ? data.sessions : [...prev, ...data.sessions]);
       setHasMore(data.hasMore);
       setPage(reset ? 2 : page + 1);
-    } catch (err) {
+    } catch {
       setError("Couldn't load conversations.");
     } finally {
       setLoading(false);
@@ -433,7 +433,7 @@ const ChatSidebar = ({
               className="fixed left-0 top-0 bottom-0 z-50 w-[min(288px,85vw)] md:hidden flex flex-col border-r border-white/10"
               style={{
                 background: "rgba(8,4,22,0.97)",
-                paddingTop: "env(safe-area-inset-top)",
+                paddingTop: "calc(env(safe-area-inset-top) + 76px)",
                 paddingBottom: "env(safe-area-inset-bottom)",
               }}
               initial={{ x: "-100%" }}

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { setGlobalSessionExpiredHandler, clearGlobalSessionExpiredHandler } from "@/lib/api";
 
 export interface AuthUser {
   id: string;
@@ -69,6 +70,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setToken(null);
   };
+
+  // ── Auto-logout: register session-expired callback globally ───────
+  // When any API call returns 401, this fires — clears auth and
+  // redirects to /login?reason=session_expired so the login page
+  // can show a helpful "Session expired" notice.
+  useEffect(() => {
+    setGlobalSessionExpiredHandler(() => {
+      // Only act if we were actually logged in
+      if (!localStorage.getItem("auth_token")) return;
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      setUser(null);
+      setToken(null);
+      // Use window.location for a clean hard-redirect (avoids stale
+      // React Router state after a forced logout)
+      window.location.href = "/login?reason=session_expired";
+    });
+    return () => clearGlobalSessionExpiredHandler();
+  }, []);
+  // ────────────────────────────────────────────────────
 
   const value = useMemo(
     () => ({

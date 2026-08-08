@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import ForestScene from "@/components/ForestScene";
-import { Sparkles, ArrowRight, Moon, Star, Mail, Lock } from "lucide-react";
+import { Sparkles, ArrowRight, Moon, Star, Mail, Lock, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useChild } from "@/context/ChildContext";
@@ -13,6 +13,7 @@ const inputClass =
 
 const SignInPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setAuth } = useAuth();
   const { setProfile, logout: clearProfile } = useChild();
   const [email, setEmail] = useState("");
@@ -23,6 +24,16 @@ const SignInPage = () => {
     null,
   );
   const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+  const sessionExpired = searchParams.get("reason") === "session_expired";
+
+  // Clear the reason param from URL so browser back doesn't re-show the banner
+  useEffect(() => {
+    if (sessionExpired) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [sessionExpired]);
 
   const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
   const normalizedEmail = email.trim().toLowerCase();
@@ -182,6 +193,20 @@ const SignInPage = () => {
               Sign in to your magical world
             </p>
           </div>
+
+          {/* Session-expired notice */}
+          {sessionExpired && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="mb-4 flex items-start gap-2.5 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-3"
+            >
+              <AlertTriangle className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+              <p className="text-amber-200 text-xs font-medium leading-snug">
+                Your session expired. Please sign in again to continue. 🔑
+              </p>
+            </motion.div>
+          )}
 
           <div className="space-y-4">
             <div className="relative">
