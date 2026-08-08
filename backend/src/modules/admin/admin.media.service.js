@@ -19,7 +19,9 @@ class LocalProvider {
 		const fileName = `${crypto.randomUUID()}${ext}`;
 		const filePath = path.join(this.uploadDir, fileName);
 		fs.writeFileSync(filePath, file.buffer);
-		const url = `/uploads/${fileName}`;
+		// Use absolute URL so the frontend can render the image directly
+		const serverUrl = (process.env.SERVER_URL || "http://localhost:5000").replace(/\/$/, "");
+		const url = `${serverUrl}/uploads/${fileName}`;
 		return { url, fileName };
 	}
 

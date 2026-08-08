@@ -76,7 +76,7 @@ const listLessons = async ({ page = 1, limit = 20, search, language, level, stat
 		quizzes: undefined,
 	}));
 
-	return { lessons: mapped, total, page, limit };
+	return { lessons: mapped, total, page, limit, pages: Math.ceil(total / limit) };
 };
 
 const getLesson = async (id) => {
@@ -862,7 +862,7 @@ const getContentAnalytics = async () => {
 
 const getImportHistory = async ({ page = 1, limit = 20 } = {}) => {
 	const skip = (page - 1) * limit;
-	const [logs, total] = await Promise.all([
+	const [imports, total] = await Promise.all([
 		prisma.importAuditLog.findMany({
 			skip,
 			take: limit,
@@ -870,7 +870,7 @@ const getImportHistory = async ({ page = 1, limit = 20 } = {}) => {
 		}),
 		prisma.importAuditLog.count(),
 	]);
-	return { logs, total, page, limit };
+	return { imports, total, page, pages: Math.ceil(total / limit), limit };
 };
 
 module.exports = {

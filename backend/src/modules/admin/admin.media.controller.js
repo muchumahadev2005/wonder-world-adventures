@@ -11,14 +11,18 @@ const uploadMedia = catchAsync(async (req, res) => {
 
 const listMedia = catchAsync(async (req, res) => {
 	const { page, limit, search, folder, type } = req.query;
+	const parsedPage = parseInt(page) || 1;
+	const parsedLimit = parseInt(limit) || 30;
 	const data = await service.listMedia({
-		page: parseInt(page) || 1,
-		limit: parseInt(limit) || 30,
+		page: parsedPage,
+		limit: parsedLimit,
 		search,
 		folder,
 		mimeType: type,
 	});
-	res.json({ success: true, ...data });
+	// Rename 'items' → 'media' and add 'pages' to match frontend API contract
+	const { items, total } = data;
+	res.json({ success: true, media: items, total, pages: Math.ceil(total / parsedLimit) });
 });
 
 const deleteMedia = catchAsync(async (req, res) => {

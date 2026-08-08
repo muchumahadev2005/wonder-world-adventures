@@ -28,7 +28,7 @@ const createLesson = catchAsync(async (req, res) => {
 });
 
 const updateLesson = catchAsync(async (req, res) => {
-	const lesson = await service.updateLesson(req.params.id, req.body, req.user?.id);
+	const lesson = await service.updateLessonWithIndex(req.params.id, req.body, req.user?.id);
 	res.json({ success: true, lesson });
 });
 
