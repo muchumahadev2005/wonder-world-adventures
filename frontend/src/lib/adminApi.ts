@@ -607,7 +607,14 @@ export const adminApi = {
   },
 
   testAiModel: async (id: string, token: string | null) => {
-    return adminFetch<{ success: boolean; status: string; error?: string; message?: string }>(`/admin/ai-models/${id}/test`, { method: "POST" }, token);
+    // Use direct fetch — a "Connection Failed" test result has success:false
+    // which is a VALID response, not an API error. adminFetch would throw on it.
+    const url = `${API_BASE}/api/admin/ai-models/${id}/test`;
+    const headers = new Headers({ "Content-Type": "application/json" });
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const response = await fetch(url, { method: "POST", headers });
+    const data = await response.json();
+    return data as { success: boolean; status: string; error?: string; message?: string };
   },
 };
 

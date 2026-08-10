@@ -102,6 +102,7 @@ const AppRoutes = () => {
         {/* ── Admin ─────────────────────────────── */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/login" element={isAuthenticated && user?.email === ADMIN_EMAIL ? <Navigate to="/admin/dashboard" replace /> : <AdminLoginPage />} />
+        <Route path="/login/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/admin/ai-models" element={<AdminRoute><AiModelsAdmin /></AdminRoute>} />
         <Route path="/admin/stories" element={<AdminRoute><StoriesAdmin /></AdminRoute>} />

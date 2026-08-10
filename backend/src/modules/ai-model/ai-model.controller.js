@@ -49,9 +49,10 @@ class AiModelController {
   async testModel(req, res) {
     try {
       const result = await aiModelService.testModel(req.params.id);
-      return res.json({ success: true, ...result });
+      // Always return 200 — test failure is a result, not a server error
+      return res.json(result);
     } catch (err) {
-      return res.status(400).json({ success: false, status: "Connection Failed", message: err.message });
+      return res.json({ success: false, status: "Connection Failed", error: err.message });
     }
   }
 }
