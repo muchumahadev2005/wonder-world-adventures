@@ -249,9 +249,14 @@ export default function AiModelsAdmin() {
                           </Badge>
                         )}
                         {test?.status === "Connection Failed" && (
-                          <Badge className="bg-red-500/20 text-red-300 border-red-500/30 flex items-center gap-1" title={test.error}>
-                            <AlertCircle className="w-3 h-3 text-red-400" /> Connection Failed
-                          </Badge>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge className="bg-red-500/20 text-red-300 border-red-500/30 flex items-center gap-1" title={test.error}>
+                              <AlertCircle className="w-3 h-3 text-red-400" /> Connection Failed
+                            </Badge>
+                            {test.error && (
+                              <span className="text-xs text-red-400 font-medium">({test.error})</span>
+                            )}
+                          </div>
                         )}
                       </div>
 

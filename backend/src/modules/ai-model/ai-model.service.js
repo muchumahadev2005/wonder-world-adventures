@@ -3,31 +3,43 @@ const logger = require("../../utils/logger");
 
 const DEFAULT_MODELS = [
   {
-    displayName: "Gemma 3",
-    modelName: "google/gemma-3-27b-it:free",
+    displayName: "Gemma 2 9B (Free)",
+    modelName: "google/gemma-2-9b-it:free",
     isActive: true,
   },
   {
-    displayName: "Llama 3.3",
-    modelName: "meta-llama/llama-3.3-70b-instruct:free",
+    displayName: "Llama 3.1 8B (Free)",
+    modelName: "meta-llama/llama-3.1-8b-instruct:free",
     isActive: false,
   },
   {
-    displayName: "Qwen 3",
-    modelName: "qwen/qwen3-30b-a3b-instruct:free",
+    displayName: "Qwen 2.5 72B (Free)",
+    modelName: "qwen/qwen-2.5-72b-instruct:free",
     isActive: false,
   },
   {
-    displayName: "Mistral Small",
-    modelName: "mistralai/mistral-small-3.2-24b-instruct:free",
+    displayName: "DeepSeek R1 (Free)",
+    modelName: "deepseek/deepseek-r1:free",
     isActive: false,
   },
   {
-    displayName: "Nvidia Llama Nemotron",
-    modelName: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+    displayName: "Mistral 7B (Free)",
+    modelName: "mistralai/mistral-7b-instruct:free",
     isActive: false,
   },
 ];
+
+const MODEL_REPLACEMENTS = {
+  "google/gemma-3-27b-it:free": "google/gemma-2-9b-it:free",
+  "google/gemma-3-27b-it": "google/gemma-2-9b-it:free",
+  "meta-llama/llama-3.3-70b-instruct:free": "meta-llama/llama-3.1-8b-instruct:free",
+  "meta-llama/llama-3.3-70b-instruct": "meta-llama/llama-3.1-8b-instruct:free",
+  "qwen/qwen3-30b-a3b-instruct:free": "qwen/qwen-2.5-72b-instruct:free",
+  "qwen/qwen-2.5-72b-instruct": "qwen/qwen-2.5-72b-instruct:free",
+  "mistralai/mistral-small-3.2-24b-instruct:free": "mistralai/mistral-7b-instruct:free",
+  "mistralai/mistral-small-3.2-24b-instruct": "mistralai/mistral-7b-instruct:free",
+  "nvidia/llama-nemotron-embed-vl-1b-v2:free": "deepseek/deepseek-r1:free",
+};
 
 class AiModelService {
   async ensureSeedDefaults() {
@@ -37,6 +49,15 @@ class AiModelService {
         logger.info("[AiModelService] Seeding default OpenRouter models...");
         for (const model of DEFAULT_MODELS) {
           await repository.createModel(model);
+        }
+      } else {
+        // Auto-update outdated/deprecated model slugs in database
+        const existingModels = await repository.listModels();
+        for (const m of existingModels) {
+          if (MODEL_REPLACEMENTS[m.modelName]) {
+            logger.info(`[AiModelService] Updating outdated model slug ${m.modelName} -> ${MODEL_REPLACEMENTS[m.modelName]}`);
+            await repository.updateModel(m.id, { modelName: MODEL_REPLACEMENTS[m.modelName] });
+          }
         }
       }
     } catch (err) {
@@ -63,7 +84,7 @@ class AiModelService {
     return {
       id: "fallback",
       displayName: "Gemma 3 (Fallback)",
-      modelName: "google/gemma-3-27b-it:free",
+      modelName: "google/gemma-3-27b-it",
       apiKey: null,
       isActive: true,
     };
