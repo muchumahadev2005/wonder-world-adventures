@@ -90,6 +90,11 @@ export const SubscribeModal = ({ open, onClose, onSuccess }: Props) => {
             email: user?.email || "",
           },
           theme: { color: "#7c5cbf" },
+          modal: {
+            ondismiss: () => {
+              reject(new Error("Payment cancelled"));
+            },
+          },
           handler: async (response: Record<string, unknown>) => {
             try {
               // 4. Verify payment on backend
