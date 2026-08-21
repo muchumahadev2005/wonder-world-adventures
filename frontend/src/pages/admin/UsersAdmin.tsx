@@ -246,57 +246,58 @@ export default function UsersAdmin() {
                   </tr>
                 ) : (
                   filtered.map((user, i) => (
-                      <motion.tr
-                        key={user.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                        style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer" }}
-                        onClick={() => setSelectedUser(user)}
-                        whileHover={{ background: "#fafafa" } as never}
-                      >
-                        <td style={{ padding: "12px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <Avatar name={user.name} />
-                            <span style={{ fontWeight: 600, fontSize: 14, color: "#0f172a" }}>{user.name}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: 13, color: "#64748b" }}>{user.email}</td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            {user.provider.includes("google") ? <Globe size={13} color="#4285f4" /> : <Mail size={13} color="#6366f1" />}
-                            <span style={{ fontSize: 12, color: "#64748b", textTransform: "capitalize" }}>{user.provider[0]}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: 12, color: "#94a3b8" }}>
-                          {new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          {user.subscriptions.length > 0 ? (
-                            <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "#fef3c7", color: "#d97706", fontWeight: 700, width: "fit-content" }}>
-                              <Crown size={10} /> {user.subscriptions[0].plan.name}
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "#f1f5f9", color: "#64748b", fontWeight: 600 }}>Free</span>
-                          )}
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: user.isVerified ? "#d1fae5" : "#fee2e2", color: user.isVerified ? "#059669" : "#dc2626", fontWeight: 700 }}>
-                            {user.isVerified ? "Verified" : "Unverified"}
+                    <motion.tr
+                      key={user.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer" }}
+                      onClick={() => setSelectedUser(user)}
+                      whileHover={{ background: "#fafafa" } as never}
+                    >
+                      <td style={{ padding: "12px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <Avatar name={user.name} />
+                          <span style={{ fontWeight: 600, fontSize: 14, color: "#0f172a" }}>{user.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 13, color: "#64748b" }}>{user.email}</td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          {user.provider.includes("google") ? <Globe size={13} color="#4285f4" /> : <Mail size={13} color="#6366f1" />}
+                          <span style={{ fontSize: 12, color: "#64748b", textTransform: "capitalize" }}>{user.provider[0]}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#94a3b8" }}>
+                        {new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        {user.subscriptions.length > 0 ? (
+                          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "#fef3c7", color: "#d97706", fontWeight: 700, width: "fit-content" }}>
+                            <Crown size={10} /> {user.subscriptions[0].plan.name}
                           </span>
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            style={{ fontSize: 12 }}
-                            onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}
-                          >
-                            View →
-                          </Button>
-                        </td>
-                      </motion.tr>
-                    ))}
+                        ) : (
+                          <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "#f1f5f9", color: "#64748b", fontWeight: 600 }}>Free</span>
+                        )}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: user.isVerified ? "#d1fae5" : "#fee2e2", color: user.isVerified ? "#059669" : "#dc2626", fontWeight: 700 }}>
+                          {user.isVerified ? "Verified" : "Unverified"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          style={{ fontSize: 12 }}
+                          onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}
+                        >
+                          View →
+                        </Button>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
