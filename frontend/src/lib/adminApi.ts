@@ -616,7 +616,39 @@ export const adminApi = {
     const data = await response.json();
     return data as { success: boolean; status: string; error?: string; message?: string };
   },
+
+  // AI Prompt Limitations
+  getAiPromptSettings: async (token: string | null) => {
+    return adminFetch<{ success: boolean; settings: AiPromptSettings; previewPrompt: string }>("/admin/ai-prompt-settings", {}, token);
+  },
+
+  updateAiPromptSettings: async (data: Partial<AiPromptSettings>, token: string | null) => {
+    return adminFetch<{ success: boolean; settings: AiPromptSettings; previewPrompt: string; message: string }>("/admin/ai-prompt-settings", { method: "PUT", body: JSON.stringify(data) }, token);
+  },
+
+  resetAiPromptSettings: async (token: string | null) => {
+    return adminFetch<{ success: boolean; settings: AiPromptSettings; previewPrompt: string; message: string }>("/admin/ai-prompt-settings/reset", { method: "POST" }, token);
+  },
+
+  previewAiPrompt: async (data: Partial<AiPromptSettings>, token: string | null) => {
+    return adminFetch<{ success: boolean; previewPrompt: string }>("/admin/ai-prompt-settings/preview", { method: "POST", body: JSON.stringify(data) }, token);
+  },
 };
+
+export interface AiPromptSettings {
+  id?: string;
+  ageGroup: string;
+  maxResponseWords: number;
+  language: string;
+  difficulty: string;
+  allowedTopics: string[];
+  safetyRules: string[];
+  customInstructions?: string | null;
+  responseTone?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export const ADMIN_EMAIL = "admin@storynest.com";
 export const isAdminUser = (email?: string | null) => email === ADMIN_EMAIL;

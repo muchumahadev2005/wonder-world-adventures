@@ -8,6 +8,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from "recharts";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { useAuth } from "@/context/AuthContext";
 import { adminApi, AdminStats } from "@/lib/adminApi";
 
@@ -68,9 +69,10 @@ const timeAgo = (iso: string) => {
 
 export default function AdminDashboard() {
   const { token } = useAuth();
-  const { data: stats, isLoading } = useQuery<AdminStats>({
+  const { data: stats, isLoading, isError, refetch } = useQuery<AdminStats>({
     queryKey: ["admin-stats"],
     queryFn: () => adminApi.getStats(token),
+    enabled: !!token,
     staleTime: 60000,
   });
 
@@ -91,10 +93,20 @@ export default function AdminDashboard() {
         </motion.div>
 
         {isLoading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ height: 130, background: "rgba(0,0,0,0.05)", borderRadius: 16, animation: "pulse 1.5s infinite" }} />
-            ))}
+          <AdminLoadingState
+            message="Fetching dashboard metrics from database..."
+            subMessage="Calculating user growth, revenue trends, and activity..."
+            minHeight="360px"
+          />
+        ) : isError ? (
+          <div style={{ padding: 40, textAlign: "center", background: "white", borderRadius: 20, border: "1px solid #fee2e2" }}>
+            <p style={{ color: "#dc2626", fontWeight: 700, marginBottom: 12 }}>Unable to load dashboard statistics from database.</p>
+            <button
+              onClick={() => refetch()}
+              style={{ padding: "8px 18px", borderRadius: 10, background: "#6366f1", color: "white", fontWeight: 700, border: "none", cursor: "pointer" }}
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <>

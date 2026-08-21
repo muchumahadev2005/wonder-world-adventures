@@ -6,6 +6,7 @@ import {
   ExternalLink, Filter,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { adminApi, AdminPayment } from "@/lib/adminApi";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ export default function PaymentsAdmin() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-payments", filterStatus],
     queryFn: () => adminApi.getPayments(token, { status: filterStatus === "all" ? "" : filterStatus }),
+    enabled: !!token,
     staleTime: 30000,
   });
 
@@ -208,11 +210,15 @@ export default function PaymentsAdmin() {
               </thead>
               <tbody>
                 {isLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i}><td colSpan={7} style={{ padding: "14px 16px" }}>
-                      <div style={{ height: 18, background: "#f1f5f9", borderRadius: 6, animation: "pulse 1.5s infinite" }} />
-                    </td></tr>
-                  ))
+                  <tr>
+                    <td colSpan={7} style={{ padding: "40px 20px" }}>
+                      <AdminLoadingState
+                        message="Fetching payments from database..."
+                        subMessage="Loading transaction history, amounts, and Razorpay orders."
+                        minHeight="200px"
+                      />
+                    </td>
+                  </tr>
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", color: "#94a3b8" }}>No payments found</td></tr>
                 ) : filtered.map((pay, i) => {

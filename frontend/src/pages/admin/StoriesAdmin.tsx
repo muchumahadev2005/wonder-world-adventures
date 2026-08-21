@@ -8,6 +8,7 @@ import {
   BookMarked, Languages, Clock, BarChart2, Ban,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { adminApi, AdminStory } from "@/lib/adminApi";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -831,15 +832,15 @@ export default function StoriesAdmin() {
               </thead>
               <tbody>
                 {isLoading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="border-b border-slate-50">
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <td key={j} className="px-4 py-3">
-                          <div className="h-4 bg-slate-100 rounded animate-pulse" style={{ width: j === 0 ? 48 : "80%" }} />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={8} className="py-12 px-4">
+                      <AdminLoadingState
+                        message="Fetching stories from database..."
+                        subMessage="Loading story titles, authors, categories, and cover images."
+                        minHeight="220px"
+                      />
+                    </td>
+                  </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-16 text-slate-400 text-sm">

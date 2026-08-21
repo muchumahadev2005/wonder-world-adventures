@@ -11,6 +11,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { adminApi, AdminSubscription } from "@/lib/adminApi";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,7 @@ export default function SubscriptionsAdmin() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-subscriptions", filterStatus],
     queryFn: () => adminApi.getSubscriptions(token, { status: filterStatus === "all" ? "" : filterStatus }),
+    enabled: !!token,
     staleTime: 30000,
   });
 
@@ -264,11 +266,15 @@ export default function SubscriptionsAdmin() {
               </thead>
               <tbody>
                 {isLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i}><td colSpan={8} style={{ padding: "14px 16px" }}>
-                      <div style={{ height: 18, background: "#f1f5f9", borderRadius: 6, animation: "pulse 1.5s infinite" }} />
-                    </td></tr>
-                  ))
+                  <tr>
+                    <td colSpan={8} style={{ padding: "40px 20px" }}>
+                      <AdminLoadingState
+                        message="Fetching subscriptions from database..."
+                        subMessage="Loading plan details, validity dates, and revenue metrics."
+                        minHeight="200px"
+                      />
+                    </td>
+                  </tr>
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={8} style={{ padding: "48px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>No subscriptions found</td></tr>
                 ) : filtered.map((sub, i) => {

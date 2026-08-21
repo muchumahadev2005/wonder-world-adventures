@@ -5,6 +5,7 @@ import { FileUp, Calendar, User, FileSpreadsheet, FileCode, CheckCircle, AlertTr
 import { useAuth } from "@/context/AuthContext";
 import { adminApi, ImportAuditEntry } from "@/lib/adminApi";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -56,10 +57,12 @@ export default function ImportHistory() {
 
         {/* List Table */}
         {isLoading ? (
-          <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-12 bg-slate-50 rounded-xl animate-pulse" />
-            ))}
+          <div className="bg-white border border-slate-100 rounded-2xl p-12 shadow-sm">
+            <AdminLoadingState
+              message="Fetching import audit logs from database..."
+              subMessage="Loading Excel spreadsheets, JSON payloads, and ingestion status."
+              minHeight="220px"
+            />
           </div>
         ) : auditEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white border border-slate-100 rounded-2xl shadow-sm">

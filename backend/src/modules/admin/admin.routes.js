@@ -92,4 +92,8 @@ router.put("/media/:id", mediaController.updateMedia);
 const aiModelRoutes = require("../ai-model/ai-model.routes");
 router.use("/ai-models", aiModelRoutes);
 
+// ── AI Prompt Limitations Management ─────────────────────────────
+const aiPromptRoutes = require("../ai-prompt/ai-prompt.routes");
+router.use("/ai-prompt-settings", aiPromptRoutes);
+
 module.exports = router;

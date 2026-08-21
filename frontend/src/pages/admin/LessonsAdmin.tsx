@@ -28,6 +28,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAuth } from "@/context/AuthContext";
 import { adminApi, AdminLesson } from "@/lib/adminApi";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -407,13 +408,15 @@ export default function LessonsAdmin() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={9} className="p-4">
-                      <div className="h-6 bg-slate-100 rounded-lg animate-pulse" />
-                    </TableCell>
-                  </TableRow>
-                ))
+                <TableRow>
+                  <TableCell colSpan={9} className="py-12">
+                    <AdminLoadingState
+                      message="Fetching lessons from database..."
+                      subMessage="Loading flashcards, quizzes, languages, and levels."
+                      minHeight="220px"
+                    />
+                  </TableCell>
+                </TableRow>
               ) : lessons.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="py-20 text-center text-slate-400">

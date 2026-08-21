@@ -5,6 +5,7 @@ import { Image as ImageIcon, Search, Upload, Trash2, Link, Edit2, Check, X, Load
 import { useAuth } from "@/context/AuthContext";
 import { adminApi, MediaItem } from "@/lib/adminApi";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -163,10 +164,12 @@ export default function MediaLibrary() {
 
         {/* Grid Asset List */}
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-64 bg-slate-100 border border-slate-100 rounded-2xl animate-pulse" />
-            ))}
+          <div className="py-16 bg-white border border-slate-100 rounded-2xl">
+            <AdminLoadingState
+              message="Fetching media assets from database..."
+              subMessage="Loading image graphics, illustrations, and storage URLs."
+              minHeight="220px"
+            />
           </div>
         ) : mediaItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white border border-slate-100 rounded-2xl shadow-sm">

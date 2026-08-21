@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Languages, Globe, Plus, Edit2, Trash2, CheckCircle, XCircle } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { adminApi, AdminLanguage } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -61,9 +62,13 @@ export default function LanguagesAdmin() {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}
           >
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} style={{ height: 180, background: "#f1f5f9", borderRadius: 16, animation: "pulse 1.5s infinite" }} />
-              ))
+              <div style={{ gridColumn: "1 / -1", padding: "40px 0" }}>
+                <AdminLoadingState
+                  message="Fetching supported languages from database..."
+                  subMessage="Loading regional and global language settings."
+                  minHeight="220px"
+                />
+              </div>
             ) : languages.map((lang, i) => (
               <motion.div
                 key={lang.id}

@@ -284,7 +284,7 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	let reply;
 	try {
 		const { client, modelName } = await getActiveLlm();
-		const systemPrompt = buildSystemPrompt(context);
+		const systemPrompt = await buildSystemPrompt(context);
 
 		const completion = await client.chat.completions.create({
 			model: modelName,

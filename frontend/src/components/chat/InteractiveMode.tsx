@@ -1,7 +1,10 @@
 /**
- * InteractiveMode — Voice-first conversation UI.
+ * InteractiveMode — Voice-first conversation UI with two sub-modes:
  *
- * Flow:
+ *   🐰 Voice Repeat — echoes back exactly what the child says (STT → TTS, no AI)
+ *   🧑‍🏫 AI Teacher  — sends to OpenRouter backend and speaks AI response
+ *
+ * The AI Teacher flow is unchanged:
  *   idle → listening (Web Speech API) → thinking (contentApi.chat) → speaking (tts.service) → idle
  *
  * CRITICAL: Reuses the EXACT same backend as ChatMode:
@@ -25,6 +28,8 @@ import VoiceMicButton from "./VoiceMicButton";
 import VoiceStatus from "./VoiceStatus";
 import TranscriptBubble from "./TranscriptBubble";
 import type { VoiceState } from "./VoiceStatus";
+import VoiceSubModeSelector, { type VoiceSubMode } from "./VoiceSubModeSelector";
+import VoiceRepeatMode from "./VoiceRepeatMode";
 
 // ── Transcript entry type ────────────────────────────────────────
 
@@ -43,6 +48,11 @@ interface InteractiveModeProps {
 
 const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
   const { token } = useAuth();
+
+  // ── Sub-mode state ──────────────────────────────────────────────
+  const [voiceSubMode, setVoiceSubMode] = useState<VoiceSubMode>("repeat");
+
+  // ── AI Teacher state (always initialised — React hook rules) ───
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -199,9 +209,38 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
     // thinking — do nothing
   }, [voiceState, startListening, handleStopVoice]);
 
+  // ── Sub-mode switch handler ─────────────────────────────────────
+  const handleSubModeChange = useCallback((mode: VoiceSubMode) => {
+    // Clean up current activity before switching
+    stopSpeaking();
+    stopListening();
+    setVoiceState("idle");
+    setError(null);
+    setVoiceSubMode(mode);
+  }, [stopListening]);
+
   // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="flex flex-col items-center flex-1 min-h-0">
+      {/* Sub-mode selector: Voice Repeat / AI Teacher */}
+      <motion.div
+        className="w-full mb-3"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <VoiceSubModeSelector
+          activeMode={voiceSubMode}
+          onChange={handleSubModeChange}
+        />
+      </motion.div>
+
+      {/* Conditional sub-mode content */}
+      {voiceSubMode === "repeat" ? (
+        <VoiceRepeatMode />
+      ) : (
+      <>
+      {/* ── AI Teacher content (existing, unchanged) ── */}
       {/* Error banner */}
       <AnimatePresence>
         {error && (
@@ -315,6 +354,8 @@ const InteractiveMode = ({ sessionId }: InteractiveModeProps) => {
       )}
 
       {/* Live transcript removed from UI - kept internally */}
+      </>
+      )}
     </div>
   );
 };

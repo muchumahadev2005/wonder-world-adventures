@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 const NAV_ITEMS = [
   { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/admin/ai-models", label: "AI Models", icon: Cpu },
+  { path: "/admin/ai-prompts", label: "AI Prompt Limits", icon: Sparkles },
   { path: "/admin/stories", label: "Stories", icon: BookOpen },
   { path: "/admin/languages", label: "Languages", icon: Languages },
   { path: "/admin/lessons", label: "Lessons", icon: GraduationCap },
@@ -105,6 +106,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
+        .admin-sidebar nav,
+        .admin-sidebar-nav {
+          scrollbar-width: none !important; /* Firefox */
+          -ms-overflow-style: none !important; /* IE and Edge */
+        }
+
+        .admin-sidebar nav::-webkit-scrollbar,
+        .admin-sidebar-nav::-webkit-scrollbar {
+          display: none !important; /* Chrome, Safari, Opera */
+          width: 0 !important;
+          height: 0 !important;
+        }
+
         .admin-main {
           flex: 1;
           display: flex;
@@ -140,12 +154,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-nav-item {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 10px 16px;
-          border-radius: 14px;
+          gap: 11px;
+          padding: 8px 14px;
+          margin-bottom: 2px;
+          border-radius: 12px;
           cursor: pointer;
           transition: all 0.15s ease;
-          color: rgba(255, 255, 255, 0.6);
+          color: rgba(255, 255, 255, 0.65);
           text-decoration: none;
           white-space: nowrap;
           position: relative;
@@ -294,7 +309,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: "12px 8px", overflowY: "auto", overflowX: "hidden" }}>
+        <nav className="admin-sidebar-nav" style={{ flex: 1, padding: "8px 6px", overflowY: "auto", overflowX: "hidden" }}>
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = location.pathname.startsWith(item.path);

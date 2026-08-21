@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLoadingState from "@/components/admin/AdminLoadingState";
 import { adminApi, AiModel } from "@/lib/adminApi";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -55,6 +56,7 @@ export default function AiModelsAdmin() {
   const { data: models = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-ai-models"],
     queryFn: () => adminApi.getAiModels(token),
+    enabled: !!token,
   });
 
   // ── Mutations ───────────────────────────────────────────────────
@@ -194,8 +196,12 @@ export default function AiModelsAdmin() {
 
         {/* Table / Cards */}
         {isLoading ? (
-          <div className="flex justify-center items-center py-16">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <div className="py-16 bg-white dark:bg-card/40 border border-border rounded-2xl">
+            <AdminLoadingState
+              message="Fetching AI Models from database..."
+              subMessage="Loading OpenRouter models, custom endpoints, and active configurations."
+              minHeight="220px"
+            />
           </div>
         ) : isError ? (
           <div className="text-center py-12">

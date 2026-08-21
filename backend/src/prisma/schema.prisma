@@ -674,3 +674,21 @@ model AiModel {
   @@map("ai_models")
 }
 
+model AiPromptSetting {
+  id                 String   @id @default(uuid())
+  ageGroup           String   @default("3-12") @map("age_group")
+  maxResponseWords   Int      @default(50) @map("max_response_words")
+  language           String   @default("en")
+  difficulty         String   @default("beginner")
+  allowedTopics      String[] @default(["Animals", "Science", "Mathematics", "English Grammar", "Stories", "General Knowledge", "Nature", "Space & Planets", "Fun Facts & Riddles", "Creative Arts", "Life Skills"]) @map("allowed_topics")
+  safetyRules        String[] @default(["No politics, elections, or government debates", "No violence, weapons, gore, or self-harm", "No adult content, profanity, or inappropriate language", "No drugs, alcohol, vaping, or gambling", "No medical diagnoses or personal data sharing"]) @map("safety_rules")
+  customInstructions String?  @map("custom_instructions")
+  responseTone       String   @default("encouraging") @map("response_tone")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_prompt_settings")
+}
+
+

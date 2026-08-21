@@ -2,7 +2,15 @@ const prisma = require("../../prisma/prismaClient");
 const { autoExpireSubscriptions } = require("../subscriptions/repositories/subscriptions.repository");
 
 const getStats = async () => {
-	await autoExpireSubscriptions();
+	// Auto expire subscriptions in background (non-blocking)
+	autoExpireSubscriptions().catch(() => {});
+
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const sevenDaysAgo = new Date(today);
+	sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+	const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
 	const [
 		totalUsers,
 		totalStories,
@@ -11,92 +19,95 @@ const getStats = async () => {
 		activeSubscriptions,
 		totalPayments,
 		successPayments,
+		paymentsToday,
+		last7DaysPayments,
+		last7DaysUsers,
+		recentUsers,
+		recentPayments,
+		recentSubscriptions,
 	] = await Promise.all([
 		prisma.user.count(),
 		prisma.story.count(),
 		prisma.lesson.count(),
 		prisma.userSubscription.count(),
-		prisma.userSubscription.count({ where: { status: "ACTIVE", endDate: { gt: new Date() } } }),
+		prisma.userSubscription.count({ where: { status: "ACTIVE", endDate: { gt: now } } }),
 		prisma.payment.count(),
-		prisma.payment.findMany({ where: { status: "SUCCESS" }, select: { amount: true } }),
+		prisma.payment.findMany({ where: { status: "SUCCESS" }, select: { amount: true, createdAt: true } }),
+		prisma.payment.count({ where: { status: "SUCCESS", createdAt: { gte: today } } }),
+		prisma.payment.findMany({
+			where: { status: "SUCCESS", createdAt: { gte: sevenDaysAgo } },
+			select: { amount: true, createdAt: true },
+		}),
+		prisma.user.findMany({
+			where: { createdAt: { gte: sevenDaysAgo } },
+			select: { createdAt: true },
+		}),
+		prisma.user.findMany({
+			orderBy: { createdAt: "desc" },
+			take: 3,
+			select: { name: true, email: true, createdAt: true },
+		}),
+		prisma.payment.findMany({
+			where: { status: "SUCCESS" },
+			orderBy: { createdAt: "desc" },
+			take: 3,
+			include: { user: { select: { name: true } } },
+		}),
+		prisma.userSubscription.findMany({
+			orderBy: { createdAt: "desc" },
+			take: 3,
+			include: { user: { select: { name: true } }, plan: { select: { name: true } } },
+		}),
 	]);
 
 	const totalRevenue = successPayments.reduce((sum, p) => sum + p.amount, 0);
-
-	// Payments today
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
-	const paymentsToday = await prisma.payment.count({
-		where: { status: "SUCCESS", createdAt: { gte: today } },
-	});
-
-	// Premium users (active subscription)
 	const premiumUsers = activeSubscriptions;
 
-	// Monthly revenue (last 30 days)
-	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-	const monthlyPayments = await prisma.payment.findMany({
-		where: { status: "SUCCESS", createdAt: { gte: thirtyDaysAgo } },
-		select: { amount: true },
-	});
-	const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + p.amount, 0);
+	// Monthly revenue (last 30 days) computed in memory from successPayments
+	const monthlyRevenue = successPayments
+		.filter((p) => new Date(p.createdAt) >= thirtyDaysAgo)
+		.reduce((sum, p) => sum + p.amount, 0);
 
-	// Revenue trend (last 7 days)
+	// Revenue trend (last 7 days) computed in memory
 	const revenueTrend = [];
 	for (let i = 6; i >= 0; i--) {
-		const dayStart = new Date();
-		dayStart.setDate(dayStart.getDate() - i);
-		dayStart.setHours(0, 0, 0, 0);
-		const dayEnd = new Date(dayStart);
-		dayEnd.setHours(23, 59, 59, 999);
-		const dayPayments = await prisma.payment.findMany({
-			where: { status: "SUCCESS", createdAt: { gte: dayStart, lte: dayEnd } },
-			select: { amount: true },
-		});
-		const revenue = dayPayments.reduce((sum, p) => sum + p.amount, 0);
-		revenueTrend.push({
-			date: dayStart.toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
-			revenue,
-		});
+		const d = new Date(today);
+		d.setDate(d.getDate() - i);
+		const dateStr = d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+		const nextD = new Date(d);
+		nextD.setDate(nextD.getDate() + 1);
+
+		const daySum = last7DaysPayments
+			.filter((p) => {
+				const t = new Date(p.createdAt);
+				return t >= d && t < nextD;
+			})
+			.reduce((sum, p) => sum + p.amount, 0);
+
+		revenueTrend.push({ date: dateStr, revenue: daySum });
 	}
 
-	// User growth (last 7 days)
+	// User growth (last 7 days) computed in memory
 	const userGrowth = [];
 	for (let i = 6; i >= 0; i--) {
-		const dayStart = new Date();
-		dayStart.setDate(dayStart.getDate() - i);
-		dayStart.setHours(0, 0, 0, 0);
-		const dayEnd = new Date(dayStart);
-		dayEnd.setHours(23, 59, 59, 999);
-		const count = await prisma.user.count({ where: { createdAt: { gte: dayStart, lte: dayEnd } } });
-		userGrowth.push({
-			date: dayStart.toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
-			users: count,
-		});
+		const d = new Date(today);
+		d.setDate(d.getDate() - i);
+		const dateStr = d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+		const nextD = new Date(d);
+		nextD.setDate(nextD.getDate() + 1);
+
+		const count = last7DaysUsers.filter((u) => {
+			const t = new Date(u.createdAt);
+			return t >= d && t < nextD;
+		}).length;
+
+		userGrowth.push({ date: dateStr, users: count });
 	}
 
-	// Recent activity
-	const recentUsers = await prisma.user.findMany({
-		orderBy: { createdAt: "desc" },
-		take: 3,
-		select: { name: true, email: true, createdAt: true },
-	});
-	const recentPayments = await prisma.payment.findMany({
-		where: { status: "SUCCESS" },
-		orderBy: { createdAt: "desc" },
-		take: 3,
-		include: { user: { select: { name: true } } },
-	});
-	const recentSubscriptions = await prisma.userSubscription.findMany({
-		orderBy: { createdAt: "desc" },
-		take: 3,
-		include: { user: { select: { name: true } }, plan: { select: { name: true } } },
-	});
-
 	const activity = [
-		...recentUsers.map(u => ({ type: "new_user", name: u.name, detail: u.email, at: u.createdAt })),
-		...recentPayments.map(p => ({ type: "payment", name: p.user.name, detail: `₹${p.amount}`, at: p.createdAt })),
-		...recentSubscriptions.map(s => ({ type: "subscription", name: s.user.name, detail: s.plan.name, at: s.createdAt })),
+		...recentUsers.map((u) => ({ type: "new_user", name: u.name, detail: u.email, at: u.createdAt })),
+		...recentPayments.map((p) => ({ type: "payment", name: p.user.name, detail: `₹${p.amount}`, at: p.createdAt })),
+		...recentSubscriptions.map((s) => ({ type: "subscription", name: s.user.name, detail: s.plan.name, at: s.createdAt })),
 	].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 8);
 
 	return {
