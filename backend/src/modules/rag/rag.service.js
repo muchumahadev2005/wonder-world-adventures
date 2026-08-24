@@ -18,8 +18,10 @@ const { similaritySearch, buildContext, extractSources } = require("./retrieval.
 const redis = require("../../utils/redis");
 const logger = require("../../utils/logger");
 const { getActiveLlm, buildSystemPrompt } = require("../chat/llm.service");
+const aiPromptService = require("../ai-prompt/ai-prompt.service");
+const { sanitizeAiResponse } = require("../../utils/responseSanitizer");
 const CACHE_TTL = 86400; // 24 hours
-const CACHE_PREFIX = "chat:";
+const CACHE_PREFIX = "chat:v2:";
 
 // ── Topic guard — blocked subjects (child safety only) ──────────
 
@@ -284,7 +286,9 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	let reply;
 	try {
 		const { client, modelName } = await getActiveLlm();
-		const systemPrompt = await buildSystemPrompt(context);
+		const settings = await aiPromptService.getActiveSettings();
+		const systemPrompt = await buildSystemPrompt(context, settings);
+		const maxWords = settings?.maxResponseWords || 50;
 
 		const completion = await client.chat.completions.create({
 			model: modelName,
@@ -294,10 +298,13 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 			],
 			max_tokens: 512,
 			temperature: 0.4,
+			include_reasoning: false,
 		});
 
-		reply = completion.choices?.[0]?.message?.content?.trim();
-		if (!reply) throw new Error("Empty LLM response");
+		const rawReply = completion.choices?.[0]?.message?.content?.trim();
+		if (!rawReply) throw new Error("Empty LLM response");
+
+		reply = sanitizeAiResponse(rawReply, { maxWords });
 	} catch (err) {
 		logger.warn("[rag] LLM call failed", { message: err.message });
 		reply = "I'm having trouble connecting right now. Please try again in a moment! 🌟";
@@ -355,4 +362,11 @@ const processQuestion = async ({ message, sessionId, userId }) => {
 	return { reply, sources, cached: false };
 };
 
-module.exports = { processQuestion };
+const clearChatCache = async () => {
+	if (global.localCacheStore) {
+		global.localCacheStore.clear();
+	}
+	logger.info("[rag] Local chat cache cleared");
+};
+
+module.exports = { processQuestion, clearChatCache };

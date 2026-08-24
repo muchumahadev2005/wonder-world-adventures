@@ -2,6 +2,7 @@ const OpenAI = require("openai");
 const logger = require("../../utils/logger");
 const aiModelService = require("../ai-model/ai-model.service");
 const aiPromptService = require("../ai-prompt/ai-prompt.service");
+const { sanitizeAiResponse } = require("../../utils/responseSanitizer");
 
 /**
  * Dynamically gets the active LLM client and active model name from the database.
@@ -53,7 +54,9 @@ const callDirectLlm = async ({ message }) => {
   let reply;
   try {
     const { client, modelName } = await getActiveLlm();
-    const systemPrompt = await buildSystemPrompt("");
+    const settings = await aiPromptService.getActiveSettings();
+    const systemPrompt = await buildSystemPrompt("", settings);
+    const maxWords = settings?.maxResponseWords || 50;
 
     const completion = await client.chat.completions.create({
       model: modelName,
@@ -63,10 +66,13 @@ const callDirectLlm = async ({ message }) => {
       ],
       max_tokens: 512,
       temperature: 0.4,
+      include_reasoning: false,
     });
 
-    reply = completion.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error("Empty LLM response");
+    const rawReply = completion.choices?.[0]?.message?.content?.trim();
+    if (!rawReply) throw new Error("Empty LLM response");
+
+    reply = sanitizeAiResponse(rawReply, { maxWords });
   } catch (err) {
     logger.warn("[llm] Direct LLM call failed", { error: err.message });
     reply = "I'm having trouble connecting right now. Please try again in a moment! 🌟";

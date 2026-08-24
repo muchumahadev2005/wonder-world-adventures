@@ -55,8 +55,8 @@ const classifyIntent = async (message) => {
 
     const raw = (completion.choices?.[0]?.message?.content || "").trim().toLowerCase();
 
-    if (raw.startsWith("general")) return "general";
-    if (raw.startsWith("storynest")) return "storynest";
+    if (raw.includes("storynest")) return "storynest";
+    if (raw.includes("general")) return "general";
 
     logger.warn("[router] Unexpected classifier output — defaulting to storynest", { raw });
     return "storynest";
