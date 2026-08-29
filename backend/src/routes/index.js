@@ -18,6 +18,8 @@ const voiceRoutes = require("../modules/voice/voice.routes");
 const paymentsRoutes = require("../modules/payments/payments.routes");
 const usersRoutes = require("../modules/users/users.routes");
 const adminRoutes = require("../modules/admin/admin.routes");
+const lifeSkillRoutes = require("../modules/life-skill/life-skill.routes");
+const dictionaryRoutes = require("../modules/dictionary/dictionary.routes");
 
 const router = express.Router();
 
@@ -46,5 +48,7 @@ router.use("/voice", voiceRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);
 router.use("/admin", adminRoutes);
+router.use("/life-skills", lifeSkillRoutes);
+router.use("/dictionary", dictionaryRoutes);
 
 module.exports = router;

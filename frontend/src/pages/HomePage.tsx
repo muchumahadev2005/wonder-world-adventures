@@ -20,6 +20,9 @@ import {
   Home as HomeIcon,
   GraduationCap,
   Zap,
+  MessageSquare,
+  Users,
+  Library,
 } from "lucide-react";
 
 type Section = {
@@ -78,6 +81,24 @@ const sections: Section[] = [
     bg: "linear-gradient(160deg, #FFE0A8 0%, #E8A87C 55%, #8E6FAD 100%)",
     glow: "rgba(232,168,124,0.55)",
     accent: HomeIcon,
+  },
+  {
+    icon: MessageSquare,
+    title: "Life Skills",
+    desc: "Real-life Practice",
+    path: "/life-skills",
+    bg: "linear-gradient(160deg, #1A6B5A 0%, #2E9E80 55%, #72D6B0 100%)",
+    glow: "rgba(46,158,128,0.55)",
+    accent: Users,
+  },
+  {
+    icon: BookOpen,
+    title: "Word Wonder",
+    desc: "Dictionary Magic",
+    path: "/dictionary",
+    bg: "linear-gradient(160deg, #2A1A6B 0%, #4A3FD4 55%, #9B80FF 100%)",
+    glow: "rgba(74,63,212,0.55)",
+    accent: Library,
   },
 ];
 
@@ -353,7 +374,7 @@ const HomePage = () => {
 
         {/* Themed feature cards — horizontal snap on mobile, grid on desktop */}
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 sm:gap-5"
           variants={container}
           initial="hidden"
           animate="show"
