@@ -691,4 +691,27 @@ model AiPromptSetting {
   @@map("ai_prompt_settings")
 }
 
+// ── Life Skills Practice ─────────────────────────────────────────
+
+model LifeSkillScenario {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  title            String
+  description      String
+  icon             String   // emoji icon e.g. "🍽️"
+  characterName    String   @map("character_name")  // e.g. "Chef Marco"
+  characterAvatar  String?  @map("character_avatar") // emoji for avatar
+  coverGradient    String   @default("linear-gradient(135deg, #1A6B5A 0%, #2E9E80 55%, #72D6B0 100%)") @map("cover_gradient")
+  systemPrompt     String   @map("system_prompt")
+  modelName        String?  @map("model_name")  // dedicated OpenRouter model slug, null = use global active model
+  apiKey           String?  @map("api_key")     // optional per-scenario override key
+  maxWords         Int      @default(60) @map("max_words")
+  isActive         Boolean  @default(true) @map("is_active")
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("life_skill_scenarios")
+}
+
 

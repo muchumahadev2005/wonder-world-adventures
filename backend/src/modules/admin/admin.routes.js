@@ -96,4 +96,11 @@ router.use("/ai-models", aiModelRoutes);
 const aiPromptRoutes = require("../ai-prompt/ai-prompt.routes");
 router.use("/ai-prompt-settings", aiPromptRoutes);
 
+// ── Life Skills Scenario Management ──────────────────────────────
+const { adminList, adminCreate, adminUpdate, adminDelete } = require("../life-skill/life-skill.controller");
+router.get("/life-skills", adminList);
+router.post("/life-skills", adminCreate);
+router.put("/life-skills/:id", adminUpdate);
+router.delete("/life-skills/:id", adminDelete);
+
 module.exports = router;

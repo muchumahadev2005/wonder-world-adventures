@@ -36,6 +36,10 @@ import MediaLibrary from "./pages/admin/MediaLibrary";
 import ImportHistory from "./pages/admin/ImportHistory";
 import AiModelsAdmin from "./pages/admin/AiModelsAdmin";
 import AiPromptsAdmin from "./pages/admin/AiPromptsAdmin";
+import LifeSkillsAdmin from "./pages/admin/LifeSkillsAdmin";
+import LifeSkillsPage from "./pages/LifeSkillsPage";
+import LifeSkillsChatPage from "./pages/LifeSkillsChatPage";
+import DictionaryPage from "./pages/DictionaryPage";
 
 import { ADMIN_EMAIL } from "./lib/adminApi";
 import { apiFetch } from "./lib/api";
@@ -99,6 +103,9 @@ const AppRoutes = () => {
         <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/parents" element={<ProtectedRoute><ParentsPage /></ProtectedRoute>} />
         <Route path="/learn" element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
+        <Route path="/life-skills" element={<ProtectedRoute><LifeSkillsPage /></ProtectedRoute>} />
+        <Route path="/life-skills/:slug/practice" element={<ProtectedRoute><LifeSkillsChatPage /></ProtectedRoute>} />
+        <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
 
         {/* ── Admin ─────────────────────────────── */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -119,6 +126,7 @@ const AppRoutes = () => {
         <Route path="/admin/payments" element={<AdminRoute><PaymentsAdmin /></AdminRoute>} />
         <Route path="/admin/analytics" element={<AdminRoute><AnalyticsAdmin /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><SettingsAdmin /></AdminRoute>} />
+        <Route path="/admin/life-skills" element={<AdminRoute><LifeSkillsAdmin /></AdminRoute>} />
 
         {/* ── 404 ──────────────────────────────── */}
         <Route path="*" element={<NotFound />} />

@@ -25,6 +25,7 @@ import {
   Image,
   FileUp,
   Cpu,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const NAV_ITEMS = [
   { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/admin/ai-models", label: "AI Models", icon: Cpu },
   { path: "/admin/ai-prompts", label: "AI Prompt Limits", icon: Sparkles },
+  { path: "/admin/life-skills", label: "Life Skills", icon: MessageSquare },
   { path: "/admin/stories", label: "Stories", icon: BookOpen },
   { path: "/admin/languages", label: "Languages", icon: Languages },
   { path: "/admin/lessons", label: "Lessons", icon: GraduationCap },

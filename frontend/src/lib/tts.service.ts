@@ -74,7 +74,9 @@ class BrowserTTSProvider implements TTSProvider {
   }
 
   speak(text: string, lang: string, options: TTSOptions = {}) {
+    if (!this.synth) return;
     this.stop();
+
     const utterance = new SpeechSynthesisUtterance(text);
     const mappedLang = LANG_MAP[lang] || lang;
     utterance.lang = mappedLang;
@@ -89,7 +91,21 @@ class BrowserTTSProvider implements TTSProvider {
     if (options.onError) utterance.onerror = (e) => options.onError!(new Error(e.error));
 
     this.currentUtterance = utterance;
-    this.synth.speak(utterance);
+
+    // Chrome unfreeze fix
+    if (this.synth.paused) {
+      this.synth.resume();
+    }
+
+    setTimeout(() => {
+      try {
+        if (this.synth.paused) this.synth.resume();
+        this.synth.speak(utterance);
+      } catch (err) {
+        console.error("[TTS] SpeechSynthesis failed:", err);
+        options.onError?.(err instanceof Error ? err : new Error(String(err)));
+      }
+    }, 30);
   }
 
   stop() {
