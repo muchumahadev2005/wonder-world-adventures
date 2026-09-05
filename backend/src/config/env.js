@@ -67,6 +67,8 @@ module.exports = {
 	// ── RAG / AI ──────────────────────────────────────────────────
 	openrouterApiKey: getEnv("OPENROUTER_API_KEY"),
 	redisUrl: getEnv("REDIS_URL"),
+	// ── StoryWeaver ────────────────────────────────────────────────
+	storyweaverApiToken: getEnv("STORYWEAVER_API_TOKEN", ""),
 };
 
 
