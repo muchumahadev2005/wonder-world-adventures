@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChild } from "@/context/ChildContext";
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +15,9 @@ import SubscribeModal from "@/components/SubscribeModal";
 import storiesBg from "@/assets/stories-bg.jpg";
 import { Star, Lock, BookMarked } from "lucide-react";
 import { StoryDetails } from "@/components/story/StoryDetails";
+import { StoryWeaverSection } from "@/components/story/StoryWeaverSection";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type StoryItem = {
   id: string;
@@ -69,10 +73,66 @@ const normalizeApiStory = (story: ApiStory): StoryItem => {
 };
 
 type Screen = "list" | "detail" | "read" | "quiz";
+type Source = "our" | "storyweaver";
+
+// ─── Source Selector ──────────────────────────────────────────────────────────
+
+const SourceSelector = ({
+  source,
+  onSelect,
+}: {
+  source: Source;
+  onSelect: (s: Source) => void;
+}) => (
+  <div
+    className="flex gap-2 p-1.5 rounded-2xl mb-5"
+    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+  >
+    {(
+      [
+        { key: "our" as Source, label: "📚 Our Stories" },
+        { key: "storyweaver" as Source, label: "🌍 StoryWeaver" },
+      ] as const
+    ).map(({ key, label }) => (
+      <motion.button
+        key={key}
+        id={`stories-source-${key}`}
+        onClick={() => onSelect(key)}
+        className="flex-1 relative py-2.5 px-3 rounded-xl font-bold text-sm transition-colors"
+        style={{
+          color: source === key ? "#fff" : "rgba(255,255,255,0.45)",
+          zIndex: 1,
+        }}
+        whileTap={{ scale: 0.97 }}
+      >
+        {source === key && (
+          <motion.div
+            layoutId="stories-source-pill"
+            className="absolute inset-0 rounded-xl"
+            style={{
+              background: "linear-gradient(135deg, hsl(260,85%,58%), hsl(290,80%,64%))",
+              boxShadow: "0 6px 20px rgba(124,92,191,0.5)",
+              zIndex: -1,
+            }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          />
+        )}
+        {label}
+      </motion.button>
+    ))}
+  </div>
+);
+
+// ─── StoriesPage ──────────────────────────────────────────────────────────────
 
 const StoriesPage = () => {
   const { profile, addStars, addXP, addCoins, incrementStreak, completeStory, setPremium } = useChild();
   const { token } = useAuth();
+
+  // Source tab state (default to storyweaver to showcase the explorer)
+  const [source, setSource] = useState<Source>("storyweaver");
+
+  // Our Stories state (unchanged)
   const [screen, setScreen] = useState<Screen>("list");
   const [apiStories, setApiStories] = useState<StoryItem[]>(stories);
   const [activeStory, setActiveStory] = useState<StoryItem | null>(null);
@@ -140,6 +200,56 @@ const StoriesPage = () => {
     setShowReward(true);
   };
 
+  // When switching source, reset Our Stories screen back to list
+  const handleSourceSelect = (s: Source) => {
+    setSource(s);
+    if (s === "our") {
+      setScreen("list");
+      setActiveStory(null);
+    }
+  };
+
+  // If StoryWeaver is active, render full-page clean StoryWeaver Explorer UI (no moon/ambient sound)
+  if (source === "storyweaver") {
+    return (
+      <div className="min-h-screen bg-[#faf8f5] text-[#1c1917] font-sans antialiased">
+        {/* Top bar */}
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/90 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="text-stone-600 hover:text-stone-900 font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition"
+              >
+                ← Back to KidsPal
+              </Link>
+              <span className="text-stone-300">|</span>
+              <span className="text-xs sm:text-sm font-bold text-stone-800 flex items-center gap-1.5">
+                🌍 StoryWeaver Explorer
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="switch-to-our-stories"
+                onClick={() => handleSourceSelect("our")}
+                className="px-3.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition flex items-center gap-1.5"
+              >
+                📚 Switch to Our Stories
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Pure StoryWeaver Section */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <StoryWeaverSection />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <SceneBackground image={storiesBg} alt="Enchanted moonlit library" variant="library" />
@@ -162,18 +272,38 @@ const StoriesPage = () => {
         onClose={() => { setShowReward(false); setScreen("list"); setActiveStory(null); }}
       />
 
-      {/* ── STORY LIST ── */}
+      {/* ── Our Stories ── */}
       <AnimatePresence mode="wait">
         {screen === "list" && (
-          <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-28">
+          <motion.div
+            key="our-list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pb-28"
+          >
             {/* Header */}
-            <div className="px-5 pt-20 pb-4">
-              <h1 className="font-display text-2xl font-extrabold text-white flex items-center gap-2 drop-shadow-md">
-                <BookMarked className="w-6 h-6 text-amber-300" /> Stories
-              </h1>
-              <p className="text-white/70 text-sm mt-1">Read, listen &amp; earn stars ⭐</p>
+            <div className="px-5 pt-20 pb-4 flex items-center justify-between">
+              <div>
+                <h1 className="font-display text-2xl font-extrabold text-white flex items-center gap-2 drop-shadow-md">
+                  <BookMarked className="w-6 h-6 text-amber-300" /> Stories
+                </h1>
+                <p className="text-white/70 text-sm mt-1">Read, listen &amp; earn stars ⭐</p>
+              </div>
+              <button
+                onClick={() => handleSourceSelect("storyweaver")}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-1.5"
+              >
+                🌍 StoryWeaver Explorer
+              </button>
             </div>
 
+            {/* Source selector */}
+            <div className="px-5">
+              <SourceSelector source={source} onSelect={handleSourceSelect} />
+            </div>
+
+            {/* Story grid */}
             <div className="px-4 grid grid-cols-2 gap-4">
               {apiStories.map((story, i) => {
                 const locked = story.premium && !profile?.isPremium;
@@ -192,7 +322,8 @@ const StoriesPage = () => {
                   >
                     {/* Cover image or emoji */}
                     {story.thumbnailUrl ? (
-                      <img src={story.thumbnailUrl} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-110" />
+                      <img src={story.thumbnailUrl} alt={story.title}
+                        className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-110" />
                     ) : (
                       <div className="p-4 text-4xl relative z-10">{story.coverEmoji}</div>
                     )}
@@ -223,24 +354,30 @@ const StoriesPage = () => {
           </motion.div>
         )}
 
-        {/* ── STORY DETAIL ── */}
+        {/* ─── Our Stories — DETAIL ─── */}
         {screen === "detail" && activeStory && (
           <StoryDetails
+            key="our-detail"
             activeStory={activeStory}
             onBack={() => setScreen("list")}
             goToQuiz={goToQuiz}
           />
         )}
 
-        {/* ── QUIZ ── */}
+        {/* ─── Our Stories — QUIZ ─── */}
         {screen === "quiz" && activeStory && (
-          <motion.div key="quiz" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} 
+          <motion.div
+            key="our-quiz"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             className="absolute inset-0 z-50 pb-28 px-4 pt-8 overflow-y-auto"
             style={{ background: "linear-gradient(180deg, #0d0720 0%, #1a0f3a 50%, #0d0720 100%)" }}
           >
             {/* Quiz intro banner */}
-            <motion.div className="mb-4 p-4 rounded-2xl text-center"
-              style={{ background: "linear-gradient(135deg,rgba(124,92,191,0.3),rgba(167,139,250,0.2))", border: "1px solid rgba(124,92,191,0.4)" }}>
+            <motion.div
+              className="mb-4 p-4 rounded-2xl text-center"
+              style={{ background: "linear-gradient(135deg,rgba(124,92,191,0.3),rgba(167,139,250,0.2))", border: "1px solid rgba(124,92,191,0.4)" }}
+            >
               <div className="text-3xl mb-1">📝</div>
               <p className="text-white font-display font-bold">Quiz Time!</p>
               <p className="text-white/60 text-xs mt-0.5">Based on: <span className="text-violet-300">{activeStory.title}</span></p>

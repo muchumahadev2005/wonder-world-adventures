@@ -20,6 +20,7 @@ const usersRoutes = require("../modules/users/users.routes");
 const adminRoutes = require("../modules/admin/admin.routes");
 const lifeSkillRoutes = require("../modules/life-skill/life-skill.routes");
 const dictionaryRoutes = require("../modules/dictionary/dictionary.routes");
+const storyweaverRoutes = require("../modules/storyweaver/routes/storyweaver.routes");
 
 const router = express.Router();
 
@@ -50,5 +51,6 @@ router.use("/users", usersRoutes);
 router.use("/admin", adminRoutes);
 router.use("/life-skills", lifeSkillRoutes);
 router.use("/dictionary", dictionaryRoutes);
+router.use("/storyweaver/stories", storyweaverRoutes);
 
 module.exports = router;

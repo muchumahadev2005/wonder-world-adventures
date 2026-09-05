@@ -287,3 +287,89 @@ export const paymentApi = {
     apiFetch<{ payments: ApiPayment[] }>("/payments/history", {}, token),
 };
 
+// ─── StoryWeaver Types ────────────────────────────────────────────────────────
+
+export type StoryWeaverStory = {
+  id: string;
+  title: string;
+  language: string;
+  level: string;
+  slug: string;
+  recommended: boolean;
+  editorsPick: boolean;
+  coverImage: string | null;
+  authors: string[];
+  illustrators: string[];
+  description: string;
+  synopsis?: string;
+  publisher: string;
+  readsCount: number;
+  likesCount: number;
+  isAudio: boolean;
+  isGif: boolean;
+  awards?: string[];
+  raw?: Record<string, unknown>;
+};
+
+export type StoryWeaverStoryPage = {
+  pageId: number | string;
+  position: number;
+  pageType: string;
+  isLastPage: boolean;
+  imageUrl: string | null;
+  text: string;
+  startTime?: number | null;
+};
+
+export type StoryWeaverStoryDetail = {
+  id: string;
+  slug: string;
+  title: string;
+  language: string;
+  level: string;
+  orientation: string;
+  isAudio: boolean;
+  audioPath: string | null;
+  vttFilePath: string | null;
+  pages: StoryWeaverStoryPage[];
+  pageTimestamps?: number[];
+  totalPages: number;
+};
+
+export type StoryWeaverListParams = {
+  page?: number;
+  limit?: number;
+  language?: string;
+  level?: number;
+  query?: string;
+  category?: string;
+};
+
+export type StoryWeaverListResponse = {
+  success: boolean;
+  stories: StoryWeaverStory[];
+  total: number;
+  page: number;
+  totalPages: number;
+  perPage: number;
+};
+
+// ─── StoryWeaver API Helpers ──────────────────────────────────────────────────
+
+export const storyweaverApi = {
+  listStories: (params: StoryWeaverListParams = {}): Promise<StoryWeaverListResponse> => {
+    const qs = new URLSearchParams();
+    if (params.page  != null) qs.set("page",     String(params.page));
+    if (params.limit != null) qs.set("limit",    String(params.limit));
+    if (params.language)      qs.set("language", params.language);
+    if (params.level != null) qs.set("level",    String(params.level));
+    if (params.query)         qs.set("query",    params.query);
+    if (params.category)      qs.set("category", params.category);
+    const q = qs.toString();
+    return apiFetch<StoryWeaverListResponse>(`/storyweaver/stories${q ? `?${q}` : ""}`);
+  },
+  getStory: (id: string): Promise<{ success: boolean; story: StoryWeaverStoryDetail }> =>
+    apiFetch<{ success: boolean; story: StoryWeaverStoryDetail }>(`/storyweaver/stories/${encodeURIComponent(id)}`),
+};
+
+
