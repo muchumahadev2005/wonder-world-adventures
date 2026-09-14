@@ -17,9 +17,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Volume2, Image as ImageIcon, Sparkles, Play, Search,
-  ExternalLink, ChevronDown, ChevronRight, X, Loader2, Award,
+  ExternalLink, ChevronDown, ChevronRight, X, Loader2, Award, Database,
 } from "lucide-react";
-import { storyweaverApi, StoryWeaverStory } from "@/lib/api";
+import { storyweaverApi, StoryWeaverStory, StoryWeaverDbStats } from "@/lib/api";
 import { StoryWeaverReader } from "./StoryWeaverReader";
 
 type FilterTab = "Audio" | "Images" | "GIF" | "All";
@@ -79,13 +79,34 @@ export const StoryWeaverSection = () => {
   const [activeReaderStory, setActiveReaderStory] = useState<StoryWeaverStory | null>(null);
   const [isReelsMode, setIsReelsMode]             = useState(false);
 
+  // Database storage states
+  const [sourceMode, setSourceMode]               = useState<"all" | "database">("all");
+  const [dbStats, setDbStats]                     = useState<StoryWeaverDbStats | null>(null);
+  const [isSyncing, setIsSyncing]                 = useState(false);
+  const [syncSuccessMsg, setSyncSuccessMsg]       = useState<string | null>(null);
+
+  // Load database statistics
+  const refreshStats = useCallback(async () => {
+    try {
+      const res = await storyweaverApi.getDbStats();
+      if (res.success) setDbStats(res.stats);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats]);
+
   // Fetch stories
   const fetchStories = useCallback(async (
     page = 1,
     limit = 24,
     query = "",
     language = "Any language",
-    category = "Any category"
+    category = "Any category",
+    source = sourceMode
   ) => {
     setLoading(true);
     setError(null);
@@ -104,34 +125,57 @@ export const StoryWeaverSection = () => {
       const res = await storyweaverApi.listStories({
         page,
         limit,
-        query:    query.trim() || undefined,
-        language: language !== "Any language" ? language : undefined,
+        query:     query.trim() || undefined,
+        language:  language !== "Any language" ? language : undefined,
         level,
-        category: effectiveCategory,
+        category:  effectiveCategory,
+        source:    source === "database" ? "database" : undefined,
+        audioOnly: (activeTab === "Audio" && (!language || language === "Any language")) || source === "database",
       });
 
       setStories(res.stories);
-      setTotalBooks(res.total || 10000);
+      setTotalBooks(res.total || (source === "database" ? res.stories.length : 10000));
       setCurrentPage(res.page || page);
       setTotalPages(res.totalPages || Math.ceil((res.total || 10000) / limit));
     } catch {
-      setError("Failed to load stories from StoryWeaver. Please check your connection and try again.");
+      setError("Failed to load stories. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sourceMode, activeTab]);
 
   // Initial load
   useEffect(() => {
-    fetchStories(1, 24, "", "Any language", "Any category");
-  }, [fetchStories]);
+    fetchStories(1, 24, "", "Any language", "Any category", sourceMode);
+  }, [fetchStories, sourceMode]);
+
+  // Trigger on-demand sync of next 20 audio stories into DB
+  const handleTriggerSync = async (count = 20) => {
+    setIsSyncing(true);
+    setSyncSuccessMsg(null);
+    try {
+      const res = await storyweaverApi.syncAudios(count);
+      if (res.success) {
+        setSyncSuccessMsg(`Successfully synced ${res.result.successCount} audio stories into database!`);
+        await refreshStats();
+        if (sourceMode === "database") {
+          fetchStories(1, parseInt(fetchSizeInput, 10) || 24, searchInput, languageInput, categoryInput, "database");
+        }
+      }
+    } catch {
+      setSyncSuccessMsg("Sync encountered an issue. Please try again.");
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncSuccessMsg(null), 6000);
+    }
+  };
 
   // Handle Search submit
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const pg = Math.max(1, parseInt(pageInput, 10) || 1);
     const sz = Math.min(50, Math.max(1, parseInt(fetchSizeInput, 10) || 24));
-    fetchStories(pg, sz, searchInput, languageInput, categoryInput);
+    fetchStories(pg, sz, searchInput, languageInput, categoryInput, sourceMode);
   };
 
   // Filter stories client-side based on activeTab
@@ -384,12 +428,12 @@ export const StoryWeaverSection = () => {
       </AnimatePresence>
 
       {/* ── Page Header ──────────────────────────────────────────────── */}
-      <div className="mb-5">
+      <div className="mb-4">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
-          StoryWeaver API Explorer
+          Illustrated Stories &amp; Narration
         </h1>
         <p className="text-stone-500 text-xs sm:text-sm mt-1">
-          Live test harness for GET <code className="bg-stone-200/80 px-1 py-0.5 rounded text-stone-800 font-mono text-[11px]">/api/v1/books-search</code> on storyweaver.org.in — every field the endpoint returns is rendered below.
+          Explore thousands of illustrated children's books with natural voice narration.
         </p>
       </div>
 
@@ -456,7 +500,11 @@ export const StoryWeaverSection = () => {
             <select
               id="sw-form-language"
               value={languageInput}
-              onChange={(e) => setLanguageInput(e.target.value)}
+              onChange={(e) => {
+                const newLang = e.target.value;
+                setLanguageInput(newLang);
+                fetchStories(1, parseInt(fetchSizeInput, 10) || 24, searchInput, newLang, categoryInput, sourceMode);
+              }}
               style={{ backgroundColor: "#ffffff", color: "#1c1917" }}
               className="w-full appearance-none px-3 py-2 pr-8 text-sm rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#d9531e]/30 focus:border-[#d9531e] cursor-pointer"
             >
@@ -479,7 +527,11 @@ export const StoryWeaverSection = () => {
             <select
               id="sw-form-category"
               value={categoryInput}
-              onChange={(e) => setCategoryInput(e.target.value)}
+              onChange={(e) => {
+                const newCat = e.target.value;
+                setCategoryInput(newCat);
+                fetchStories(1, parseInt(fetchSizeInput, 10) || 24, searchInput, languageInput, newCat, sourceMode);
+              }}
               style={{ backgroundColor: "#ffffff", color: "#1c1917" }}
               className="w-full appearance-none px-3 py-2 pr-8 text-sm rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#d9531e]/30 focus:border-[#d9531e] cursor-pointer"
             >
@@ -662,6 +714,11 @@ export const StoryWeaverSection = () => {
                   {story.editorsPick && (
                     <span className="bg-[#d9531e] text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm">
                       EDITOR'S PICK
+                    </span>
+                  )}
+                  {(story.isSavedInDb || sourceMode === "database" || story.source === "database") && (
+                    <span className="bg-emerald-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                      💾 IN DB
                     </span>
                   )}
                   {story.isAudio && (

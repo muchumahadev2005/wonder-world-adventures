@@ -309,6 +309,8 @@ export type StoryWeaverStory = {
   isGif: boolean;
   awards?: string[];
   raw?: Record<string, unknown>;
+  isSavedInDb?: boolean;
+  source?: string;
 };
 
 export type StoryWeaverStoryPage = {
@@ -319,6 +321,7 @@ export type StoryWeaverStoryPage = {
   imageUrl: string | null;
   text: string;
   startTime?: number | null;
+  audioUrl?: string | null;
 };
 
 export type StoryWeaverStoryDetail = {
@@ -334,6 +337,16 @@ export type StoryWeaverStoryDetail = {
   pages: StoryWeaverStoryPage[];
   pageTimestamps?: number[];
   totalPages: number;
+  isSavedInDb?: boolean;
+  hasGeneratedAudio?: boolean;
+  source?: string;
+};
+
+export type StoryWeaverDbStats = {
+  totalSaved: number;
+  totalWithAudio: number;
+  latestSync: string | null;
+  languages: { language: string; count: number }[];
 };
 
 export type StoryWeaverListParams = {
@@ -343,6 +356,8 @@ export type StoryWeaverListParams = {
   level?: number;
   query?: string;
   category?: string;
+  source?: "api" | "database" | "db";
+  audioOnly?: boolean;
 };
 
 export type StoryWeaverListResponse = {
@@ -352,6 +367,7 @@ export type StoryWeaverListResponse = {
   page: number;
   totalPages: number;
   perPage: number;
+  source?: string;
 };
 
 // ─── StoryWeaver API Helpers ──────────────────────────────────────────────────
@@ -359,17 +375,30 @@ export type StoryWeaverListResponse = {
 export const storyweaverApi = {
   listStories: (params: StoryWeaverListParams = {}): Promise<StoryWeaverListResponse> => {
     const qs = new URLSearchParams();
-    if (params.page  != null) qs.set("page",     String(params.page));
-    if (params.limit != null) qs.set("limit",    String(params.limit));
-    if (params.language)      qs.set("language", params.language);
-    if (params.level != null) qs.set("level",    String(params.level));
-    if (params.query)         qs.set("query",    params.query);
-    if (params.category)      qs.set("category", params.category);
+    if (params.page  != null) qs.set("page",      String(params.page));
+    if (params.limit != null) qs.set("limit",     String(params.limit));
+    if (params.language)      qs.set("language",  params.language);
+    if (params.level != null) qs.set("level",     String(params.level));
+    if (params.query)         qs.set("query",     params.query);
+    if (params.category)      qs.set("category",  params.category);
+    if (params.source)        qs.set("source",    params.source);
+    if (params.audioOnly)     qs.set("audioOnly", "true");
     const q = qs.toString();
     return apiFetch<StoryWeaverListResponse>(`/storyweaver/stories${q ? `?${q}` : ""}`);
   },
   getStory: (id: string): Promise<{ success: boolean; story: StoryWeaverStoryDetail }> =>
     apiFetch<{ success: boolean; story: StoryWeaverStoryDetail }>(`/storyweaver/stories/${encodeURIComponent(id)}`),
+  generateAudio: (id: string): Promise<{ success: boolean; story: StoryWeaverStoryDetail }> =>
+    apiFetch<{ success: boolean; story: StoryWeaverStoryDetail }>(`/storyweaver/stories/${encodeURIComponent(id)}/generate-audio`, {
+      method: "POST",
+    }),
+  getDbStats: (): Promise<{ success: boolean; stats: StoryWeaverDbStats }> =>
+    apiFetch<{ success: boolean; stats: StoryWeaverDbStats }>("/storyweaver/stories/stats"),
+  syncAudios: (limit = 20): Promise<{ success: boolean; result: { totalProcessed: number; successCount: number; failCount: number } }> =>
+    apiFetch<{ success: boolean; result: { totalProcessed: number; successCount: number; failCount: number } }>("/storyweaver/stories/sync", {
+      method: "POST",
+      body: JSON.stringify({ limit }),
+    }),
 };
 
 
