@@ -33,18 +33,19 @@ export const StoryWeaverReader = ({
   isReelsMode = false,
   onNextStory,
 }: StoryWeaverReaderProps) => {
-  const [detail, setDetail]             = useState<StoryWeaverStoryDetail | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
-  const [pageIdx, setPageIdx]           = useState(0);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioError, setAudioError]     = useState(false);
-  const [imgLoaded, setImgLoaded]       = useState(false);
+  const [detail, setDetail]                   = useState<StoryWeaverStoryDetail | null>(null);
+  const [loading, setLoading]                 = useState(true);
+  const [error, setError]                     = useState<string | null>(null);
+  const [pageIdx, setPageIdx]                 = useState(0);
+  const [audioPlaying, setAudioPlaying]       = useState(false);
+  const [generatingAudio, setGeneratingAudio] = useState(false);
+  const [audioError, setAudioError]           = useState(false);
+  const [imgLoaded, setImgLoaded]             = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const touchStartX = useRef<number | null>(null);
 
-  // Fetch story details & pages (including pageTimestamps from VTT)
+  // Fetch story details & pages (and pre-generate audio if needed)
   const loadStory = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -55,6 +56,21 @@ export const StoryWeaverReader = ({
     try {
       const res = await storyweaverApi.getStory(story.slug || story.id);
       setDetail(res.story);
+
+      // If pages don't have audio yet, kick off background generation
+      const needsAudio = res.story?.pages?.some(
+        (p) => !p.audioUrl && (p.text || "").trim().length >= 2
+      );
+      if (needsAudio) {
+        storyweaverApi
+          .generateAudio(story.slug || story.id)
+          .then((genRes) => {
+            if (genRes.success && genRes.story) {
+              setDetail(genRes.story);
+            }
+          })
+          .catch(() => {});
+      }
     } catch {
       setError("Unable to load this story. Please try again!");
     } finally {
@@ -71,71 +87,30 @@ export const StoryWeaverReader = ({
   const isFirst     = pageIdx === 0;
   const isLast      = totalPages > 0 && pageIdx === totalPages - 1;
 
-  // Auto-play audio when story is loaded
+  // Auto-play current page audio when audioPlaying is true and pageIdx changes
   useEffect(() => {
-    if (detail?.audioPath && !audioError) {
-      const audio = audioRef.current;
-      if (audio) {
-        audio
-          .play()
-          .then(() => setAudioPlaying(true))
-          .catch(() => {
-            // Autoplay without user gesture may be blocked by browser policy
-            setAudioPlaying(false);
-          });
-      }
-    }
-  }, [detail?.audioPath, audioError]);
-
-  // ─── AUDIO-SYNCED AUTO PAGE SCROLL / ADVANCE ─────────────────────────────
-  // According to audio playback time, automatically advance the images
-  const handleTimeUpdate = () => {
     const audio = audioRef.current;
-    if (!audio || !detail || totalPages === 0) return;
-    const cur = audio.currentTime;
+    if (!audio) return;
 
-    const timestamps = detail.pageTimestamps;
-    if (timestamps && timestamps.length > 0) {
-      // Find the page index whose start time <= current audio playback time
-      let targetIdx = 0;
-      for (let i = 0; i < timestamps.length; i++) {
-        if (cur >= timestamps[i]) {
-          targetIdx = i;
-        } else {
-          break;
-        }
-      }
-      if (targetIdx !== pageIdx && targetIdx < totalPages) {
-        setPageIdx(targetIdx);
-      }
-    } else if (audio.duration && totalPages > 1) {
-      // Fallback if no VTT: divide audio duration evenly across pages
-      const secPerPage = audio.duration / totalPages;
-      const targetIdx = Math.min(totalPages - 1, Math.floor(cur / secPerPage));
-      if (targetIdx !== pageIdx) {
-        setPageIdx(targetIdx);
-      }
+    if (audioPlaying && currentPage?.audioUrl) {
+      audio.currentTime = 0;
+      audio
+        .play()
+        .then(() => setAudioError(false))
+        .catch(() => {
+          // Autoplay policy may require user gesture on first play
+          setAudioPlaying(false);
+        });
+    } else {
+      audio.pause();
     }
-  };
+  }, [pageIdx, audioPlaying, currentPage?.audioUrl]);
 
   // Seek audio and update page
   const seekToPage = useCallback((newIdx: number) => {
     const target = Math.max(0, Math.min(totalPages - 1, newIdx));
     setPageIdx(target);
-
-    const audio = audioRef.current;
-    if (audio && detail?.pageTimestamps && detail.pageTimestamps[target] !== undefined) {
-      audio.currentTime = detail.pageTimestamps[target];
-      if (audio.paused) {
-        audio.play().then(() => setAudioPlaying(true)).catch(() => {});
-      }
-    } else if (audio && audio.duration && totalPages > 0) {
-      audio.currentTime = (target / totalPages) * audio.duration;
-      if (audio.paused) {
-        audio.play().then(() => setAudioPlaying(true)).catch(() => {});
-      }
-    }
-  }, [detail, totalPages]);
+  }, [totalPages]);
 
   // Navigation functions
   const goNext = useCallback(() => {
@@ -174,23 +149,35 @@ export const StoryWeaverReader = ({
     setImgLoaded(false);
   }, [pageIdx]);
 
-  // Audio toggle
-  const toggleAudio = () => {
-    const audio = audioRef.current;
-    if (!audio || audioError) return;
+  // Audio toggle with on-demand generation support
+  const toggleAudio = async () => {
+    if (generatingAudio) return;
 
     if (audioPlaying) {
-      audio.pause();
       setAudioPlaying(false);
-    } else {
-      audio
-        .play()
-        .then(() => setAudioPlaying(true))
-        .catch(() => {
-          setAudioError(true);
-          setAudioPlaying(false);
-        });
+      return;
     }
+
+    const hasAnyAudio = Boolean(detail?.pages?.some((p) => Boolean(p.audioUrl)));
+
+    // If audio is not yet generated, generate now
+    if (!hasAnyAudio) {
+      setGeneratingAudio(true);
+      try {
+        const res = await storyweaverApi.generateAudio(story.slug || story.id);
+        if (res.success && res.story) {
+          setDetail(res.story);
+          setAudioPlaying(true);
+        }
+      } catch {
+        setAudioError(true);
+      } finally {
+        setGeneratingAudio(false);
+      }
+      return;
+    }
+
+    setAudioPlaying(true);
   };
 
   // Touch swipe support
@@ -205,7 +192,9 @@ export const StoryWeaverReader = ({
     touchStartX.current = null;
   };
 
-  const hasAudio = Boolean(detail?.audioPath) && !audioError;
+  const hasAudio =
+    Boolean(detail?.pages?.some((p) => Boolean(p.audioUrl))) ||
+    Boolean(detail?.pages?.some((p) => (p.text || "").trim().length >= 2));
 
   return (
     <motion.div
@@ -219,16 +208,20 @@ export const StoryWeaverReader = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Hidden Audio element with onTimeUpdate for automatic scrolling */}
-      {detail?.audioPath && (
+      {/* Hidden Audio element for current page narration */}
+      {currentPage?.audioUrl && (
         <audio
           ref={audioRef}
-          src={detail.audioPath}
+          key={`page-audio-${pageIdx}-${currentPage.audioUrl}`}
+          src={currentPage.audioUrl}
           preload="auto"
-          onTimeUpdate={handleTimeUpdate}
           onEnded={() => {
-            setAudioPlaying(false);
-            if (isReelsMode) goNext();
+            if (!isLast) {
+              setPageIdx((prev) => prev + 1);
+            } else {
+              setAudioPlaying(false);
+              if (isReelsMode && onNextStory) onNextStory();
+            }
           }}
           onError={() => {
             setAudioError(true);
@@ -300,28 +293,34 @@ export const StoryWeaverReader = ({
               <SkipForward className="w-4 h-4" />
             </button>
 
-            {/* Audio Toggle (Pulse indicator when playing) */}
+            {/* Audio Toggle (Pulse indicator when playing, spinner when generating) */}
             <button
               type="button"
               id="sw-reader-audio"
               onClick={toggleAudio}
-              disabled={!hasAudio}
+              disabled={generatingAudio || !hasAudio}
               className={`relative w-8 h-8 rounded-full flex items-center justify-center text-white transition active:scale-95 ${
-                hasAudio
-                  ? audioPlaying
-                    ? "bg-[#d9531e] text-white shadow-md ring-2 ring-[#d9531e]/50"
-                    : "bg-white/10 hover:bg-white/20"
+                generatingAudio
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  : audioPlaying
+                  ? "bg-[#d9531e] text-white shadow-md ring-2 ring-[#d9531e]/50"
+                  : hasAudio
+                  ? "bg-white/10 hover:bg-white/20"
                   : "bg-white/5 text-white/30 cursor-not-allowed"
               }`}
               title={
-                !hasAudio
-                  ? "No narration audio for this story"
+                generatingAudio
+                  ? "Generating AI narration..."
+                  : !hasAudio
+                  ? "No text to narrate for this story"
                   : audioPlaying
                   ? "Narration playing — click to pause"
-                  : "Click to play narration audio"
+                  : "Click to play AI voice narration"
               }
             >
-              {audioPlaying ? (
+              {generatingAudio ? (
+                <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+              ) : audioPlaying ? (
                 <Volume2 className="w-4 h-4 animate-pulse" />
               ) : (
                 <VolumeX className="w-4 h-4" />
@@ -350,12 +349,23 @@ export const StoryWeaverReader = ({
               ? "BACK COVER"
               : `PAGE ${pageIdx + 1}`}
           </span>
-          {hasAudio && audioPlaying && (
-            <span className="text-[10px] text-orange-400 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-ping" />
-              Auto-scrolling with audio
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {generatingAudio ? (
+              <span className="text-[10px] text-amber-300 font-semibold flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Generating AI voice...
+              </span>
+            ) : audioPlaying ? (
+              <span className="text-[10px] text-orange-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-ping" />
+                Auto-reading page
+              </span>
+            ) : hasAudio ? (
+              <span className="text-[10px] text-emerald-400/80 font-medium flex items-center gap-1">
+                🎙️ AI Narration
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {/* ── Center Content: Illustration + Tap Navigation ───────────── */}

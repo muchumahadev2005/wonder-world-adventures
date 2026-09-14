@@ -69,6 +69,12 @@ module.exports = {
 	redisUrl: getEnv("REDIS_URL"),
 	// ── StoryWeaver ────────────────────────────────────────────────
 	storyweaverApiToken: getEnv("STORYWEAVER_API_TOKEN", ""),
+	// ── Cloudflare R2 (Audio Storage) ──────────────────────────────
+	r2AccountId:       getEnv("R2_ACCOUNT_ID", ""),
+	r2AccessKeyId:     getEnv("R2_ACCESS_KEY_ID", ""),
+	r2SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", ""),
+	r2BucketName:      getEnv("R2_BUCKET_NAME", "flucieaudio"),
+	r2PublicUrl:       getEnv("R2_PUBLIC_URL", ""),
 };
 
 

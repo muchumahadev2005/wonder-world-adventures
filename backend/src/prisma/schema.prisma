@@ -714,4 +714,37 @@ model LifeSkillScenario {
   @@map("life_skill_scenarios")
 }
 
+// ── StoryWeaver Audio Stories ─────────────────────────────────────
+
+model StoryWeaverAudio {
+  id             String    @id @default(cuid())
+  swId           String    @unique @map("sw_id")
+  slug           String    @unique
+  title          String
+  language       String    @default("English")
+  level          String?
+  description    String?
+  synopsis       String?
+  coverImage     String?   @map("cover_image")
+  authors        String[]  @default([])
+  illustrators   String[]  @default([])
+  publisher      String?
+  readsCount     Int       @default(0) @map("reads_count")
+  likesCount     Int       @default(0) @map("likes_count")
+  isAudio        Boolean   @default(true) @map("is_audio")
+  pageTimestamps Json?     @map("page_timestamps")
+  pages          Json?
+  totalPages     Int       @default(0) @map("total_pages")
+  orientation    String?   @default("landscape")
+  isSynced       Boolean   @default(true) @map("is_synced")
+  syncedAt       DateTime  @default(now()) @map("synced_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([language])
+  @@index([level])
+  @@index([isAudio])
+  @@map("storyweaver_audios")
+}
+
 
