@@ -56,8 +56,33 @@ const getStory = catchAsync(async (req, res) => {
 
 // POST /api/storyweaver/stories/:id/generate-audio
 const generateAudio = catchAsync(async (req, res) => {
-	const story = await service.ensurePageAudios(req.params.id);
-	res.json({ success: true, story });
+	// Race audio generation against a 55-second timeout
+	// (just under Render's 60s default to avoid gateway timeout)
+	const GENERATION_TIMEOUT = 55_000;
+
+	try {
+		const story = await Promise.race([
+			service.ensurePageAudios(req.params.id),
+			new Promise((_, reject) =>
+				setTimeout(
+					() => reject(new Error("Audio generation timed out — will continue in background")),
+					GENERATION_TIMEOUT
+				)
+			),
+		]);
+		res.json({ success: true, story });
+	} catch (err) {
+		// If timed out, still return the story without audio rather than an error
+		try {
+			const story = await service.getStory(req.params.id);
+			res.json({ success: true, story, audioGenerating: true });
+		} catch (fallbackErr) {
+			res.status(504).json({
+				success: false,
+				message: "Audio generation is taking longer than expected. Please try again shortly.",
+			});
+		}
+	}
 });
 
 module.exports = {
