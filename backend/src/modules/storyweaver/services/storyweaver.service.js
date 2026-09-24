@@ -69,7 +69,7 @@ const fetchJson = (url) =>
  */
 const fetchText = (url) =>
 	new Promise((resolve, reject) => {
-		const req = https.get(url, { timeout: 10_000 }, (res) => {
+		const req = https.get(url, { timeout: 5_000 }, (res) => {
 			let raw = "";
 			res.on("data", (chunk) => { raw += chunk; });
 			res.on("end", () => resolve(raw));
@@ -685,10 +685,16 @@ const getStory = async (id, fallbackTitle = null) => {
 	let cueTimes = {};
 	if (data.vttFilePath) {
 		try {
-			const vttText = await fetchText(data.vttFilePath);
+			// Race VTT fetch against a 3-second timeout — VTT is optional enhancement
+			const vttText = await Promise.race([
+				fetchText(data.vttFilePath),
+				new Promise((_, reject) =>
+					setTimeout(() => reject(new Error("VTT fetch timed out (3s)")), 3000)
+				),
+			]);
 			cueTimes = parseVttCueTimes(vttText);
 		} catch (e) {
-			logger.warn("[storyweaver] Failed to fetch/parse VTT file", { error: e.message });
+			logger.warn("[storyweaver] VTT fetch skipped (non-blocking)", { error: e.message });
 		}
 	}
 

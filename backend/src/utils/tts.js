@@ -88,34 +88,65 @@ const generatePageAudio = async (text, language = "English") => {
 	const voice = pickVoice(language);
 	logger.info("[tts] Generating audio", { language, voice, textLength: cleanText.length });
 
-	const tts = new MsEdgeTTS();
-	await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+	// Wrap TTS in a timeout to prevent hanging on production
+	const TTS_TIMEOUT_MS = 30_000; // 30 seconds max per page
 
-	const { audioStream } = tts.toStream(cleanText);
+	const generateWithTimeout = () =>
+		new Promise((resolve, reject) => {
+			const timer = setTimeout(() => {
+				reject(new Error(`TTS generation timed out after ${TTS_TIMEOUT_MS / 1000}s`));
+			}, TTS_TIMEOUT_MS);
 
-	return new Promise((resolve, reject) => {
-		const chunks = [];
-		audioStream.on("data", (chunk) => {
-			if (chunk && chunk.audio) {
-				chunks.push(chunk.audio);
-			} else if (Buffer.isBuffer(chunk)) {
-				chunks.push(chunk);
-			}
+			(async () => {
+				try {
+					const tts = new MsEdgeTTS();
+					await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+
+					const { audioStream } = tts.toStream(cleanText);
+
+					const chunks = [];
+					audioStream.on("data", (chunk) => {
+						if (chunk && chunk.audio) {
+							chunks.push(chunk.audio);
+						} else if (Buffer.isBuffer(chunk)) {
+							chunks.push(chunk);
+						}
+					});
+					audioStream.on("end", () => {
+						clearTimeout(timer);
+						const buffer = Buffer.concat(chunks);
+						if (buffer.length === 0) {
+							reject(new Error("TTS produced empty audio"));
+						} else {
+							logger.info("[tts] Audio generated", { size: buffer.length, voice });
+							resolve(buffer);
+						}
+					});
+					audioStream.on("error", (err) => {
+						clearTimeout(timer);
+						logger.error("[tts] Stream error", { error: err.message });
+						reject(err);
+					});
+				} catch (err) {
+					clearTimeout(timer);
+					reject(err);
+				}
+			})();
 		});
-		audioStream.on("end", () => {
-			const buffer = Buffer.concat(chunks);
-			if (buffer.length === 0) {
-				reject(new Error("TTS produced empty audio"));
-			} else {
-				logger.info("[tts] Audio generated", { size: buffer.length, voice });
-				resolve(buffer);
-			}
-		});
-		audioStream.on("error", (err) => {
-			logger.error("[tts] Generation failed", { error: err.message });
-			reject(err);
-		});
-	});
+
+	// Try once, and if it fails, try one more time
+	try {
+		return await generateWithTimeout();
+	} catch (firstErr) {
+		logger.warn("[tts] First attempt failed, retrying...", { error: firstErr.message });
+		try {
+			await new Promise((r) => setTimeout(r, 500));
+			return await generateWithTimeout();
+		} catch (retryErr) {
+			logger.error("[tts] Generation failed after retry", { error: retryErr.message });
+			throw retryErr;
+		}
+	}
 };
 
 module.exports = {

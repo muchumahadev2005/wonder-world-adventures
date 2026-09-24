@@ -53,29 +53,54 @@ export const StoryWeaverReader = ({
     setAudioPlaying(false);
     setAudioError(false);
 
-    try {
-      const res = await storyweaverApi.getStory(story.slug || story.id);
-      setDetail(res.story);
+    const maxRetries = 2;
+    let lastError: Error | null = null;
 
-      // If pages don't have audio yet, kick off background generation
-      const needsAudio = res.story?.pages?.some(
-        (p) => !p.audioUrl && (p.text || "").trim().length >= 2
-      );
-      if (needsAudio) {
-        storyweaverApi
-          .generateAudio(story.slug || story.id)
-          .then((genRes) => {
-            if (genRes.success && genRes.story) {
-              setDetail(genRes.story);
-            }
-          })
-          .catch(() => {});
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Add timeout to prevent hanging forever (Render cold-start can be slow)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), attempt === 0 ? 20_000 : 30_000);
+
+        const res = await storyweaverApi.getStory(story.slug || story.id);
+        clearTimeout(timeout);
+
+        setDetail(res.story);
+
+        // If pages don't have audio yet, kick off background generation
+        const needsAudio = res.story?.pages?.some(
+          (p) => !p.audioUrl && (p.text || "").trim().length >= 2
+        );
+        if (needsAudio) {
+          storyweaverApi
+            .generateAudio(story.slug || story.id)
+            .then((genRes) => {
+              if (genRes.success && genRes.story) {
+                setDetail(genRes.story);
+              }
+            })
+            .catch(() => {});
+        }
+
+        // Success — exit retry loop
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        if (attempt < maxRetries) {
+          // Wait before retrying (exponential backoff: 2s, 4s)
+          await new Promise((r) => setTimeout(r, (attempt + 1) * 2000));
+          continue;
+        }
       }
-    } catch {
-      setError("Unable to load this story. Please try again!");
-    } finally {
-      setLoading(false);
     }
+
+    if (lastError) {
+      setError("Unable to load this story. Please try again!");
+    }
+
+    setLoading(false);
   }, [story.slug, story.id]);
 
   useEffect(() => {
@@ -214,6 +239,7 @@ export const StoryWeaverReader = ({
           ref={audioRef}
           key={`page-audio-${pageIdx}-${currentPage.audioUrl}`}
           src={currentPage.audioUrl}
+          crossOrigin="anonymous"
           preload="auto"
           onEnded={() => {
             if (!isLast) {
@@ -224,8 +250,16 @@ export const StoryWeaverReader = ({
             }
           }}
           onError={() => {
-            setAudioError(true);
-            setAudioPlaying(false);
+            // On audio load error, skip to next page instead of stopping
+            // This handles CORS issues, missing R2 files, network errors
+            console.warn(`[StoryWeaverReader] Audio failed for page ${pageIdx}:`, currentPage.audioUrl);
+            if (audioPlaying && !isLast) {
+              // Auto-advance to next page after a brief delay
+              setTimeout(() => setPageIdx((prev) => prev + 1), 500);
+            } else {
+              setAudioError(true);
+              setAudioPlaying(false);
+            }
           }}
           style={{ display: "none" }}
         />

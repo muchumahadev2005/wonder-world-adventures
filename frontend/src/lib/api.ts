@@ -391,13 +391,14 @@ export const storyweaverApi = {
   generateAudio: (id: string): Promise<{ success: boolean; story: StoryWeaverStoryDetail }> =>
     apiFetch<{ success: boolean; story: StoryWeaverStoryDetail }>(`/storyweaver/stories/${encodeURIComponent(id)}/generate-audio`, {
       method: "POST",
+      body: {},
     }),
   getDbStats: (): Promise<{ success: boolean; stats: StoryWeaverDbStats }> =>
     apiFetch<{ success: boolean; stats: StoryWeaverDbStats }>("/storyweaver/stories/stats"),
   syncAudios: (limit = 20): Promise<{ success: boolean; result: { totalProcessed: number; successCount: number; failCount: number } }> =>
     apiFetch<{ success: boolean; result: { totalProcessed: number; successCount: number; failCount: number } }>("/storyweaver/stories/sync", {
       method: "POST",
-      body: JSON.stringify({ limit }),
+      body: { limit },
     }),
 };
 
