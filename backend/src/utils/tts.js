@@ -79,8 +79,8 @@ const generatePageAudio = async (text, language = "English") => {
 	// Clean the text for better TTS output
 	const cleanText = text
 		.replace(/\s+/g, " ")
-		.replace(/[""]/g, '"')
-		.replace(/['']/g, "'")
+		.replace(/["\u201C\u201D]/g, '"')
+		.replace(/['\u2018\u2019]/g, "'")
 		.trim();
 
 	if (cleanText.length < 2) return null;
@@ -88,13 +88,129 @@ const generatePageAudio = async (text, language = "English") => {
 	const voice = pickVoice(language);
 	logger.info("[tts] Generating audio", { language, voice, textLength: cleanText.length });
 
-	// Wrap TTS in a timeout to prevent hanging on production
-	const TTS_TIMEOUT_MS = 30_000; // 30 seconds max per page
+	// Split long text into chunks to avoid WebSocket drops on Render
+	// msedge-tts WebSocket disconnects for text > ~500 chars
+	const MAX_CHUNK_CHARS = 400;
+	const textChunks = splitTextIntoChunks(cleanText, MAX_CHUNK_CHARS);
 
-	const generateWithTimeout = () =>
+	logger.info("[tts] Split into chunks", { totalChunks: textChunks.length, chunkSizes: textChunks.map(c => c.length) });
+
+	const audioBuffers = [];
+
+	for (let i = 0; i < textChunks.length; i++) {
+		const chunk = textChunks[i];
+		if (chunk.trim().length < 2) continue;
+
+		try {
+			const buffer = await generateChunkAudio(chunk, voice);
+			if (buffer && buffer.length > 0) {
+				audioBuffers.push(buffer);
+			}
+		} catch (err) {
+			logger.error("[tts] Chunk generation failed", {
+				chunkIdx: i,
+				chunkLen: chunk.length,
+				error: err.message,
+			});
+			// Continue with remaining chunks — partial audio is better than none
+		}
+
+		// Small delay between chunks to avoid rate-limiting
+		if (i < textChunks.length - 1) {
+			await new Promise((r) => setTimeout(r, 200));
+		}
+	}
+
+	if (audioBuffers.length === 0) {
+		logger.error("[tts] All chunks failed — no audio produced");
+		return null;
+	}
+
+	const finalBuffer = Buffer.concat(audioBuffers);
+	logger.info("[tts] Audio generated", {
+		size: finalBuffer.length,
+		voice,
+		chunksUsed: audioBuffers.length,
+		totalChunks: textChunks.length,
+	});
+
+	return finalBuffer;
+};
+
+/**
+ * Split text into chunks at sentence boundaries, respecting MAX_CHARS limit.
+ * Splits at '. ', '! ', '? ', then falls back to ', ' or space.
+ *
+ * @param {string} text
+ * @param {number} maxChars
+ * @returns {string[]}
+ */
+const splitTextIntoChunks = (text, maxChars) => {
+	if (text.length <= maxChars) {
+		return [text];
+	}
+
+	const chunks = [];
+	let remaining = text;
+
+	while (remaining.length > 0) {
+		if (remaining.length <= maxChars) {
+			chunks.push(remaining.trim());
+			break;
+		}
+
+		// Find the best split point within maxChars
+		let splitAt = -1;
+
+		// Priority 1: Split at sentence end (. ! ?)
+		const sentenceEnders = [". ", "! ", "? ", ".\u201D ", "!\u201D ", "?\u201D "];
+		for (const ender of sentenceEnders) {
+			const idx = remaining.lastIndexOf(ender, maxChars);
+			if (idx > 0 && idx > splitAt) {
+				splitAt = idx + ender.length - 1; // Include the punctuation, not the space
+			}
+		}
+
+		// Priority 2: Split at comma or semicolon
+		if (splitAt < 0) {
+			const commaIdx = remaining.lastIndexOf(", ", maxChars);
+			const semiIdx = remaining.lastIndexOf("; ", maxChars);
+			splitAt = Math.max(commaIdx, semiIdx);
+			if (splitAt > 0) splitAt += 1;
+		}
+
+		// Priority 3: Split at any space
+		if (splitAt < 0) {
+			splitAt = remaining.lastIndexOf(" ", maxChars);
+		}
+
+		// Priority 4: Hard split (shouldn't happen with normal text)
+		if (splitAt <= 0) {
+			splitAt = maxChars;
+		}
+
+		chunks.push(remaining.substring(0, splitAt).trim());
+		remaining = remaining.substring(splitAt).trim();
+	}
+
+	return chunks.filter((c) => c.length > 0);
+};
+
+/**
+ * Generate audio for a single small text chunk with timeout and retry.
+ * Creates a fresh MsEdgeTTS instance per call to avoid stale WebSocket issues.
+ *
+ * @param {string} chunkText — Small text chunk (< 500 chars ideally)
+ * @param {string} voice     — msedge-tts voice name
+ * @returns {Promise<Buffer>} — MP3 audio buffer
+ */
+const generateChunkAudio = async (chunkText, voice) => {
+	const TTS_TIMEOUT_MS = 15_000; // 15s per chunk (short text = fast)
+
+	const attempt = () =>
 		new Promise((resolve, reject) => {
 			const timer = setTimeout(() => {
-				reject(new Error(`TTS generation timed out after ${TTS_TIMEOUT_MS / 1000}s`));
+				reject(new Error(`TTS chunk timed out after ${TTS_TIMEOUT_MS / 1000}s`));
 			}, TTS_TIMEOUT_MS);
 
 			(async () => {
@@ -102,7 +218,7 @@ const generatePageAudio = async (text, language = "English") => {
 					const tts = new MsEdgeTTS();
 					await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-					const { audioStream } = tts.toStream(cleanText);
+					const { audioStream } = tts.toStream(chunkText);
 
 					const chunks = [];
 					audioStream.on("data", (chunk) => {
@@ -116,15 +232,13 @@ const generatePageAudio = async (text, language = "English") => {
 						clearTimeout(timer);
 						const buffer = Buffer.concat(chunks);
 						if (buffer.length === 0) {
-							reject(new Error("TTS produced empty audio"));
+							reject(new Error("TTS chunk produced empty audio"));
 						} else {
-							logger.info("[tts] Audio generated", { size: buffer.length, voice });
 							resolve(buffer);
 						}
 					});
 					audioStream.on("error", (err) => {
 						clearTimeout(timer);
-						logger.error("[tts] Stream error", { error: err.message });
 						reject(err);
 					});
 				} catch (err) {
@@ -134,18 +248,13 @@ const generatePageAudio = async (text, language = "English") => {
 			})();
 		});
 
-	// Try once, and if it fails, try one more time
+	// Try up to 2 times per chunk
 	try {
-		return await generateWithTimeout();
+		return await attempt();
 	} catch (firstErr) {
-		logger.warn("[tts] First attempt failed, retrying...", { error: firstErr.message });
-		try {
-			await new Promise((r) => setTimeout(r, 500));
-			return await generateWithTimeout();
-		} catch (retryErr) {
-			logger.error("[tts] Generation failed after retry", { error: retryErr.message });
-			throw retryErr;
-		}
+		logger.warn("[tts] Chunk attempt 1 failed, retrying...", { error: firstErr.message, textLen: chunkText.length });
+		await new Promise((r) => setTimeout(r, 300));
+		return await attempt();
 	}
 };
 
@@ -154,3 +263,4 @@ module.exports = {
 	pickVoice,
 	VOICE_MAP,
 };
+
