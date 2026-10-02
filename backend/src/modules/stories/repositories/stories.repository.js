@@ -1,12 +1,56 @@
 const prisma = require("../../../prisma/prismaClient");
+const { parsePagination, buildPaginationMeta, safeSortField, safeSortDir } = require("../../../utils/pagination");
 
-// ── Shared include ────────────────────────────────────────────────
+// ── Shared include for DETAIL endpoint (full data) ────────────────
 const includeStory = {
 	language: true,
 	quizzes: {
 		where: { isPublished: true },
 		include: { questions: { orderBy: { sortOrder: "asc" } } },
 	},
+};
+
+// ── Lightweight SELECT for LIST endpoints (cards/thumbnails) ──────
+// Excludes heavy fields: content, pages — those are only needed in detail
+const selectListStory = {
+	id: true,
+	slug: true,
+	title: true,
+	subtitle: true,
+	description: true,
+	author: true,
+	category: true,
+	ageGroup: true,
+	difficulty: true,
+	tags: true,
+	coverImage: true,
+	thumbnail: true,
+	thumbnailUrl: true,
+	backgroundUrl: true,
+	coverEmoji: true,
+	coverGradient: true,
+	readingTime: true,
+	listeningTime: true,
+	duration: true,
+	isPremium: true,
+	isPublished: true,
+	isFeatured: true,
+	isTrending: true,
+	isRecommended: true,
+	readAloudEnabled: true,
+	narratorVoice: true,
+	audioUrl: true,
+	xpReward: true,
+	starsReward: true,
+	likesCount: true,
+	readsCount: true,
+	favoritesCount: true,
+	sortOrder: true,
+	createdAt: true,
+	updatedAt: true,
+	languageId: true,
+	language: true,
+	// No quizzes in list view — only needed on detail
 };
 
 // ── Language filter builder ───────────────────────────────────────
@@ -21,20 +65,20 @@ const buildLanguageFilter = (language) => {
 	};
 };
 
-// ── List (supports rich admin + public filtering) ─────────────────
-const list = ({
+// ── List (supports rich admin + public filtering + pagination) ─────
+const ALLOWED_SORT_FIELDS = ["createdAt", "title", "readingTime", "starsReward", "xpReward", "readsCount", "likesCount", "sortOrder"];
+
+const list = async ({
 	language, category, ageGroup, difficulty,
 	isPremium, isFeatured, isTrending, isRecommended,
 	isPublished, search,
-	limit = 100, page = 1,
+	limit = 20, page = 1,
 	sortBy = "createdAt", sortOrder: sortDir = "desc",
 } = {}) => {
 	const where = {};
 
 	// Only apply isPublished filter if explicitly provided
 	if (typeof isPublished === "boolean") where.isPublished = isPublished;
-	// For public listings (no explicit flag), default to published only
-	// (callers that want all set isPublished: undefined explicitly)
 
 	if (category)   where.category  = { equals: category,  mode: "insensitive" };
 	if (ageGroup)   where.ageGroup   = ageGroup;
@@ -56,19 +100,29 @@ const list = ({
 	const langFilter = buildLanguageFilter(language);
 	if (langFilter) Object.assign(where, langFilter);
 
-	const allowedSort = ["createdAt", "title", "readingTime", "starsReward", "xpReward", "readsCount", "likesCount", "sortOrder"];
-	const orderField  = allowedSort.includes(sortBy) ? sortBy : "createdAt";
+	const orderField = safeSortField(sortBy, ALLOWED_SORT_FIELDS);
+	const orderDir   = safeSortDir(sortDir);
 
-	return prisma.story.findMany({
-		where,
-		include: includeStory,
-		orderBy: [{ [orderField]: sortDir === "asc" ? "asc" : "desc" }],
-		take:    Math.min(Number(limit) || 100, 500),
-		skip:    (Math.max(Number(page) || 1, 1) - 1) * (Math.min(Number(limit) || 100, 500)),
-	});
+	const pagination = parsePagination({ page, limit });
+
+	const [stories, total] = await Promise.all([
+		prisma.story.findMany({
+			where,
+			select: selectListStory,
+			orderBy: [{ [orderField]: orderDir }],
+			take: pagination.limit,
+			skip: pagination.skip,
+		}),
+		prisma.story.count({ where }),
+	]);
+
+	return {
+		stories,
+		pagination: buildPaginationMeta(total, pagination.page, pagination.limit),
+	};
 };
 
-// ── Find by id or slug ────────────────────────────────────────────
+// ── Find by id or slug (FULL detail — includes content, pages, quizzes) ──
 const findByIdOrSlug = (id) =>
 	prisma.story.findFirst({
 		where: { OR: [{ id }, { slug: id }] },
@@ -76,14 +130,14 @@ const findByIdOrSlug = (id) =>
 	});
 
 // ── Category listing ──────────────────────────────────────────────
-const listByCategory = (category) =>
-	list({ category, isPublished: true });
+const listByCategory = (category, query = {}) =>
+	list({ ...query, category, isPublished: true });
 
 // ── Recommended ───────────────────────────────────────────────────
 const recommended = (limit = 6) =>
 	prisma.story.findMany({
 		where: { isPublished: true },
-		include: includeStory,
+		select: selectListStory,
 		orderBy: [{ isPremium: "asc" }, { starsReward: "desc" }, { sortOrder: "asc" }],
 		take: limit,
 	});

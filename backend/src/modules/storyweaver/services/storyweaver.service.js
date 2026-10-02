@@ -10,6 +10,7 @@
 
 const https    = require("https");
 const redis    = require("../../../utils/redis");
+const cache    = require("../../../utils/cache");
 const logger   = require("../../../utils/logger");
 const prisma   = require("../../../prisma/prismaClient");
 const { storyweaverApiToken, r2PublicUrl } = require("../../../config/env");
@@ -274,6 +275,7 @@ const saveAudioStoryToDb = async (story) => {
 			},
 		});
 		logger.info("[storyweaver] Saved story (images & text) to PostgreSQL", { swId, slug, title: record.title });
+		cache.invalidate("storyweaver").catch(() => {});
 		return record;
 	} catch (err) {
 		logger.warn("[storyweaver] Failed to save story to DB", { swId, error: err.message });
@@ -335,65 +337,74 @@ const getAudioStoryFromDb = async (idOrSlug) => {
  * List audio stories saved in PostgreSQL with pagination and filtering.
  */
 const listDbAudioStories = async (params = {}) => {
-	const { page = 1, limit = 12, language, level, query } = params;
-	const where = { isAudio: true };
+	const cacheKey = cache.buildKey("storyweaver:db_list", params);
+	const { data, source } = await cache.cachedDedup(
+		cacheKey,
+		async () => {
+			const { page = 1, limit = 12, language, level, query } = params;
+			const where = { isAudio: true };
 
-	if (language && language !== "Any language") {
-		where.language = { equals: language, mode: "insensitive" };
-	}
-	if (level) {
-		where.level = String(level);
-	}
-	if (query) {
-		where.OR = [
-			{ title: { contains: query, mode: "insensitive" } },
-			{ description: { contains: query, mode: "insensitive" } },
-			{ slug: { contains: query, mode: "insensitive" } },
-		];
-	}
+			if (language && language !== "Any language") {
+				where.language = { equals: language, mode: "insensitive" };
+			}
+			if (level) {
+				where.level = String(level);
+			}
+			if (query) {
+				where.OR = [
+					{ title: { contains: query, mode: "insensitive" } },
+					{ description: { contains: query, mode: "insensitive" } },
+					{ slug: { contains: query, mode: "insensitive" } },
+				];
+			}
 
-	const [records, total] = await Promise.all([
-		prisma.storyWeaverAudio.findMany({
-			where,
-			skip: (page - 1) * limit,
-			take: limit,
-			orderBy: [{ readsCount: "desc" }, { createdAt: "desc" }],
-		}),
-		prisma.storyWeaverAudio.count({ where }),
-	]);
+			const [records, total] = await Promise.all([
+				prisma.storyWeaverAudio.findMany({
+					where,
+					skip: (page - 1) * limit,
+					take: limit,
+					orderBy: [{ readsCount: "desc" }, { createdAt: "desc" }],
+				}),
+				prisma.storyWeaverAudio.count({ where }),
+			]);
 
-	const stories = records.map((r) => ({
-		id:          r.swId,
-		swId:        r.swId,
-		title:       r.title,
-		language:    r.language,
-		level:       r.level || "",
-		slug:        r.slug,
-		recommended: false,
-		editorsPick: false,
-		coverImage:  r.coverImage,
-		authors:     r.authors || [],
-		illustrators:r.illustrators || [],
-		description: r.description || "",
-		synopsis:    r.synopsis || "",
-		publisher:   r.publisher || "",
-		readsCount:  r.readsCount || 0,
-		likesCount:  r.likesCount || 0,
-		isAudio:     true,
-		isGif:       false,
-		totalPages:  r.totalPages,
-		isSavedInDb: true,
-		source:      "database",
-	}));
+			const stories = records.map((r) => ({
+				id:          r.swId,
+				swId:        r.swId,
+				title:       r.title,
+				language:    r.language,
+				level:       r.level || "",
+				slug:        r.slug,
+				recommended: false,
+				editorsPick: false,
+				coverImage:  r.coverImage,
+				authors:     r.authors || [],
+				illustrators:r.illustrators || [],
+				description: r.description || "",
+				synopsis:    r.synopsis || "",
+				publisher:   r.publisher || "",
+				readsCount:  r.readsCount || 0,
+				likesCount:  r.likesCount || 0,
+				isAudio:     true,
+				isGif:       false,
+				totalPages:  r.totalPages,
+				isSavedInDb: true,
+				source:      "database",
+			}));
 
-	return {
-		stories,
-		total,
-		page,
-		totalPages: Math.ceil(total / limit) || 1,
-		perPage:    limit,
-		source:     "database",
-	};
+			return {
+				stories,
+				total,
+				page,
+				totalPages: Math.ceil(total / limit) || 1,
+				perPage:    limit,
+				source:     "database",
+			};
+		},
+		cache.TTL.STORYWEAVER_LIST
+	);
+
+	return { ...data, _cacheSource: source };
 };
 
 /**

@@ -27,6 +27,7 @@ const listDbStories = catchAsync(async (req, res) => {
 		level:    level    ? Number(level) : undefined,
 		query:    query    || undefined,
 	});
+	if (req.setCacheSource) req.setCacheSource(result._cacheSource);
 	res.json({ success: true, ...result });
 });
 

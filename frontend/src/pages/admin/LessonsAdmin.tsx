@@ -43,6 +43,7 @@ import JsonImportDialog from "@/components/admin/lessons/JsonImportDialog";
 import ExportDialog from "@/components/admin/lessons/ExportDialog";
 import VersionHistory from "@/components/admin/lessons/VersionHistory";
 import LessonPreview from "@/components/admin/lessons/LessonPreview";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const STATUS_BADGES: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700 border-slate-200",
@@ -64,6 +65,7 @@ export default function LessonsAdmin() {
 
   // Filters state
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [filterLang, setFilterLang] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -90,12 +92,12 @@ export default function LessonsAdmin() {
 
   // Query paginated lessons list
   const { data: lessonsData, isLoading } = useQuery({
-    queryKey: ["admin-lessons", page, search, filterLang, filterLevel, filterStatus, filterPremium],
+    queryKey: ["admin-lessons", page, debouncedSearch, filterLang, filterLevel, filterStatus, filterPremium],
     queryFn: () =>
       adminApi.getAdminLessons(token, {
         page,
         limit: 10,
-        search: search.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         language: filterLang === "all" ? undefined : filterLang,
         level: filterLevel === "all" ? undefined : filterLevel,
         status: filterStatus === "all" ? undefined : filterStatus,

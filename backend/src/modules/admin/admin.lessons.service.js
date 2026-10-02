@@ -1,6 +1,15 @@
 const prisma = require("../../prisma/prismaClient");
 const XLSX = require("xlsx");
 const { indexContentAsync, deleteEmbeddings } = require("../rag/embedding.service");
+const cache = require("../../utils/cache");
+
+const invalidateLessonCache = () => {
+	setImmediate(() => {
+		cache.invalidate("lessons").catch(() => {});
+		cache.invalidate("admin").catch(() => {});
+		cache.invalidate("homepage").catch(() => {});
+	});
+};
 
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -156,6 +165,7 @@ const createLesson = async (data, userId) => {
 
 	// Auto-index embedding (async, non-blocking)
 	indexContentAsync("lesson", lesson.id);
+	invalidateLessonCache();
 	return lesson;
 };
 
@@ -248,6 +258,7 @@ const updateLesson = async (id, data, userId) => {
 		}
 	}
 
+	invalidateLessonCache();
 	return getLesson(existing.id);
 };
 
@@ -263,6 +274,7 @@ const deleteLesson = async (id) => {
 	const lesson = await getLesson(id);
 	setImmediate(() => deleteEmbeddings("lesson", lesson.id));
 	await prisma.lesson.delete({ where: { id: lesson.id } });
+	invalidateLessonCache();
 	return { deleted: true };
 };
 
@@ -314,29 +326,35 @@ const duplicateLesson = async (id) => {
 
 const archiveLesson = async (id) => {
 	const lesson = await getLesson(id);
-	return prisma.lesson.update({
+	const updated = await prisma.lesson.update({
 		where: { id: lesson.id },
 		data: { status: "archived", isPublished: false, archivedAt: new Date() },
 		include: lessonInclude,
 	});
+	invalidateLessonCache();
+	return updated;
 };
 
 const restoreLesson = async (id) => {
 	const lesson = await getLesson(id);
-	return prisma.lesson.update({
+	const updated = await prisma.lesson.update({
 		where: { id: lesson.id },
 		data: { status: "draft", archivedAt: null },
 		include: lessonInclude,
 	});
+	invalidateLessonCache();
+	return updated;
 };
 
 const publishLesson = async (id) => {
 	const lesson = await getLesson(id);
-	return prisma.lesson.update({
+	const updated = await prisma.lesson.update({
 		where: { id: lesson.id },
 		data: { status: "published", isPublished: true, publishedAt: new Date() },
 		include: lessonInclude,
 	});
+	invalidateLessonCache();
+	return updated;
 };
 
 // ── Cards ────────────────────────────────────────────────────────

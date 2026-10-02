@@ -1,4 +1,5 @@
 const repository = require("../repositories/lessons.repository");
+const cache = require("../../../utils/cache");
 
 const normalizeCard = (card) => ({
 	id: card.id,
@@ -73,23 +74,56 @@ const getLessonsByLevel = async (levelId, query = {}) => {
 		error.status = 404;
 		throw error;
 	}
-	const lessons = await repository.listByLevel(level.id, query);
-	return lessons.map(normalizeLesson);
+
+	const cacheKey = cache.buildKey("lessons:level", { levelId: level.id, ...query });
+	const { data, source } = await cache.cachedQuery(
+		cacheKey,
+		async () => {
+			const rows = await repository.listByLevel(level.id, query);
+			return rows.map(normalizeLesson);
+		},
+		cache.TTL.LESSONS_LIST
+	);
+
+	const result = Array.isArray(data) ? [...data] : data;
+	result._cacheSource = source;
+	return result;
 };
 
 const listLessons = async (query = {}) => {
-	const lessons = await repository.list(query);
-	return lessons.map(normalizeLesson);
+	const cacheKey = cache.buildKey("lessons:list", query);
+	const { data, source } = await cache.cachedQuery(
+		cacheKey,
+		async () => {
+			const rows = await repository.list(query);
+			return rows.map(normalizeLesson);
+		},
+		cache.TTL.LESSONS_LIST
+	);
+
+	const result = Array.isArray(data) ? [...data] : data;
+	result._cacheSource = source;
+	return result;
 };
 
 const getLesson = async (id) => {
-	const lesson = await repository.findByIdOrSlug(id);
-	if (!lesson) {
-		const error = new Error("Lesson not found");
-		error.status = 404;
-		throw error;
-	}
-	return normalizeLesson(lesson);
+	const cacheKey = `lessons:detail:${id.toLowerCase().trim()}`;
+	const { data, source } = await cache.cachedQuery(
+		cacheKey,
+		async () => {
+			const lesson = await repository.findByIdOrSlug(id);
+			if (!lesson) {
+				const error = new Error("Lesson not found");
+				error.status = 404;
+				throw error;
+			}
+			return normalizeLesson(lesson);
+		},
+		cache.TTL.LESSONS_DETAIL
+	);
+
+	const result = { ...data, _cacheSource: source };
+	return result;
 };
 
 const getLessonCards = async (id) => {
@@ -98,18 +132,19 @@ const getLessonCards = async (id) => {
 		lesson,
 		cards: lesson.cards,
 		words: lesson.words,
+		_cacheSource: lesson._cacheSource,
 	};
 };
 
 const getLessonQuiz = async (id) => {
 	const lesson = await getLesson(id);
-	const quiz = lesson.quizzes[0] || null;
+	const quiz = lesson.quizzes?.[0] || null;
 	if (!quiz) {
 		const error = new Error("Quiz not found");
 		error.status = 404;
 		throw error;
 	}
-	return { lesson, quiz };
+	return { lesson, quiz, _cacheSource: lesson._cacheSource };
 };
 
 module.exports = {

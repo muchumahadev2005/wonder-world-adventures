@@ -2,6 +2,7 @@ const XLSX = require("xlsx");
 const prisma = require("../../../prisma/prismaClient");
 const repository = require("../repositories/stories.repository");
 const { indexContentAsync, deleteEmbeddings } = require("../../rag/embedding.service");
+const cache = require("../../../utils/cache");
 const {
 	STORY_CATEGORIES,
 	STORY_AGE_GROUPS,
@@ -197,38 +198,101 @@ const normalizeStoryData = async (input, { partial = false } = {}) => {
 
 // ── CRUD ──────────────────────────────────────────────────────────
 
-const listStories = async (query) => {
-	const stories = await repository.list({
-		...query,
+const listStories = async (query = {}) => {
+	const cacheKey = cache.buildKey("stories:list", {
+		search: query.search,
 		language: query.language || query.languageId,
+		category: query.category,
+		ageGroup: query.ageGroup,
+		difficulty: query.difficulty,
+		isPremium: query.isPremium,
+		isFeatured: query.isFeatured,
+		isTrending: query.isTrending,
+		isRecommended: query.isRecommended,
+		isPublished: query.isPublished,
+		page: query.page,
+		limit: query.limit,
+		sortBy: query.sortBy,
+		sortOrder: query.sortOrder,
 	});
-	return stories.map(normalizeStory);
+
+	const { data, source } = await cache.cachedQuery(
+		cacheKey,
+		async () => {
+			const result = await repository.list({
+				...query,
+				language: query.language || query.languageId,
+			});
+			return {
+				stories: result.stories.map(normalizeStory),
+				pagination: result.pagination,
+			};
+		},
+		cache.TTL.STORIES_LIST
+	);
+
+	return { ...data, _cacheSource: source };
 };
 
 const getStory = async (id) => {
-	const story = await repository.findByIdOrSlug(id);
-	if (!story) {
-		const error = new Error("Story not found");
-		error.status = 404;
-		throw error;
-	}
-	return normalizeStory(story);
+	const cacheKey = cache.buildKey("stories:detail", { id: id.toLowerCase() });
+
+	const { data, source } = await cache.cachedQuery(
+		cacheKey,
+		async () => {
+			const story = await repository.findByIdOrSlug(id);
+			if (!story) {
+				const error = new Error("Story not found");
+				error.status = 404;
+				throw error;
+			}
+			return normalizeStory(story);
+		},
+		cache.TTL.STORIES_DETAIL
+	);
+
+	data._cacheSource = source;
+	return data;
 };
 
-const listByCategory = async (category) => {
-	const stories = await repository.listByCategory(category);
-	return stories.map(normalizeStory);
+const listByCategory = async (category, query = {}) => {
+	const cacheKey = cache.buildKey("stories:category", { category, ...query });
+
+	const { data, source } = await cache.cachedQuery(
+		cacheKey,
+		async () => {
+			const result = await repository.listByCategory(category, query);
+			return {
+				stories: result.stories.map(normalizeStory),
+				pagination: result.pagination,
+			};
+		},
+		cache.TTL.STORIES_LIST
+	);
+
+	return { ...data, _cacheSource: source };
 };
 
 const recommended = async () => {
-	const stories = await repository.recommended();
-	return stories.map(normalizeStory);
+	const { data, source } = await cache.cachedDedup(
+		"stories:recommended",
+		async () => {
+			const stories = await repository.recommended();
+			return stories.map(normalizeStory);
+		},
+		cache.TTL.STORIES_LIST
+	);
+
+	return { stories: data, _cacheSource: source };
 };
 
 const createStory = async (body) => {
 	const data = await normalizeStoryData(body);
 	const story = await repository.create(data);
 	indexContentAsync("story", story.id);
+	// Invalidate story and admin caches
+	cache.invalidate("stories");
+	cache.invalidate("admin");
 	return normalizeStory(story);
 };
 
@@ -243,6 +307,10 @@ const updateStory = async (idOrSlug, body) => {
 	if (!body.slug) delete data.slug;
 	const story = await repository.update(existing.id, data);
 	indexContentAsync("story", story.id);
+	// Invalidate story caches
+	cache.invalidate("stories");
+	cache.del(cache.buildKey("stories:detail", { id: existing.slug }));
+	cache.del(cache.buildKey("stories:detail", { id: existing.id }));
 	return normalizeStory(story);
 };
 
@@ -255,6 +323,11 @@ const deleteStory = async (idOrSlug) => {
 	}
 	await repository.remove(existing.id);
 	setImmediate(() => deleteEmbeddings("story", existing.id));
+	// Invalidate story and admin caches
+	cache.invalidate("stories");
+	cache.invalidate("admin");
+	cache.del(cache.buildKey("stories:detail", { id: existing.slug }));
+	cache.del(cache.buildKey("stories:detail", { id: existing.id }));
 	return { id: existing.id };
 };
 
@@ -291,6 +364,8 @@ const duplicateStory = async (idOrSlug) => {
 	});
 
 	indexContentAsync("story", story.id);
+	cache.invalidate("stories");
+	cache.invalidate("admin");
 	return normalizeStory(story);
 };
 
@@ -550,6 +625,11 @@ const importFromExcel = async (buffer, userId) => {
 					: "failed",
 		},
 	});
+
+	if (results.success.length > 0) {
+		cache.invalidate("stories");
+		cache.invalidate("admin");
+	}
 
 	return results;
 };

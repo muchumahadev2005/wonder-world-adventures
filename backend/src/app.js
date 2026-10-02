@@ -67,6 +67,10 @@ app.use(express.json({ limit: "10mb" }));
 const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
 
+// Performance and cache tracking middleware
+const perfMiddleware = require("./middleware/perf.middleware");
+app.use(perfMiddleware);
+
 app.use("/api", routes);
 
 app.use(errorMiddleware);

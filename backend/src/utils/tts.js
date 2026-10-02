@@ -17,11 +17,11 @@ const logger = require("./logger");
 // ── Language → Voice mapping ─────────────────────────────────────────────────
 // Using warm, natural-sounding female voices that work well for children's stories
 const VOICE_MAP = {
-	"English":    "en-US-AriaNeural",
+	"English":    "en-IN-NeerjaNeural",
 	"Hindi":      "hi-IN-SwaraNeural",
 	"Gujarati":   "gu-IN-DhwaniNeural",
 	"Marathi":    "mr-IN-AarohiNeural",
-	"Urdu":       "ur-PK-UzmaNeural",
+	"Urdu":       "ur-IN-GulNeural",
 	"Kannada":    "kn-IN-SapnaNeural",
 	"Tamil":      "ta-IN-PallaviNeural",
 	"Arabic":     "ar-SA-ZariyahNeural",
@@ -36,7 +36,7 @@ const VOICE_MAP = {
 	"Portuguese": "pt-BR-FranciscaNeural",
 };
 
-const DEFAULT_VOICE = "en-US-AriaNeural";
+const DEFAULT_VOICE = "en-IN-NeerjaNeural";
 
 /**
  * Select the best voice for a given language.

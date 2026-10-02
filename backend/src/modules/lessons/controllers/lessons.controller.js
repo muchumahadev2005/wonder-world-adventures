@@ -3,26 +3,31 @@ const service = require("../services/lessons.service");
 
 const listLessons = catchAsync(async (req, res) => {
 	const lessons = await service.listLessons(req.query);
+	if (req.setCacheSource) req.setCacheSource(lessons._cacheSource);
 	res.json({ success: true, lessons });
 });
 
 const getLessonsByLevel = catchAsync(async (req, res) => {
 	const lessons = await service.getLessonsByLevel(req.params.id, req.query);
+	if (req.setCacheSource) req.setCacheSource(lessons._cacheSource);
 	res.json({ success: true, lessons });
 });
 
 const getLesson = catchAsync(async (req, res) => {
 	const lesson = await service.getLesson(req.params.id);
+	if (req.setCacheSource) req.setCacheSource(lesson._cacheSource);
 	res.json({ success: true, lesson });
 });
 
 const getLessonCards = catchAsync(async (req, res) => {
 	const result = await service.getLessonCards(req.params.id);
+	if (req.setCacheSource) req.setCacheSource(result._cacheSource);
 	res.json({ success: true, ...result });
 });
 
 const getLessonQuiz = catchAsync(async (req, res) => {
 	const result = await service.getLessonQuiz(req.params.id);
+	if (req.setCacheSource) req.setCacheSource(result._cacheSource);
 	res.json({ success: true, ...result });
 });
 
