@@ -3,6 +3,7 @@ const service = require("./admin.service");
 
 const getStats = catchAsync(async (req, res) => {
 	const stats = await service.getStats();
+	if (req.setCacheSource) req.setCacheSource(stats._cacheSource);
 	res.json({ success: true, ...stats });
 });
 

@@ -1,7 +1,7 @@
 const repository = require("../repositories/games.repository");
 const subscriptionsService = require("../../subscriptions/services/subscriptions.service");
 const { indexContentAsync, deleteEmbeddings } = require("../../rag/embedding.service");
-
+const cache = require("../../../utils/cache");
 
 const normalizeGame = (game, canAccessPremium = false) => ({
 	id: game.slug || game.id,
@@ -58,19 +58,36 @@ const getChildProfile = async (userId) => {
 
 const listGames = async (userId) => {
 	const canAccessPremium = userId ? await subscriptionsService.canAccessPremium(userId) : false;
-	const games = await repository.listGames();
-	return games.map((game) => normalizeGame(game, canAccessPremium));
+	const { data: rawGames, source } = await cache.cachedDedup(
+		"games:raw_list",
+		() => repository.listGames(),
+		cache.TTL.GAMES_LIST
+	);
+	const games = (rawGames || []).map((game) => normalizeGame(game, canAccessPremium));
+	games._cacheSource = source;
+	return games;
 };
 
 const getGame = async (id, userId) => {
-	const game = await repository.findByIdOrSlug(id);
-	if (!game || !game.isActive) {
-		const error = new Error("Game not found");
-		error.status = 404;
-		throw error;
-	}
+	const key = `games:raw:${id.toLowerCase().trim()}`;
+	const { data: game, source } = await cache.cachedDedup(
+		key,
+		async () => {
+			const found = await repository.findByIdOrSlug(id);
+			if (!found || !found.isActive) {
+				const error = new Error("Game not found");
+				error.status = 404;
+				throw error;
+			}
+			return found;
+		},
+		cache.TTL.GAMES_LIST
+	);
+
 	const canAccessPremium = userId ? await subscriptionsService.canAccessPremium(userId) : false;
-	return normalizeGame(game, canAccessPremium);
+	const normalized = normalizeGame(game, canAccessPremium);
+	normalized._cacheSource = source;
+	return normalized;
 };
 
 const updateProgress = async (userId, body) => {
@@ -101,32 +118,35 @@ const listProgress = async (userId) => {
 
 // ─── Gamezop Integration ──────────────────────────────────────────────────────
 const GAMEZOP_API_URL = "https://pub.gamezop.com/v3/games?id=3443";
+const logger = require("../../../utils/logger");
 
 const fetchGamezopGames = () =>
 	new Promise((resolve, reject) => {
 		const https = require("https");
-		https
-			.get(GAMEZOP_API_URL, (res) => {
-				let raw = "";
-				res.on("data", (chunk) => {
-					raw += chunk;
-				});
-				res.on("end", () => {
-					try {
-						resolve(JSON.parse(raw));
-					} catch (e) {
-						reject(new Error("Failed to parse Gamezop response"));
-					}
-				});
-			})
-			.on("error", reject);
+		const req = https.get(GAMEZOP_API_URL, { timeout: 10_000 }, (res) => {
+			let raw = "";
+			res.on("data", (chunk) => {
+				raw += chunk;
+			});
+			res.on("end", () => {
+				try {
+					resolve(JSON.parse(raw));
+				} catch (e) {
+					reject(new Error("Failed to parse Gamezop response"));
+				}
+			});
+		});
+
+		req.on("timeout", () => {
+			req.destroy();
+			reject(new Error("Gamezop API request timed out"));
+		});
+
+		req.on("error", reject);
 	});
 
-const getGamezopGames = async () => {
+const _fetchAndNormalizeGamezop = async () => {
 	const data = await fetchGamezopGames();
-	// Gamezop v3 returns { games: [...] }
-	// categories: { "en": ["Puzzle & Logic"] }  ← object with locale keys, NOT array of objects
-	// tags:       { "en": ["Puzzle", "IQ", ...] } ← same shape
 	const games = Array.isArray(data?.games) ? data.games : [];
 	return games.map((g) => {
 		const categoryNames = Array.isArray(g.categories?.en) ? g.categories.en : [];
@@ -152,6 +172,30 @@ const getGamezopGames = async () => {
 			isPremium,
 		};
 	});
+};
+
+const getGamezopGames = async () => {
+	try {
+		const { data, source } = await cache.cachedDedup(
+			"games:gamezop",
+			async () => {
+				const games = await _fetchAndNormalizeGamezop();
+				if (!games || games.length === 0) {
+					throw new Error("Gamezop returned no games");
+				}
+				return games;
+			},
+			cache.TTL.GAMES_LIST
+		);
+		const result = Array.isArray(data) ? [...data] : data;
+		result._cacheSource = source;
+		return result;
+	} catch (err) {
+		logger.warn("[games] Gamezop fetch failed, returning graceful fallback", { error: err.message });
+		const fallback = [];
+		fallback._cacheSource = "fallback";
+		return fallback;
+	}
 };
 // ─────────────────────────────────────────────────────────────────────────────
 

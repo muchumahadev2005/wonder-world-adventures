@@ -221,6 +221,10 @@ model Story {
   @@index([isFeatured])
   @@index([isTrending])
   @@index([difficulty])
+  @@index([isPublished, createdAt])
+  @@index([isPublished, isFeatured])
+  @@index([isPublished, category])
+  @@index([isPremium])
   @@map("stories")
 }
 
@@ -272,6 +276,9 @@ model Lesson {
   @@index([languageId, levelId])
   @@index([status])
   @@index([lessonCode])
+  @@index([isPublished, createdAt])
+  @@index([isPublished, languageId])
+  @@index([isPremium])
   @@map("lessons")
 }
 
@@ -394,6 +401,7 @@ model Game {
 
   @@index([languageId])
   @@index([levelId])
+  @@index([isActive])
   @@map("games")
 }
 
@@ -744,6 +752,7 @@ model StoryWeaverAudio {
   @@index([language])
   @@index([level])
   @@index([isAudio])
+  @@index([language, level])
   @@map("storyweaver_audios")
 }
 

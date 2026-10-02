@@ -3,6 +3,7 @@ const service = require("../services/subscriptions.service");
 
 const listPlans = catchAsync(async (req, res) => {
 	const plans = await service.listPlans();
+	if (req.setCacheSource) req.setCacheSource(plans._cacheSource);
 	res.json({ success: true, plans });
 });
 

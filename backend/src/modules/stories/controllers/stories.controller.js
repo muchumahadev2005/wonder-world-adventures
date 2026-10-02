@@ -4,23 +4,35 @@ const service    = require("../services/stories.service");
 // ── Story CRUD ────────────────────────────────────────────────────
 
 const listStories = catchAsync(async (req, res) => {
-	const stories = await service.listStories(req.query);
-	res.json({ success: true, stories });
+	const result = await service.listStories(req.query);
+	if (req.setCacheSource) req.setCacheSource(result._cacheSource);
+	res.json({
+		success: true,
+		stories: result.stories,
+		pagination: result.pagination,
+	});
 });
 
 const getStory = catchAsync(async (req, res) => {
 	const story = await service.getStory(req.params.id);
+	if (req.setCacheSource) req.setCacheSource(story._cacheSource);
 	res.json({ success: true, story });
 });
 
 const listByCategory = catchAsync(async (req, res) => {
-	const stories = await service.listByCategory(req.params.category);
-	res.json({ success: true, stories });
+	const result = await service.listByCategory(req.params.category, req.query);
+	if (req.setCacheSource) req.setCacheSource(result._cacheSource);
+	res.json({
+		success: true,
+		stories: result.stories,
+		pagination: result.pagination,
+	});
 });
 
 const recommended = catchAsync(async (req, res) => {
-	const stories = await service.recommended();
-	res.json({ success: true, stories });
+	const result = await service.recommended();
+	if (req.setCacheSource) req.setCacheSource(result._cacheSource);
+	res.json({ success: true, stories: result.stories });
 });
 
 const createStory = catchAsync(async (req, res) => {

@@ -1,4 +1,5 @@
 const repository = require("../repositories/subscriptions.repository");
+const cache = require("../../../utils/cache");
 
 const buildEndDate = (startDate, durationDays) => {
 	const end = new Date(startDate);
@@ -7,7 +8,10 @@ const buildEndDate = (startDate, durationDays) => {
 };
 
 const listPlans = async () => {
-	return repository.listPlans();
+	const { data, source } = await cache.cachedDedup("plans:list", () => repository.listPlans(), cache.TTL.PLANS);
+	const result = Array.isArray(data) ? [...data] : data;
+	result._cacheSource = source;
+	return result;
 };
 
 const getCurrent = async (userId) => {
@@ -32,11 +36,15 @@ const subscribe = async (userId, planId) => {
 
 	const startDate = new Date();
 	const endDate = buildEndDate(startDate, plan.durationDays);
-	return repository.createSubscription({ userId, planId, startDate, endDate });
+	const subscription = await repository.createSubscription({ userId, planId, startDate, endDate });
+	// Invalidate admin stats on new subscription
+	cache.invalidate("admin").catch(() => {});
+	return subscription;
 };
 
 const cancel = async (userId) => {
 	await repository.cancelSubscription({ userId });
+	cache.invalidate("admin").catch(() => {});
 	return { status: "CANCELLED" };
 };
 

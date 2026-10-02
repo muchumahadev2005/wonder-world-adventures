@@ -85,18 +85,53 @@ const set = async (key, value, ttlSeconds = 86400) => {
 };
 
 /**
- * Delete a key.
- * @param {string} key
+ * Delete a key or multiple keys.
+ * @param {...string} keys
  */
-const del = async (key) => {
-	if (!client || !redisAvailable) return;
+const del = async (...keys) => {
+	if (!client || !redisAvailable || keys.length === 0) return;
 	try {
-		await client.del(key);
+		await client.del(...keys);
 	} catch (err) {
-		logger.warn("[redis] DEL failed", { key, message: err.message });
+		logger.warn("[redis] DEL failed", { keys, message: err.message });
+	}
+};
+
+/**
+ * Find keys matching a glob-style pattern.
+ * @param {string} pattern
+ * @returns {Promise<string[]>}
+ */
+const keys = async (pattern) => {
+	if (!client || !redisAvailable) return [];
+	try {
+		return await client.keys(pattern);
+	} catch (err) {
+		logger.warn("[redis] KEYS failed", { pattern, message: err.message });
+		return [];
+	}
+};
+
+/**
+ * Delete all keys matching a pattern.
+ * @param {string} pattern
+ * @returns {Promise<number>} number of keys deleted
+ */
+const delPattern = async (pattern) => {
+	if (!client || !redisAvailable) return 0;
+	try {
+		const matchedKeys = await client.keys(pattern);
+		if (matchedKeys && matchedKeys.length > 0) {
+			await client.del(...matchedKeys);
+			return matchedKeys.length;
+		}
+		return 0;
+	} catch (err) {
+		logger.warn("[redis] delPattern failed", { pattern, message: err.message });
+		return 0;
 	}
 };
 
 const isAvailable = () => redisAvailable;
 
-module.exports = { initRedis, get, set, del, isAvailable };
+module.exports = { initRedis, get, set, del, keys, delPattern, isAvailable };

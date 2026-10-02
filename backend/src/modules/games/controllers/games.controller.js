@@ -3,11 +3,13 @@ const service = require("../services/games.service");
 
 const listGames = catchAsync(async (req, res) => {
 	const games = await service.listGames(req.user?.id);
+	if (req.setCacheSource) req.setCacheSource(games._cacheSource);
 	res.json({ success: true, games });
 });
 
 const getGame = catchAsync(async (req, res) => {
 	const game = await service.getGame(req.params.id, req.user?.id);
+	if (req.setCacheSource) req.setCacheSource(game._cacheSource);
 	res.json({ success: true, game });
 });
 
@@ -24,6 +26,7 @@ const listProgress = catchAsync(async (req, res) => {
 // ─── Gamezop ─────────────────────────────────────────────────────────────────
 const listGamezopGames = catchAsync(async (req, res) => {
 	const games = await service.getGamezopGames();
+	if (req.setCacheSource) req.setCacheSource(games._cacheSource);
 	res.json({ success: true, games });
 });
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35,4 +38,3 @@ module.exports = {
 	listProgress,
 	listGamezopGames,
 };
-

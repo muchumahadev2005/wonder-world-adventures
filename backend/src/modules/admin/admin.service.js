@@ -1,7 +1,8 @@
 const prisma = require("../../prisma/prismaClient");
 const { autoExpireSubscriptions } = require("../subscriptions/repositories/subscriptions.repository");
+const cache = require("../../utils/cache");
 
-const getStats = async () => {
+const _computeStats = async () => {
 	// Auto expire subscriptions in background (non-blocking)
 	autoExpireSubscriptions().catch(() => {});
 
@@ -125,6 +126,11 @@ const getStats = async () => {
 		userGrowth,
 		activity,
 	};
+};
+
+const getStats = async () => {
+	const { data, source } = await cache.cachedDedup("admin:stats", _computeStats, cache.TTL.ADMIN_STATS);
+	return { ...data, _cacheSource: source };
 };
 
 const getAllUsers = async ({ page = 1, limit = 20, search = "" }) => {

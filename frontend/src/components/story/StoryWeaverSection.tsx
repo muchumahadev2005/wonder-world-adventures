@@ -28,14 +28,19 @@ const LANGUAGES = [
   "Any language",
   "English",
   "Hindi",
+  "Urdu",
+  "Malayalam",
   "Tamil",
   "Telugu",
   "Kannada",
   "Marathi",
-  "Bengali",
   "Gujarati",
+  "Bengali",
+  "Punjabi",
   "Odia",
   "Assamese",
+  "Sanskrit",
+  "Arabic",
 ];
 
 const CATEGORIES = [
@@ -98,6 +103,12 @@ export const StoryWeaverSection = () => {
   useEffect(() => {
     refreshStats();
   }, [refreshStats]);
+
+  // Combine predefined languages with any synced languages present in the database
+  const availableLanguages = useMemo(() => {
+    const dbLangs = (dbStats?.languages || []).map((l) => l.language).filter(Boolean);
+    return Array.from(new Set([...LANGUAGES, ...dbLangs]));
+  }, [dbStats]);
 
   // Fetch stories
   const fetchStories = useCallback(async (
@@ -508,7 +519,7 @@ export const StoryWeaverSection = () => {
               style={{ backgroundColor: "#ffffff", color: "#1c1917" }}
               className="w-full appearance-none px-3 py-2 pr-8 text-sm rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#d9531e]/30 focus:border-[#d9531e] cursor-pointer"
             >
-              {LANGUAGES.map((lang) => (
+              {availableLanguages.map((lang) => (
                 <option key={lang} value={lang}>
                   {lang}
                 </option>
