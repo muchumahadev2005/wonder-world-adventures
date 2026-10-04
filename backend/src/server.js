@@ -3,7 +3,11 @@ const { connectDb } = require("./config/db");
 const { port } = require("./config/env");
 const logger = require("./utils/logger");
 const { initRedis } = require("./utils/redis");
+const { initSentry } = require("./utils/sentry");
 const prisma = require("./prisma/prismaClient");
+
+// Initialize Sentry monitoring (graceful no-op if SENTRY_DSN not set)
+initSentry();
 
 // ── Neon keep-alive ───────────────────────────────────────────────────────────
 // Neon free tier auto-suspends after 5 min of inactivity.
@@ -31,8 +35,9 @@ const start = async () => {
 			logger.warn("Redis initialization failed, continuing without cache", err);
 		});
 		app.listen(port, () => {
+			const { maskDatabaseUrl } = require("./utils/tokenSecurity");
 			logger.info(`StoryNest World API running on port ${port}`);
-			logger.info(`Database: ${(process.env.DATABASE_URL || "").substring(0, 50)}...`);
+			logger.info(`Database: ${maskDatabaseUrl(process.env.DATABASE_URL || "")}`);
 			startKeepAlive();
 		});
 	} catch (err) {

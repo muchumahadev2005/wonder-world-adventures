@@ -22,13 +22,15 @@ const lifeSkillRoutes = require("../modules/life-skill/life-skill.routes");
 const dictionaryRoutes = require("../modules/dictionary/dictionary.routes");
 const storyweaverRoutes = require("../modules/storyweaver/routes/storyweaver.routes");
 
+const { authRateLimiter, aiRateLimiter, audioRateLimiter } = require("../middleware/rateLimit.middleware");
+
 const router = express.Router();
 
 router.get("/health", (req, res) => {
 	res.json({ success: true, message: "StoryNest World API" });
 });
 
-router.use("/auth", authRoutes);
+router.use("/auth", authRateLimiter, authRoutes);
 router.use("/children", childrenRoutes);
 // NOTE: /child alias removed — was a duplicate
 router.use("/subscriptions", subscriptionsRoutes);
@@ -42,10 +44,10 @@ router.use("/games", gamesRoutes);
 router.use("/rewards", rewardsRoutes);
 router.use("/progress", progressRoutes);
 router.use("/parents", parentsRoutes);
-router.use("/chatbot", ragRoutes);       // RAG-powered AI Buddy
+router.use("/chatbot", aiRateLimiter, ragRoutes);       // RAG-powered AI Buddy
 router.use("/rag", ragAdminRoutes);      // Admin: re-indexing endpoints
-router.use("/chat", chatRoutes);         // Persistent chat history (auth required)
-router.use("/voice", voiceRoutes);
+router.use("/chat", aiRateLimiter, chatRoutes);         // Persistent chat history (auth required)
+router.use("/voice", audioRateLimiter, voiceRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);
 router.use("/admin", adminRoutes);
