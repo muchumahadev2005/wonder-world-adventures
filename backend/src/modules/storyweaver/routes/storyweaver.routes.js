@@ -5,6 +5,7 @@ const {
 	storyIdSchema,
 	syncAudiosSchema,
 } = require("../validators/storyweaver.validator");
+const { audioRateLimiter } = require("../../../middleware/rateLimit.middleware");
 
 const router = express.Router();
 
@@ -48,12 +49,12 @@ router.get("/db", validateQuery(listStoriesSchema), controller.listDbStories);
 router.get("/stats", controller.getDbStats);
 
 // POST /api/storyweaver/stories/sync (Sync available audio stories to DB)
-router.post("/sync", validateBody(syncAudiosSchema), controller.triggerSync);
+router.post("/sync", audioRateLimiter, validateBody(syncAudiosSchema), controller.triggerSync);
 
 // GET /api/storyweaver/stories/:id (Get story details & pages for reader)
 router.get("/:id", validateParams(storyIdSchema), controller.getStory);
 
 // POST /api/storyweaver/stories/:id/generate-audio (Generate TTS audio & save to R2)
-router.post("/:id/generate-audio", validateParams(storyIdSchema), controller.generateAudio);
+router.post("/:id/generate-audio", audioRateLimiter, validateParams(storyIdSchema), controller.generateAudio);
 
 module.exports = router;

@@ -1,5 +1,9 @@
-const info = (...args) => console.log("[info]", ...args);
-const warn = (...args) => console.warn("[warn]", ...args);
-const error = (...args) => console.error("[error]", ...args);
+const { sanitizeLogArgs } = require("./tokenSecurity");
 
-module.exports = { info, warn, error };
+const debug = (...args) => console.log("[debug]", ...sanitizeLogArgs(...args));
+const info  = (...args) => console.log("[info]", ...sanitizeLogArgs(...args));
+const warn  = (...args) => console.warn("[warn]", ...sanitizeLogArgs(...args));
+const error = (...args) => console.error("[error]", ...sanitizeLogArgs(...args));
+
+module.exports = { debug, info, warn, error };
+

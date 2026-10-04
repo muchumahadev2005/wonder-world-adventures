@@ -38,6 +38,11 @@ const errorMiddleware = (err, req, res, next) => {
 		logger.error(`[500 Internal Server Error]`, err);
 	}
 
+	if (status >= 500) {
+		const sentry = require("../utils/sentry");
+		sentry.captureException(err);
+	}
+
 	res.status(status).json({
 		success: false,
 		message,

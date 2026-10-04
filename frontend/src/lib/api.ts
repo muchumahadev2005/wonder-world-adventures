@@ -27,6 +27,22 @@ const logApiBase = () => {
 
 type ApiOptions = Omit<RequestInit, "body"> & { body?: Record<string, unknown> };
 
+const maskSensitivePayload = (obj: any): any => {
+  if (!obj || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(maskSensitivePayload);
+  const clone: Record<string, any> = { ...obj };
+  const sensitiveKeys = ["password", "token", "accessToken", "refreshToken", "jwt", "secret", "code"];
+  for (const k of Object.keys(clone)) {
+    if (sensitiveKeys.includes(k) && typeof clone[k] === "string") {
+      const val = clone[k];
+      clone[k] = val.length > 8 ? `${val.slice(0, 3)}...[HIDDEN]...${val.slice(-3)}` : "••••••••";
+    } else if (typeof clone[k] === "object") {
+      clone[k] = maskSensitivePayload(clone[k]);
+    }
+  }
+  return clone;
+};
+
 export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?: string | null) => {
   const url = `${API_BASE_URL}${path}`;
   if (apiDebug) {
@@ -45,7 +61,7 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
     console.log("[api] request", {
       url,
       method: options.method || "GET",
-      body: options.body || null,
+      body: maskSensitivePayload(options.body) || null,
     });
   }
 
@@ -61,7 +77,7 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
       url,
       status: response.status,
       ok: response.ok,
-      data,
+      data: maskSensitivePayload(data),
     });
   }
   if (!response.ok || data?.success === false) {
